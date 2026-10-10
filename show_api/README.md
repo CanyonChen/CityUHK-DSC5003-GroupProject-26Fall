@@ -10,7 +10,7 @@ Express 与 MySQL 接口服务，为用户端和管理后台提供业务接口�
 
 ```sh
 cd show_api
-cp .env.example .env
+test -f .env || cp .env.example .env
 ```
 
 编辑 `.env`，填写本机连接信息：
@@ -28,6 +28,8 @@ cp .env.example .env
 
 ## 启动
 
+开发环境已在 macOS arm64 上使用 Node.js 22.23.2、npm 10.9.8 验证。使用已配置的 Conda 环境时先执行 `conda activate showsys`；其他管理工具使用相同版本即可。首次配置及完整依赖版本见[开发环境配置指南](../requirements.md)。
+
 在 `show_api` 目录中执行：
 
 ```sh
@@ -38,11 +40,15 @@ set +a
 npm start
 ```
 
+本目录的 [.npmrc](.npmrc) 设置了 `ignore-scripts=true`，避免旧版可选 `fsevents` 原生扩展在 Node.js 22 / Apple Silicon 下编译失败。当前依赖树中，该设置跳过 `fsevents` 的安装脚本和 `nodemon` 的 `postinstall`；API 业务依赖无需安装时生成代码。已验证全部 12 个直接依赖可加载，文件监听通过 Node.js 的回退机制正常工作。
+
+该设置保留显式 `npm start` 的执行，但会跳过安装生命周期及 pre/post 脚本。后续新增需要安装脚本的依赖时，需重新检查此配置。[npm 官方说明](https://docs.npmjs.com/cli/v10/commands/npm-ci/#ignore-scripts)
+
 默认入口为 <http://localhost:3000/>。`npm start` 通过 `bin/www` 创建 HTTP 服务并监听端口；`app.js` 仅配置和导出 Express 应用，`node app.js` 不会启动 HTTP 监听。
 
 前端代理和图片地址沿用 `http://localhost:3000`，首次运行保持此端口。若修改 `PORT`，同步调整两个前端的代理及资源地址；在新的终端分别启动两个前端，避免它们继承 API 的端口变量。
 
-以上是后续运行步骤；本次没有安装依赖、导入数据库或启动服务，MySQL 连接及历史依赖的运行兼容性尚未验证。
+2026-10-10 已将 `db_show.sql` 导入本机 MariaDB 11.4.13，配置被 Git 忽略的 `.env`，并通过 `npm start` 启动 API。已验证数据库连接、电影和影院列表、管理员登录及后台电影列表，两个前端的 API 代理均正常；完整购票与管理端数据修改流程仍待验证。应用使用仅限 `db_show` 的增删改查账号，连接密码只保存在本机 `.env` 中。
 
 ## 代码入口与边界
 
