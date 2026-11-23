@@ -1,11 +1,14 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { stats } from '../api';
+import { performanceOccupancy, stats } from '../api';
 import { money, shortDate } from '../format';
 import { connectRealtime } from '../realtime';
 import { createLiveRefresh } from '../liveRefresh';
 
 const data = ref({ items: [], total: {} });
+const occupancy = ref(null);
+const selectedPerformanceId = ref(null);
+const occupancyLoading = ref(false);
 const loading = ref(true);
 const error = ref('');
 let stopRealtime = null;
@@ -15,6 +18,24 @@ const sellThrough = computed(() => sellable.value ? Math.round((data.value.total
 const checkinRate = computed(() => data.value.total.tickets_sold ? Math.round((data.value.total.checked_in / data.value.total.tickets_sold) * 100) : 0);
 
 const live = createLiveRefresh(() => load(true));
+
+function pct(value) {
+  return `${Number(value || 0).toFixed(1)}%`;
+}
+
+async function loadOccupancy(id = selectedPerformanceId.value) {
+  occupancy.value = null;
+  if (!id) return;
+  occupancyLoading.value = true;
+  error.value = '';
+  try {
+    occupancy.value = await performanceOccupancy(id);
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    occupancyLoading.value = false;
+  }
+}
 
 function isStatsEvent(msg) {
   const path = String(msg.path || '');
@@ -27,6 +48,9 @@ async function load(silent = false) {
   error.value = '';
   try {
     data.value = await stats();
+    const hasSelected = data.value.items.some((row) => row.performance_id === selectedPerformanceId.value);
+    if (!hasSelected) selectedPerformanceId.value = data.value.items[0]?.performance_id || null;
+    await loadOccupancy(selectedPerformanceId.value);
   } catch (err) {
     error.value = err.message;
   } finally {
@@ -135,6 +159,63 @@ onBeforeUnmount(() => {
           </tr>
         </tfoot>
       </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <p class="eyebrow">REGIONAL OCCUPANCY</p>
+        <h2>Occupancy by region</h2>
+      </div>
+      <select v-if="data.items.length" v-model.number="selectedPerformanceId" @change="loadOccupancy()">
+        <option v-for="row in data.items" :key="row.performance_id" :value="row.performance_id">
+          {{ row.event_name }} — {{ shortDate(row.starts_at) }}
+        </option>
+      </select>
+    </div>
+    <div v-if="occupancyLoading" class="empty-state">Loading regional occupancy…</div>
+    <div v-else-if="!occupancy || !occupancy.regions.length" class="empty-state">No regional seat data for this performance.</div>
+    <div v-else class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Region</th>
+            <th class="num">Seats</th>
+            <th class="num">Sellable</th>
+            <th class="num">Sold</th>
+            <th class="num">Checked</th>
+            <th class="num">Occupancy</th>
+            <th class="num">Attendance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in occupancy.regions" :key="row.region">
+            <td>
+              <strong>{{ row.region }}</strong>
+              <small>{{ row.blocked_seats }} blocked</small>
+            </td>
+            <td class="num">{{ row.total_seats }}</td>
+            <td class="num">{{ row.sellable_seats }}</td>
+            <td class="num">{{ row.tickets_sold }}</td>
+            <td class="num">{{ row.checked_in }}</td>
+            <td class="num strong">{{ pct(row.occupancy_rate) }}</td>
+            <td class="num">{{ pct(row.attendance_rate) }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num">{{ occupancy.total.total_seats }}</td>
+            <td class="num">{{ occupancy.total.sellable_seats }}</td>
+            <td class="num">{{ occupancy.total.tickets_sold }}</td>
+            <td class="num">{{ occupancy.total.checked_in }}</td>
+            <td class="num strong">{{ pct(occupancy.total.occupancy_rate) }}</td>
+            <td class="num">{{ pct(occupancy.total.attendance_rate) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="muted">Occupancy = sold tickets / sellable seats (BLOCKED seats excluded). Attendance = checked-in tickets / sold tickets.</p>
     </div>
   </section>
 </template>

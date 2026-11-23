@@ -75,6 +75,7 @@ export const listVenues = () => api('/admin/venues');
 // performances
 export const listPerformances = (params) => api(`/admin/performances${qs(params)}`);
 export const getPerformance = (id) => api(`/admin/performances/${id}`);
+export const performanceOccupancy = (id) => api(`/admin/performances/${id}/occupancy`);
 export const createPerformance = (body) => api('/admin/performances', { method: 'POST', body });
 export const updatePerformance = (id, body) => api(`/admin/performances/${id}`, { method: 'PATCH', body });
 export const publishPerformance = (id) => api(`/admin/performances/${id}/publish`, { method: 'POST' });
