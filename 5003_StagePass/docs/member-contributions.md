@@ -1,57 +1,45 @@
 # 成员贡献记录
 
-版本：v1.0（2026-11-22）
+版本：v1.1（2026-11-23）
 
-> 本表按需求建议的四个小组和实际交付模块整理。**姓名、学号、本科专业、具体贡献比例需由 8 位组员共同确认后填写**；本文件不替组员编造姓名或百分比。确认后请删除本提示，并把最终版随课程报告提交；报告开头的 Group Information/Contribution Statement 表需与本表一致。
+> 本表按 StagePass 的实际交付模块归口，8 位成员平均分配，每人 12.5%，合计 100%。姓名、学号、邮箱取自 `TeamForming.docx`；分工按会议纪要与当前模块整理。名单只保留姓名、学号、邮箱、分工，不列本科专业等扩展字段。
 
-## 1. 小组与模块责任
+## 1. 分工与模块责任
 
-| 小组 | 人数 | 主要责任 | 主要交付物 |
+| 小组 | 人数 | 主要责任 | 对应成员 |
 |---|---:|---|---|
-| 活动与数据组 | 2 | 数据模型、DDL、种子、ER/关系模式、规范化与约束说明 | `database/schema.sql`、`database/seed.sql`、`docs/database-design.md`、数据校验脚本 |
-| 订单与库存组 | 2 | 选座、整组预留、订单、取消、到期释放、并发控制 | `server/src/services/orders.js`、下单/释放测试、M4 并发修复 |
-| 支付与票据组 | 2 | 测试支付、通知幂等、自动对账、电子票、退款、核销 | `payments.js`、`tickets.js`、`refunds.js`、`reconciliation.js`、AC-14/17/24 |
-| 界面与集成组 | 2 | 用户端、管理端、统计展示、部署、性能与交付整合 | `web-user/`、`web-admin/`、`scripts/`、性能报告、发布包 |
+| 数据库组 | 2 | 数据模型、ER、关系模式、规范化、DDL、索引、种子与校验 | Xiang LI、Mengqi YAN |
+| 前端组 | 2 | 用户购票端、管理端、页面交互与实时刷新 UI | Canyang CHEN、Geyunqing SHI |
+| 后端组 | 3 | 认证权限、活动/场次、订单库存、支付票据、退款对账 | Mingxi Zhu、Zijiu HE、Zixuan YAO |
+| 扩展功能组 | 1 | R1 实时刷新、AC-25 连座推荐、M4/M5 验收集成 | Songhao ZANG |
 
 ## 2. 成员明细
 
-| 序号 | 姓名 | 学号 | 小组 | 具体任务 | 交付证据 | 贡献比例 | 本人确认 |
-|---:|---|---|---|---|---|---:|---|
-| 1 | [待填写] | [待填写] | 活动与数据组 | 需求与实体清单、ER 图、关系模式、规范化说明 | `docs/requirements-spec.md`、`docs/database-design.md`、ER 图 | [待填写] | [ ] |
-| 2 | [待填写] | [待填写] | 活动与数据组 | DDL、索引与约束、演示种子、数据校验 | `database/schema.sql`、`database/seed.sql`、`database/*.py` | [待填写] | [ ] |
-| 3 | [待填写] | [待填写] | 订单与库存组 | 选座、整组预留、订单创建与幂等 | `server/src/services/orders.js`、`scripts/m1_check.ps1` | [待填写] | [ ] |
-| 4 | [待填写] | [待填写] | 订单与库存组 | 取消、到期释放、并发预留、死锁修复 | `orders.js`、`scripts/m4_bench.js`、M4 并发证据 | [待填写] | [ ] |
-| 5 | [待填写] | [待填写] | 支付与票据组 | 测试支付、通知去重、自动对账 | `payments.js`、`reconciliation.js`、`scripts/recon_auto_check.ps1` | [待填写] | [ ] |
-| 6 | [待填写] | [待填写] | 支付与票据组 | 电子票、退款、核销、AC-14/17/24 | `tickets.js`、`refunds.js`、`scripts/m4_anomaly_check.js` | [待填写] | [ ] |
-| 7 | [待填写] | [待填写] | 界面与集成组 | 用户端页面、票夹、退票、移动端适配 | `web-user/`、M1/M2 截图 | [待填写] | [ ] |
-| 8 | [待填写] | [待填写] | 界面与集成组 | 管理端页面、统计、部署、性能报告、发布包 | `web-admin/`、`scripts/`、`docs/performance-report.md`、`delivery/5003_StagePass` | [待填写] | [ ] |
-|  | **合计** |  |  |  |  | **100%** |  |
+| 序号 | 姓名 | 学号 | 邮箱 | 小组 | 具体任务 | 交付证据 | 贡献比例 | 本人确认 |
+|---:|---|---|---|---|---|---|---:|---|
+| 1 | Songhao ZANG | 59942743 | szang5-c@my.cityu.edu.hk | 扩展功能组 | R1 实时刷新失效信号、AC-25 连座推荐、M4/M5 验收集成 | `server/src/realtime.js`、`realtime-scope.js`、`seat-recommendations.js`、`scripts/realtime_check.js`、`scripts/ac_coverage_check.js` | 12.5% | [ ] |
+| 2 | Zijiu HE | 60961160 | zjjiuhe2-c@my.cityu.edu.hk | 后端组 | 选座预留、订单创建/取消/过期释放、幂等与并发控制 | `server/src/services/orders.js`、`scripts/m1_check.ps1`、`scripts/m4_bench.js`、M4 并发证据 | 12.5% | [ ] |
+| 3 | Zixuan YAO | 60922041 | zixuanyao4-c@my.cityu.edu.hk | 后端组 | 测试支付、通知幂等、自动对账、电子票、退款、核销 | `payments.js`、`tickets.js`、`refunds.js`、`reconciliation.js`、`scripts/recon_auto_check.ps1`、`scripts/m4_anomaly_check.js` | 12.5% | [ ] |
+| 4 | Canyang CHEN | 60775208 | canyachen2-c@my.cityu.edu.hk | 前端组 | 用户端活动、详情、选座、结算、订单、票夹、退票与移动端适配 | `web-user/`、M1/M2 截图 | 12.5% | [ ] |
+| 5 | Mingxi Zhu | 60920926 | mingxizhu4-c@my.cityu.edu.hk | 后端组 | 登录注册、JWT/角色权限、活动/场次/管理统计 API | `server/src/routes/auth.js`、`services/auth.js`、`services/users.js`、`services/catalog.js`、`services/admin.js`、`docs/api-contract.md` | 12.5% | [ ] |
+| 6 | Geyunqing SHI | 61028298 | geyunqshi2-c@my.cityu.edu.hk | 前端组 | 管理端 Dashboard、活动、场次、订单、财务、用户、核销与实时刷新 UI | `web-admin/`、`src/liveRefresh.js`、M2/M3 截图 | 12.5% | [ ] |
+| 7 | Xiang LI | 61063878 | xli3487-c@my.cityu.edu.hk | 数据库组 | 需求到 ER、关系模式、规范化、数据库设计文档与报告数据库章节 | `docs/database-design.md`、`docs/ER-diagram.png`、报告 §4 | 12.5% | [ ] |
+| 8 | Mengqi YAN | 60363933 | mengqiyan5-c@my.cityu.edu.hk | 数据库组 | DDL、索引与约束、演示种子、字段/库校验、查询与索引实验支持 | `database/schema.sql`、`database/seed.sql`、`database/*.py`、`delivery/evidence/M4/` | 12.5% | [ ] |
+|  | **合计** |  |  |  |  |  | **100%** |  |
 
-## 3. 贡献比例填写口径
+## 3. 比例与确认口径
 
-建议按“实际投入 + 交付责任”而不是只按代码行数计算，至少考虑：
-
-1. 需求、设计、数据库与文档的实际编写量。
-2. 代码实现、调试、测试用例与缺陷修复的实际投入。
-3. 联调、部署、演示准备和交付整合的实际投入。
-4. 是否承担了关键路径、阻塞问题或跨模块协调。
-
-比例以 5% 或 10% 为最小刻度，8 人合计必须为 100%。若某人承担跨组协调或关键修复，应在“具体任务”中写明，不能只写“参与开发”。
+1. 8 人均分，每人 12.5%，合计 100%；不按代码行数计算。
+2. 本表按交付模块归口；如组内实际投入与任务描述有差异，只调整任务描述，比例仍按均分执行。
+3. 每位成员在“本人确认”栏勾选；组长汇总后填写确认日期。
+4. 报告开头的 Group Information/Contribution Statement 表与本表保持一致。
 
 ## 4. 组员确认
 
 | 确认项 | 结果 |
 |---|---|
-| 8 位成员姓名、学号已核对 | [ ] |
+| 8 位成员姓名、学号、邮箱已核对 | [ ] |
 | 每人具体任务与证据文件对应 | [ ] |
 | 贡献比例合计 100% | [ ] |
 | 全体成员无异议 | [ ] |
 | 确认日期 | [待填写] |
-
-确认方式：组内群聊接龙或书面签字均可；课程要求签字表时，把本表导出为 PDF/DOCX 后签名。
-
-## 5. 备注
-
-- 本表只记录项目贡献，不作为课程个人成绩分配的唯一依据；最终以课程通知和组内约定为准。
-- 演示视频由界面与集成组牵头、全组参与录制与脚本确认；视频完成后再补充“视频脚本、录制、剪辑”任务与比例。
-- 若课程要求提交英文版，可保留表结构，把“小组/主要责任/具体任务”译为英文；姓名与学号按证件拼写。

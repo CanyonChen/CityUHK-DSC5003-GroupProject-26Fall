@@ -2,7 +2,7 @@
 
 产品名称：StagePass（中文沟通名：舞台通行）
 
-版本：v1.7（2026-11-23）
+版本：v1.8（2026-11-23）
 
 ## 1. 交付状态总览
 
@@ -22,19 +22,19 @@
 | P0/P1 AC 缺口补测 | 完成，17/17 PASS | 独立库 `ticketing_ac` + API 3300；覆盖 P0 16 条 + AC-25；AC-06 100 并发 0 个 5xx；AC-25 含通道/停用/占用/预算/不锁座/抢占后整组 409 |
 | 多人连座推荐 | 完成，API-47 + 用户端面板 | `server/src/services/seat-recommendations.js`、`routes/performances.js`、`web-user/src/views/SeatMapView.vue`；只读推荐，下单整组原子重检 |
 | R1 实时刷新 | 完成，8/8 + 调度器单测 + UI 实测 | `server/src/realtime.js`、`server/src/realtime-scope.js`、两个前端 `src/realtime.js` 与 `src/liveRefresh.js`、`scripts/realtime_check.js`；AC-26 |
-| 课程报告 | 内容完成，PDF 待导出 | `docs/course-report.md`（v1.7，含 Group Information/Contribution Statement 表、ER 图、Q-01–Q-03、Track 1 证据地图与 Q-01–Q-07 覆盖表）；PDF 需按 brief 命名 `XXXX-report.pdf` |
-| 课程报告 PDF | 待导出 | 由 `docs/course-report.md` 导出；导出前确认系统结构图 `docs/system-architecture.png` 已嵌入、成员信息已填 |
+| 课程报告 | 内容完成，PDF 待导出 | `docs/course-report.md`（v1.8，含 Group Information/Contribution Statement 表、ER 图、Q-01–Q-03、Track 1 证据地图与 Q-01–Q-07 覆盖表）；PDF 需按 brief 命名 `XXXX-report.pdf` |
+| 课程报告 PDF | 待导出 | 由 `docs/course-report.md` 导出；导出前确认系统结构图 `docs/system-architecture.png` 已嵌入 |
 | 演示数据 | 完成 | `database/seed.sql`；导入计数见 M5 证据 |
-| 成员贡献记录 | 待组员确认 | `docs/member-contributions.md`，姓名/学号/比例待填；报告开头的 Group Information/Contribution Statement 表也需同步 |
+| 成员贡献记录 | 已生成，待签字确认 | `docs/member-contributions.md` 与 `docs/team-roster.md`；8 人姓名/学号/邮箱/分工已填，比例均分 12.5%；报告开头表已同步 |
 | 演示视频 | 待与组员共同完成 | 按用户要求延后；完成后把可访问链接写入报告 §16 与提交清单 |
-| GitHub 代码仓库 | 已提供 | <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>；需确认 `main` 分支包含当前发布包内容 |
+| GitHub 代码仓库 | 已上传，结构待整理 | <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>；`Ft-Hawk-patch-1` 已有 169 个 StagePass 文件，`main`/根目录仍为 FilmSys 旧基线；新增 `team-roster.md` 待补传 |
 | 课程官方要求 | 已取得 brief | 报告 PDF `XXXX-report.pdf`、GitHub repo、5–8 分钟视频；提交平台/仓库命名/截止时间以课程通知为准 |
 
 ## 2. 发布包检查
 
 发布包目录：`delivery/5003_StagePass`
 
-当前发布包：169 个文件（约 3.73 MiB）；最终 commit 以包内 `git log -1 --oneline` 为准。提交前如再改文件，需重新 commit 并核对文件数。
+当前发布包：170 个文件（约 3.73 MiB）；提交前如再改文件，需重新核对文件数并刷新本清单。
 
 提交前在包内执行：
 
@@ -57,7 +57,7 @@ Get-ChildItem -Recurse -File | Measure-Object | Select-Object Count
 
 | 检查 | 结果 |
 |---|---|
-| 从发布包复制到临时目录 | 139 个文件，不含 `.git` |
+| 从发布包复制到临时目录 | 139 个文件（R1 限制版前历史基线；当前包为 170，提交前需重跑一次） |
 | 独立数据库 `ticketing_m5clean` | 16 场次 / 3,630 场次座位 / 594 订单 / 1,751 票 |
 | 后端依赖 | 126 packages |
 | 用户端依赖 + 构建 | 33 packages；38 modules，673 ms（R1 限制版前基线；最终构建 40 modules） |
@@ -77,12 +77,12 @@ Get-ChildItem -Recurse -File | Measure-Object | Select-Object Count
 
 ## 4. 提交前必须人工确认
 
-1. **成员贡献记录**：填入 8 位成员姓名、本科专业、学号、具体任务和贡献比例，合计 100%，全体确认；同步填报告开头的 Group Information/Contribution Statement 表。
+1. **成员贡献记录**：8 位成员姓名、学号、邮箱、分工已填入，比例均分 12.5%，合计 100%；由全体成员在 `docs/member-contributions.md` 与报告开头表确认。
 2. **课程官方要求**：brief 已取得，报告必须是 PDF（`XXXX-report.pdf`）、代码必须有 GitHub repo、视频 5–8 分钟且链接写进报告；待确认的是提交平台、仓库命名和截止时间。
 3. **演示视频**：与组员确定脚本、录制、剪辑和字幕；视频完成后把链接或文件放入提交包，并在报告/README/清单登记。
 4. **默认端口可选验收**：如课程要求必须用 3000/8080/8081 演示，先在空机器或停止占用的演示实例后重跑一次 M5 干净环境。
 5. **报告格式**：用 `docs/course-report.md` 导出 PDF，文件名按 brief 使用 `XXXX-report.pdf`；导出后检查中文字体、表格、分页，以及 `system-architecture.png` 是否正常显示。
-6. **GitHub 直传**：仓库地址为 <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>。发布包当前没有配置 remote；先 `git remote add origin https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall.git`，再 `git push -u origin main`；不要提交 `.env`、`node_modules`、日志。
+6. **GitHub 结构**：仓库地址为 <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>。当前 `Ft-Hawk-patch-1` 已上传 169 个 StagePass 文件；`main` 与根目录仍是 FilmSys 旧基线。提交前需把 StagePass 合并到 `main`/根目录，或明确使用 StagePass 分支链接；不要提交 `.env`、`node_modules`、日志。
 
 ## 5. 建议提交物结构
 
@@ -99,6 +99,7 @@ Get-ChildItem -Recurse -File | Measure-Object | Select-Object Count
 │  ├─ performance-report.md
 │  ├─ course-report.md
 │  ├─ member-contributions.md
+│  ├─ team-roster.md
 │  └─ submission-checklist.md
 ├─ database/
 ├─ server/
@@ -119,43 +120,26 @@ Get-ChildItem -Recurse -File | Measure-Object | Select-Object Count
 
 如课程要求把报告、ER 图、数据库设计 Word 单独提交，则从 `DB/` 与 `docs/` 取对应文件，不要混入源码仓库的无关归档。
 
-## 6. GitHub 同步（阻塞：远端是另一套基线）
+## 6. GitHub 上传现状（结构待整理）
 
-远端与本地不是同一历史，当前不能直接 `git push`：
+- 仓库：<https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>
+- `Ft-Hawk-patch-1`：已有 169 个 StagePass 文件，位于 `5003_StagePass/` 子目录；`server/.env.example` 与 `server/.gitignore` 已补。
+- `main`：仍是 FilmSys 旧基线，248 个文件，0 个 StagePass 文件。
+- 仓库根 `README.md` 仍是旧“Show 票务系统”，不是 StagePass 的 README。
+- 本轮新增 `docs/team-roster.md`，并修改 `docs/course-report.md`、`docs/member-contributions.md`、`docs/submission-checklist.md`；这些尚未上传。
 
-- `origin/main` = `b48385d`，9 个提交、248 个文件，内容是 FilmSys 模板基线（`show/`、`show_admin/`、`show_api/`、`db_show.sql`）。
-- 本地 `main` = 本轮文档提交后的 StagePass 发布包，49 个提交、164 个受跟踪文件；与远端没有 merge-base。
-- 因此普通 push 会 non-fast-forward；必须先决定策略，并让组员确认远端没有需要保留的作业内容。
+最终提交前需要选择一种结构：
 
-两种可选策略：
+1. **保留现有仓库**：把 `Ft-Hawk-patch-1` 合并到 `main`，将 `5003_StagePass/` 内容移到根目录，替换根 README，清理旧 `show/`、`show_admin/`、`show_api/`、`db_show.sql`。
+2. **新建空仓库**：把 170 个文件按顶层目录分批上传到根目录，避免继承旧 FilmSys 内容。
 
-1. **替换远端为 StagePass**：先给远端现状打备份标签，再 `git push --force-with-lease`；这会改写远端 `main`，只适合确认远端是废弃模板的情况。
-2. **合并两条历史**：`git merge --allow-unrelated-histories origin/main`，手工处理 `README.md`、`docs/` 等重名文件；工作量大，容易把 FilmSys 模板残留带进提交。
-
-策略确定前，只做只读核对：
-
-```powershell
-cd "D:\_Study\CityU_MDS\Courses\SemesterA\5003\Assignment\GP\delivery\5003_StagePass"
-git remote -v
-git fetch origin
-git log -1 --oneline origin/main
-git rev-list --left-right --count HEAD...origin/main
-```
-
-不要把下面的旧命令直接运行；它假设远端为空或可直接快进：
-
-```powershell
-git remote add origin https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall.git
-git push -u origin main
-```
-
-确定策略并完成推送后，刷新 GitHub 页面，确认仓库根目录能看到 `README.md`、`docs/`、`database/`、`server/`、`web-user/`、`web-admin/`、`scripts/` 与 `delivery/`，且 `docs/course-report.md` 是本轮版本。
+在结构整理完成前，报告 §16 的仓库链接可能打开到旧项目；提交时至少要把链接指向包含 StagePass 的分支。
 
 ## 7. 剩余风险
 
-- 课程 brief 已取得；仍待确认的是提交平台、仓库命名和截止时间，报告 PDF/视频格式不会变化。
-- GitHub 远端是 FilmSys 模板基线，与本地 StagePass 历史无共同祖先；需组员确认后选择“替换远端”或“合并历史”，不能直接 push。
-- 成员姓名、专业和比例未提供，贡献记录与报告开头表仍是占位。
+- 课程 brief 已取得；仍待确认的是提交平台、仓库命名和截止时间。
+- GitHub 根目录仍是 FilmSys 旧基线；`main` 没有 StagePass，结构需在提交前整理。
+- 8 人姓名、学号、邮箱、分工和 12.5% 均分已填；报告 PDF 与演示视频仍待完成。
 - 视频未录制；报告 PDF 未导出。
 - 干净环境未做登录后的浏览器交互截图；API 与 M1–M4 UI 证据已覆盖核心流程。
 - 默认端口未在本次干净环境使用；构建与启动配置本身支持默认端口。
