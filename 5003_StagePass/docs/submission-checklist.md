@@ -2,7 +2,7 @@
 
 产品名称：StagePass（中文沟通名：舞台通行）
 
-版本：v1.8（2026-11-23）
+版本：v1.9（2026-11-23）
 
 ## 1. 交付状态总览
 
@@ -22,12 +22,12 @@
 | P0/P1 AC 缺口补测 | 完成，17/17 PASS | 独立库 `ticketing_ac` + API 3300；覆盖 P0 16 条 + AC-25；AC-06 100 并发 0 个 5xx；AC-25 含通道/停用/占用/预算/不锁座/抢占后整组 409 |
 | 多人连座推荐 | 完成，API-47 + 用户端面板 | `server/src/services/seat-recommendations.js`、`routes/performances.js`、`web-user/src/views/SeatMapView.vue`；只读推荐，下单整组原子重检 |
 | R1 实时刷新 | 完成，8/8 + 调度器单测 + UI 实测 | `server/src/realtime.js`、`server/src/realtime-scope.js`、两个前端 `src/realtime.js` 与 `src/liveRefresh.js`、`scripts/realtime_check.js`；AC-26 |
-| 课程报告 | 内容完成，PDF 待导出 | `docs/course-report.md`（v1.8，含 Group Information/Contribution Statement 表、ER 图、Q-01–Q-03、Track 1 证据地图与 Q-01–Q-07 覆盖表）；PDF 需按 brief 命名 `XXXX-report.pdf` |
+| 课程报告 | 内容完成，PDF 待导出 | `docs/course-report.md`（v1.9，含 Group Information/Contribution Statement 表、ER 图、Q-01–Q-03、Track 1 证据地图与 Q-01–Q-07 覆盖表）；PDF 需按 brief 命名 `XXXX-report.pdf` |
 | 课程报告 PDF | 待导出 | 由 `docs/course-report.md` 导出；导出前确认系统结构图 `docs/system-architecture.png` 已嵌入 |
 | 演示数据 | 完成 | `database/seed.sql`；导入计数见 M5 证据 |
 | 成员贡献记录 | 已生成，待签字确认 | `docs/member-contributions.md` 与 `docs/team-roster.md`；8 人姓名/学号/邮箱/分工已填，比例均分 12.5%；报告开头表已同步 |
 | 演示视频 | 待与组员共同完成 | 按用户要求延后；完成后把可访问链接写入报告 §16 与提交清单 |
-| GitHub 代码仓库 | 已上传，结构待整理 | <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>；`Ft-Hawk-patch-1` 已有 169 个 StagePass 文件，`main`/根目录仍为 FilmSys 旧基线；新增 `team-roster.md` 待补传 |
+| GitHub 代码仓库 | 已上传，结构待整理 | <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>；`Ft-Hawk-patch-1` 已有 170 个 StagePass 文件，本轮 M5 文档已上传；`main`/根目录仍为 FilmSys 旧基线 |
 | 课程官方要求 | 已取得 brief | 报告 PDF `XXXX-report.pdf`、GitHub repo、5–8 分钟视频；提交平台/仓库命名/截止时间以课程通知为准 |
 
 ## 2. 发布包检查
@@ -82,7 +82,7 @@ Get-ChildItem -Recurse -File | Measure-Object | Select-Object Count
 3. **演示视频**：与组员确定脚本、录制、剪辑和字幕；视频完成后把链接或文件放入提交包，并在报告/README/清单登记。
 4. **默认端口可选验收**：如课程要求必须用 3000/8080/8081 演示，先在空机器或停止占用的演示实例后重跑一次 M5 干净环境。
 5. **报告格式**：用 `docs/course-report.md` 导出 PDF，文件名按 brief 使用 `XXXX-report.pdf`；导出后检查中文字体、表格、分页，以及 `system-architecture.png` 是否正常显示。
-6. **GitHub 结构**：仓库地址为 <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>。当前 `Ft-Hawk-patch-1` 已上传 169 个 StagePass 文件；`main` 与根目录仍是 FilmSys 旧基线。提交前需把 StagePass 合并到 `main`/根目录，或明确使用 StagePass 分支链接；不要提交 `.env`、`node_modules`、日志。
+6. **GitHub 结构**：仓库地址为 <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>。当前 `Ft-Hawk-patch-1` 已上传 170 个 StagePass 文件，本轮 M5 文档已上传；`main` 与根目录仍是 FilmSys 旧基线。提交前需把 StagePass 合并到 `main`/根目录，或明确使用 StagePass 分支链接；不要提交 `.env`、`node_modules`、日志。
 
 ## 5. 建议提交物结构
 
@@ -123,7 +123,7 @@ Get-ChildItem -Recurse -File | Measure-Object | Select-Object Count
 ## 6. GitHub 上传现状（结构待整理）
 
 - 仓库：<https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>
-- `Ft-Hawk-patch-1`：已有 169 个 StagePass 文件，位于 `5003_StagePass/` 子目录；`server/.env.example` 与 `server/.gitignore` 已补。
+- `Ft-Hawk-patch-1`：已有 170 个 StagePass 文件，位于 `5003_StagePass/` 子目录；本轮 `team-roster.md`、报告、贡献记录与清单已上传；`server/.env.example` 与 `server/.gitignore` 已补。
 - `main`：仍是 FilmSys 旧基线，248 个文件，0 个 StagePass 文件。
 - 仓库根 `README.md` 仍是旧“Show 票务系统”，不是 StagePass 的 README。
 - 本轮新增 `docs/team-roster.md`，并修改 `docs/course-report.md`、`docs/member-contributions.md`、`docs/submission-checklist.md`；这些尚未上传。

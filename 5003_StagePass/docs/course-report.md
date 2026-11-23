@@ -8,7 +8,7 @@
 | 产品名称 | StagePass（中文沟通名：舞台通行） |
 | 项目 | Track 1：校园演出或小型剧场固定座位售票系统 |
 | 团队规模 | 8 人 |
-| 报告版本 | v1.8（2026-11-23 修订） |
+| 报告版本 | v1.9（2026-11-23 修订） |
 | 完成日期 | 2026-11-23 |
 | 代码与文档基线 | 发布包 `delivery/5003_StagePass`，M1–M5 交付 + R1 实时刷新 + AC-25 连座推荐 |
 
@@ -679,13 +679,13 @@ node .\m4_anomaly_check.js
 
 | 交付物 | 链接 / 位置 | 状态 |
 |---|---|---|
-| 源代码仓库（GitHub） | <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall> | 已上传 169 个 StagePass 文件到 `Ft-Hawk-patch-1`；`main` 与根目录结构待整理 |
+| 源代码仓库（GitHub） | <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall> | 已上传 170 个 StagePass 文件到 `Ft-Hawk-patch-1`，本轮 M5 文档已上传；`main` 与根目录结构待整理 |
 | 演示视频（5–8 分钟） | `[待填写：可公开访问的视频链接]` | 待录制 |
 | 本地发布包 | `delivery/5003_StagePass` | 已完成；新增 `docs/team-roster.md` 后为 170 个文件 |
 | 项目 README | `README.md` | 已完成 |
 | 课程报告 PDF | `[待导出：XXXX-report.pdf]` | 待导出 |
 
-说明：GitHub 仓库已上传 169 个 StagePass 文件，`server/.env.example` 与 `server/.gitignore` 已补；`main` 仍是 248 个文件的 FilmSys 旧基线，根目录结构与旧目录清理按计划后置。新增 `docs/team-roster.md` 与本轮成员表修改尚未上传，最终提交前需补传。视频链接和报告 PDF 仍需在最终提交前替换占位内容；视频需覆盖用户界面、查询执行、数据流和后端操作。
+说明：GitHub 仓库已上传 170 个 StagePass 文件，`server/.env.example` 与 `server/.gitignore` 已补；本轮 `docs/team-roster.md` 与成员/报告/清单修改均已上传；`main` 仍是 248 个文件的 FilmSys 旧基线，根目录结构与旧目录清理按计划后置。视频链接和报告 PDF 仍需在最终提交前替换占位内容；视频需覆盖用户界面、查询执行、数据流和后端操作。
 
 ---
 
