@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="Light Showcase">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1A30"/>
+      <stop offset=".55" stop-color="#172A49"/>
+      <stop offset="1" stop-color="#24395C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".72" cy=".25" r=".7">
+      <stop offset="0" stop-color="#79C0B4" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#79C0B4" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B1526" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0B1526" stop-opacity=".82"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+  
+  <g opacity=".9">
+    <path d="M820 650 L1080 90 L1340 650 Z" fill="none" stroke="#79C0B4" stroke-width="2" opacity=".7"/>
+    <path d="M900 650 L1080 220 L1260 650 Z" fill="#79C0B4" opacity=".08"/>
+    <g opacity=".6">
+      <path d="M1080 200 L730 820" stroke="#7FA6C9" stroke-width="18" opacity=".3"/>
+      <path d="M1080 200 L910 830" stroke="#E0B84C" stroke-width="14" opacity=".3"/>
+      <path d="M1080 200 L1100 840" stroke="#8FBF9F" stroke-width="16" opacity=".3"/>
+      <path d="M1080 200 L1280 830" stroke="#B45B5B" stroke-width="12" opacity=".3"/>
+      <path d="M1080 200 L1470 800" stroke="#7FA6C9" stroke-width="10" opacity=".25"/>
+    </g>
+    <g stroke="#F7F5F0" stroke-width="1" opacity=".3">
+      <path d="M620 760 L1500 760"/><path d="M620 790 L1500 790"/>
+    </g>
+  </g>
+  <rect width="1600" height="900" fill="url(#fade)"/>
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#F7F5F0">
+    <text x="90" y="640" font-size="96" letter-spacing="-2"><tspan x="90" dy="0">Light</tspan><tspan x="90" dy="92">Showcase</tspan></text>
+  </g>
+  <g font-family="'Segoe UI', Arial, sans-serif" fill="#79C0B4">
+    <text x="94" y="150" font-size="18" letter-spacing="6">NEW MEDIA · INSTALLATION</text>
+    <text x="94" y="795" font-size="16" letter-spacing="4" fill="#F7F5F0" opacity=".65">CITYU MDS · DSC5003 · SEASON 2026</text>
+  </g>
+  <g stroke="#79C0B4" fill="none">
+    <path d="M94 185 L360 185" stroke-width="2" opacity=".7"/>
+    <path d="M94 825 L1540 825" stroke-width="1" opacity=".32"/>
+  </g>
+</svg>

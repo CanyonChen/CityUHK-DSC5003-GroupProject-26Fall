@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="Jazz in the Black Box">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1A30"/>
+      <stop offset=".55" stop-color="#172A49"/>
+      <stop offset="1" stop-color="#24395C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".72" cy=".25" r=".7">
+      <stop offset="0" stop-color="#C97B4E" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#C97B4E" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B1526" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0B1526" stop-opacity=".82"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+  
+  <g opacity=".92">
+    <g fill="none" stroke="#C97B4E" stroke-width="3" opacity=".55">
+      <path d="M700 220 C790 140 880 300 970 220 C1060 140 1150 300 1240 220 C1330 140 1420 300 1510 220"/>
+      <path d="M700 320 C790 240 880 400 970 320 C1060 240 1150 400 1240 320 C1330 240 1420 400 1510 320"/>
+      <path d="M700 420 C790 340 880 500 970 420 C1060 340 1150 500 1240 420 C1330 340 1420 500 1510 420"/>
+    </g>
+    <circle cx="1120" cy="600" r="150" fill="none" stroke="#F7F5F0" stroke-width="1.5" opacity=".3"/>
+    <circle cx="1120" cy="600" r="8" fill="#C97B4E"/>
+    <g fill="#F7F5F0" opacity=".45">
+      <circle cx="860" cy="620" r="3"/><circle cx="930" cy="660" r="2"/><circle cx="1260" cy="560" r="4"/>
+    </g>
+  </g>
+  <rect width="1600" height="900" fill="url(#fade)"/>
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#F7F5F0">
+    <text x="90" y="640" font-size="96" letter-spacing="-2"><tspan x="90" dy="0">Jazz in the</tspan><tspan x="90" dy="92">Black Box</tspan></text>
+  </g>
+  <g font-family="'Segoe UI', Arial, sans-serif" fill="#C97B4E">
+    <text x="94" y="150" font-size="18" letter-spacing="6">LIVE QUINTET</text>
+    <text x="94" y="795" font-size="16" letter-spacing="4" fill="#F7F5F0" opacity=".65">CITYU MDS · DSC5003 · SEASON 2026</text>
+  </g>
+  <g stroke="#C97B4E" fill="none">
+    <path d="M94 185 L360 185" stroke-width="2" opacity=".7"/>
+    <path d="M94 825 L1540 825" stroke-width="1" opacity=".32"/>
+  </g>
+</svg>
