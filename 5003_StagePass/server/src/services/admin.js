@@ -1074,6 +1074,98 @@ async function salesStats({ performanceId, dateFrom, dateTo }) {
   return { items, total };
 }
 
+function rate(numerator, denominator) {
+  if (!denominator) return 0;
+  return Number(((numerator / denominator) * 100).toFixed(2));
+}
+
+async function regionOccupancy(performanceId) {
+  const perf = await q(
+    query,
+    `SELECT p.performance_id, e.name AS event_name, v.name AS venue_name, p.starts_at, p.status
+       FROM performances p
+       JOIN events e ON e.event_id = p.event_id
+       JOIN venues v ON v.venue_id = p.venue_id
+      WHERE p.performance_id = ?`,
+    [performanceId]
+  );
+  if (!perf.length) throw new ApiError(404, 'NOT_FOUND', 'Performance not found');
+
+  const seatRows = await q(
+    query,
+    `SELECT s.region,
+            COUNT(*) AS total_seats,
+            SUM(CASE WHEN ss.session_seat_status = 'BLOCKED' THEN 1 ELSE 0 END) AS blocked_seats,
+            SUM(CASE WHEN ss.session_seat_status = 'BLOCKED' THEN 0 ELSE 1 END) AS sellable_seats
+       FROM session_seats ss
+       JOIN seats s ON s.seat_id = ss.seat_id
+      WHERE ss.performance_id = ?
+      GROUP BY s.region
+      ORDER BY s.region ASC`,
+    [performanceId]
+  );
+  const ticketRows = await q(
+    query,
+    `SELECT s.region,
+            COUNT(DISTINCT t.ticket_id) AS tickets_sold,
+            COUNT(DISTINCT CASE WHEN t.status = 'USED' THEN t.ticket_id END) AS checked_in
+       FROM tickets t
+       JOIN order_items oi ON oi.order_item_id = t.order_item_id
+       JOIN session_seats ss ON ss.session_seat_id = oi.session_seat_id
+       JOIN seats s ON s.seat_id = ss.seat_id
+       JOIN orders o ON o.order_id = oi.order_id
+      WHERE o.performance_id = ?
+        AND t.status IN ('VALID','USED','REFUND_PENDING')
+      GROUP BY s.region`,
+    [performanceId]
+  );
+
+  const ticketMap = new Map(ticketRows.map((r) => [String(r.region), r]));
+  const regions = seatRows.map((r) => {
+    const t = ticketMap.get(String(r.region)) || {};
+    const totalSeats = toInt(r.total_seats);
+    const blockedSeats = toInt(r.blocked_seats);
+    const sellableSeats = toInt(r.sellable_seats);
+    const ticketsSold = toInt(t.tickets_sold);
+    const checkedIn = toInt(t.checked_in);
+    return {
+      region: r.region,
+      total_seats: totalSeats,
+      blocked_seats: blockedSeats,
+      sellable_seats: sellableSeats,
+      tickets_sold: ticketsSold,
+      checked_in: checkedIn,
+      occupancy_rate: rate(ticketsSold, sellableSeats),
+      attendance_rate: rate(checkedIn, ticketsSold),
+    };
+  });
+
+  const total = regions.reduce((acc, r) => ({
+    total_seats: acc.total_seats + r.total_seats,
+    blocked_seats: acc.blocked_seats + r.blocked_seats,
+    sellable_seats: acc.sellable_seats + r.sellable_seats,
+    tickets_sold: acc.tickets_sold + r.tickets_sold,
+    checked_in: acc.checked_in + r.checked_in,
+  }), { total_seats: 0, blocked_seats: 0, sellable_seats: 0, tickets_sold: 0, checked_in: 0 });
+  total.occupancy_rate = rate(total.tickets_sold, total.sellable_seats);
+  total.attendance_rate = rate(total.checked_in, total.tickets_sold);
+
+  const p = perf[0];
+  return {
+    performance_id: toInt(p.performance_id),
+    event_name: p.event_name,
+    venue_name: p.venue_name,
+    starts_at: isoOrNull(p.starts_at),
+    status: p.status,
+    regions,
+    total,
+    definitions: {
+      occupancy_rate: 'tickets_sold / sellable_seats, where sellable_seats excludes BLOCKED seats',
+      attendance_rate: 'checked_in / tickets_sold',
+    },
+  };
+}
+
 async function adminOrders({ status, performanceId, dateFrom, dateTo, keyword, page, pageSize, offset }) {
   const conds = [];
   const params = [];
@@ -1303,5 +1395,5 @@ module.exports = {
   listAdminPerformances, getAdminPerformance, createPerformance, updatePerformance, publishPerformance, setSales,
   updatePriceTiers, setSessionSeatStatus, bulkSetSeatStatus,
   checkerPerformances, checkin, listCheckins,
-  salesStats, adminOrders, listRefunds, paymentExceptions, reconcilePayment, auditLogs,
+  salesStats, regionOccupancy, adminOrders, listRefunds, paymentExceptions, reconcilePayment, auditLogs,
 };
