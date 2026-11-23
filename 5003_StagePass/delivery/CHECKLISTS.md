@@ -266,7 +266,7 @@
 
 ### API-SPEC · ACTIVE · docs/api-contract.md
 
-- [x] 47 个端点编号连续，方法/路径/角色/错误码齐全；含 API-47 与 9.3 辅助
+- [x] 48 个端点编号连续，方法/路径/角色/错误码齐全；含 API-47、API-48 与 9.3 辅助
 - [x] 端点组与 FR、AC 映射表覆盖全部端点
 - [x] 金额整数分、UTC 时间、分页与幂等约定与 DDL 一致
 - [x] 覆盖需求建议的 7 个业务错误码，并登记 ROLE_ALREADY_ASSIGNED / LAST_ADMIN
@@ -342,7 +342,7 @@
 - [x] 写明独立库 ticketing_m5clean 与导入计数
 - [x] 写明依赖安装数、构建模块数与服务端口
 - [x] 写明 /health、双前端 HTTP、登录、购票链路与管理统计结果
-- [x] 索引 m5-clean-check.json、realtime-check.json、realtime-ui-check.json、ac-coverage.json、recommendation-ui-check.json 与六张截图
+- [x] 索引 m5-clean-check.json、realtime-check.json、realtime-ui-check.json、ac-coverage.json、recommendation-ui-check.json、region-occupancy.json 与七张截图
 - [x] 说明替代端口原因与默认端口配置
 
 ### EVID-REC-UI · ACTIVE · delivery/evidence/M5/recommendation-ui-check.json
@@ -369,6 +369,7 @@
 - [x] 含静态系统结构图：双前端、Express API、MySQL 与 WebSocket 失效信号的数据流
 - [x] 含数据库 ER 图，并覆盖 17 表、122 字段、关系、规范化、约束与索引
 - [x] 含 Q-01 座位图、Q-02 管理端订单检索、Q-03 场次销售统计的代表性 SQL
+- [x] 含 Q-06 区域上座率口径、API-48 实测值与截图引用
 - [x] 覆盖购票、支付、退款、核销、状态模型与事务边界
 - [x] 覆盖 M1-M4 验收、并发、异常、P95、EXPLAIN 与索引实验
 - [x] 覆盖 M5 干净环境步骤、结果、端口说明与已知限制

@@ -34,11 +34,11 @@
     "API-SPEC": {
       "path": "docs/api-contract.md",
       "kind": "markdown",
-      "version": "v1.9",
+      "version": "v1.10",
       "status": "ACTIVE",
-      "note": "API 契约 v1.9：47 条契约 + 4 个管理端辅助 + 11.1 WebSocket 失效信号；新增 API-47 多人连座推荐",
+      "note": "API 契约 v1.10：48 条契约 + 4 个管理端辅助 + 11.1 WebSocket 失效信号；新增 API-47 多人连座推荐与 API-48 区域上座率",
       "checklist": [
-        "47 个端点编号连续，方法/路径/角色/错误码齐全；含 API-47 与 9.3 辅助",
+        "48 个端点编号连续，方法/路径/角色/错误码齐全；含 API-47、API-48 与 9.3 辅助",
         "端点组与 FR、AC 映射表覆盖全部端点",
         "金额整数分、UTC 时间、分页与幂等约定与 DDL 一致",
         "覆盖需求建议的 7 个业务错误码，并登记 ROLE_ALREADY_ASSIGNED / LAST_ADMIN",
@@ -188,15 +188,16 @@
     "REPORT-M5": {
       "path": "docs/course-report.md",
       "kind": "markdown",
-      "version": "v1.9",
+      "version": "v1.10",
       "status": "ACTIVE",
-      "note": "M5 课程报告 v1.9（2026-11-23 修订）：8 人成员表与 12.5% 均分贡献表已填，分工改为 2/2/3/1；保留 Group Information/Contribution Statement、系统图、Track 1 证据地图与 17/17 缺口补测；GitHub 已上传 170 文件",
+      "note": "M5 课程报告 v1.10（2026-11-23 修订）：8 人成员表与 12.5% 均分贡献表已填；新增 Q-06 区域上座率实现、实测数值与证据，Q-01–Q-07 覆盖表无“未实现”；保留 Group Information/Contribution Statement、系统图、Track 1 证据地图；GitHub 远端已上传 170 文件，Q-06 新增证据待同步",
       "checklist": [
         "覆盖项目背景、需求范围、角色与关键业务规则",
         "覆盖三层架构、技术栈、目录结构与模块职责",
         "含静态系统结构图：双前端、Express API、MySQL 与 WebSocket 失效信号的数据流",
         "含数据库 ER 图，并覆盖 17 表、122 字段、关系、规范化、约束与索引",
         "含 Q-01 座位图、Q-02 管理端订单检索、Q-03 场次销售统计的代表性 SQL",
+        "含 Q-06 区域上座率口径、API-48 实测值与截图引用",
         "覆盖购票、支付、退款、核销、状态模型与事务边界",
         "覆盖 M1-M4 验收、并发、异常、P95、EXPLAIN 与索引实验",
         "覆盖 M5 干净环境步骤、结果、端口说明与已知限制",
@@ -207,15 +208,15 @@
     "EVID-M5": {
       "path": "delivery/evidence/M5/README.md",
       "kind": "markdown",
-      "version": "v1.3",
+      "version": "v1.4",
       "status": "ACTIVE",
-      "note": "M5 证据索引 v1.3：在干净环境与 R1 证据上增加 P0/P1 17/17、AC-25 连座推荐面板实测与两张截图",
+      "note": "M5 证据索引 v1.4：在干净环境、R1、P0/P1 与 AC-25 证据上增加 Q-06 区域上座率 API 实测与控制台截图",
       "checklist": [
         "写明发布包来源、commit、文件数与干净目录",
         "写明独立库 ticketing_m5clean 与导入计数",
         "写明依赖安装数、构建模块数与服务端口",
         "写明 /health、双前端 HTTP、登录、购票链路与管理统计结果",
-        "索引 m5-clean-check.json、realtime-check.json、realtime-ui-check.json、ac-coverage.json、recommendation-ui-check.json 与六张截图",
+        "索引 m5-clean-check.json、realtime-check.json、realtime-ui-check.json、ac-coverage.json、recommendation-ui-check.json、region-occupancy.json 与七张截图",
         "说明替代端口原因与默认端口配置"
       ]
     },
@@ -248,9 +249,9 @@
     "CHECKLIST-M5": {
       "path": "docs/submission-checklist.md",
       "kind": "markdown",
-      "version": "v1.9",
+      "version": "v1.10",
       "status": "ACTIVE",
-      "note": "M5 提交清单 v1.9：成员 8 人均分 12.5%、team-roster 已入包；报告 v1.9；GitHub 已上传 170 文件且本轮 M5 文档已上传，但 main/根目录结构待整理；视频与 PDF 待补",
+      "note": "M5 提交清单 v1.10：新增 Q-06 区域上座率（API-48）与证据；成员 8 人均分 12.5%、team-roster 已入包；报告 v1.10；GitHub 远端仍为 170 文件且文档 v1.8，Q-06 新增文件待补；main/根目录结构待整理；视频与 PDF 待补",
       "checklist": [
         "逐项列出源代码、DDL、种子、README、双前端说明、ER/事务、SQL/计划、验收、报告、视频、贡献记录",
         "写明发布包检查命令与 FAIL/WARN 要求",

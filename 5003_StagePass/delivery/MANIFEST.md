@@ -18,19 +18,19 @@
 
 | ID | 文件 | 版本 | 状态 | 直接上游 | 直接下游 | 说明 |
 |---|---|---|---|---|---|---|
-| API-SPEC | docs/api-contract.md | v1.9 | ACTIVE | REQ | SCRIPT-SMOKE、SRV-ROUTES-AUTH、SRV-ROUTES-HEALTH、SRV-SERVICE-AUTH、SRV-AUTH-MW、SRV-SERVICE-CATALOG、SRV-ROUTES-EVENTS、SRV-ROUTES-PERF、SRV-SERVICE-RECOMMEND、SCRIPT-CATALOG、SRV-SERVICE-ORDERS、SRV-SERVICE-PAYMENTS、SRV-SERVICE-TICKETS、SRV-SERVICE-USERS、SRV-SERVICE-RECON、SCRIPT-M3CHECK | API 契约 v1.9：47 条契约 + 4 个管理端辅助 + 11.1 WebSocket 失效信号；新增 API-47 多人连座推荐 |
+| API-SPEC | docs/api-contract.md | v1.10 | ACTIVE | REQ | SCRIPT-SMOKE、SRV-ROUTES-AUTH、SRV-ROUTES-HEALTH、SRV-SERVICE-AUTH、SRV-AUTH-MW、SRV-SERVICE-CATALOG、SRV-ROUTES-EVENTS、SRV-ROUTES-PERF、SRV-SERVICE-RECOMMEND、SCRIPT-CATALOG、SRV-SERVICE-ORDERS、SRV-SERVICE-PAYMENTS、SRV-SERVICE-TICKETS、SRV-SERVICE-USERS、SRV-SERVICE-RECON、SCRIPT-M3CHECK | API 契约 v1.10：48 条契约 + 4 个管理端辅助 + 11.1 WebSocket 失效信号；新增 API-47 多人连座推荐与 API-48 区域上座率 |
 | CHECKFIELDS | database/check_fields.py | - | ACTIVE | DICT、DDL | — | 逐表列数与字典核对 |
-| CHECKLIST-M5 | docs/submission-checklist.md | v1.9 | ACTIVE | CONTRIB-M5、REPORT-M5 | — | M5 提交清单 v1.9：成员 8 人均分 12.5%、team-roster 已入包；报告 v1.9；GitHub 已上传 170 文件且本轮 M5 文档已上传，但 main/根目录结构待整理；视频与 PDF 待补 |
+| CHECKLIST-M5 | docs/submission-checklist.md | v1.10 | ACTIVE | CONTRIB-M5、REPORT-M5 | — | M5 提交清单 v1.10：新增 Q-06 区域上座率（API-48）与证据；成员 8 人均分 12.5%、team-roster 已入包；报告 v1.10；GitHub 远端仍为 170 文件且文档 v1.8，Q-06 新增文件待补；main/根目录结构待整理；视频与 PDF 待补 |
 | CHECKSCHEMA | database/check_schema.py | - | ACTIVE | DDL | — | schema.sql 静态校验（sqlglot 解析 + 结构断言），不依赖数据库 |
 | CONTRIB-M5 | docs/member-contributions.md | v1.1 | ACTIVE | — | CHECKLIST-M5 | M5 成员贡献记录 v1.1：8 人姓名/学号/邮箱/分工已填，比例均分 12.5%；名单不含专业等扩展字段 |
 | DDL | database/schema.sql | v1.2 | ACTIVE | REQ、DICT | SEED、VERIFYDB、CHECKFIELDS、SCRIPT-RESET、CHECKSCHEMA、SRV-DB、SRV-SERVICE-CATALOG、SRV-SERVICE-ORDERS、SRV-SERVICE-PAYMENTS、SRV-SERVICE-TICKETS、SCRIPT-M4DATA | 17 表 DDL；users 增加 token_version，payment_notifications 增加 payload_json；已实库建表并通过约束用例 |
 | DICT | docs/database-design.md | v1.2 | ACTIVE | REQ | DDL、CHECKFIELDS、SRV-SERVICE-USERS、REPORT-M5 | 数据字典：实体清单 / 关系概述 / 逐表字段；新增 token_version 与通知原文列 |
 | EVID-ACCOV | delivery/evidence/M5/ac-coverage.json | v1.0 | ACTIVE | SCRIPT-ACCOV、EVID-M5、REPORT-M5 | — | 2026-11-22 独立库运行结果：17/17 PASS（P0 16 + AC-25），含 run_id、base、database、summary 与逐条 evidence |
 | EVID-M4 | delivery/evidence/M4/README.md | - | ACTIVE | SCRIPT-M4DATA、SCRIPT-M4BENCH、SCRIPT-M4ANOM | REPORT-M4 | M4 证据索引：规模数据、benchmark、EXPLAIN、索引实验、reservation、异常用例与日志 |
-| EVID-M5 | delivery/evidence/M5/README.md | v1.3 | ACTIVE | REPORT-M5 | EVID-ACCOV、EVID-REC-UI | M5 证据索引 v1.3：在干净环境与 R1 证据上增加 P0/P1 17/17、AC-25 连座推荐面板实测与两张截图 |
+| EVID-M5 | delivery/evidence/M5/README.md | v1.4 | ACTIVE | REPORT-M5 | EVID-ACCOV、EVID-REC-UI | M5 证据索引 v1.4：在干净环境、R1、P0/P1 与 AC-25 证据上增加 Q-06 区域上座率 API 实测与控制台截图 |
 | EVID-REC-UI | delivery/evidence/M5/recommendation-ui-check.json | v1.0 | ACTIVE | EVID-M5 | WEB-USER-VIEWS | AC-25 用户端生产构建实测：默认 2 人/A 区，三张同排无通道卡，选中不锁座，HELD 前后均为 2 |
 | REPORT-M4 | docs/performance-report.md | v1.0 | ACTIVE | SCRIPT-M4BENCH、EVID-M4 | REPORT-M5 | M4 性能报告：环境、数据规模、5 类查询 P95、EXPLAIN、索引实验、50 并发预留、AC-14/17/24 与复现步骤 |
-| REPORT-M5 | docs/course-report.md | v1.9 | ACTIVE | REQ、DICT、REPORT-M4 | EVID-M5、CHECKLIST-M5、EVID-ACCOV | M5 课程报告 v1.9（2026-11-23 修订）：8 人成员表与 12.5% 均分贡献表已填，分工改为 2/2/3/1；保留 Group Information/Contribution Statement、系统图、Track 1 证据地图与 17/17 缺口补测；GitHub 已上传 170 文件 |
+| REPORT-M5 | docs/course-report.md | v1.10 | ACTIVE | REQ、DICT、REPORT-M4 | EVID-M5、CHECKLIST-M5、EVID-ACCOV | M5 课程报告 v1.10（2026-11-23 修订）：8 人成员表与 12.5% 均分贡献表已填；新增 Q-06 区域上座率实现、实测数值与证据，Q-01–Q-07 覆盖表无“未实现”；保留 Group Information/Contribution Statement、系统图、Track 1 证据地图；GitHub 远端已上传 170 文件，Q-06 新增证据待同步 |
 | REQ | docs/requirements-spec.md | v1.6 | ACTIVE | — | DICT、DDL、API-SPEC、SCRIPT-M3CHECK、REPORT-M5 | 需求基线：双前端 + 共用 API，支持多场馆、演示种子 3 场馆/670 座；含 R1 广播作用域、前端节流、可见性与操作暂停（FR-04、AC-26） |
 | ROSTER-M5 | docs/team-roster.md | - | ACTIVE | — | — | 小组成员名单：8 人姓名、学号、邮箱、分工；不含专业/电话/任务/证据 |
 | SCRIPT-ACCOV | scripts/ac_coverage_check.js | - | ACTIVE | — | EVID-ACCOV | P0/P1 AC 补测：16 条 P0 + AC-25 可单跑或 --all，默认独立 API 3300 / 库 ticketing_ac，输出 delivery/evidence/M5/ac-coverage.json |
