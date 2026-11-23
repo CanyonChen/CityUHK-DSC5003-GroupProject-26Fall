@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="La Traviata Highlights">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1A30"/>
+      <stop offset=".55" stop-color="#172A49"/>
+      <stop offset="1" stop-color="#24395C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".72" cy=".25" r=".7">
+      <stop offset="0" stop-color="#B45B5B" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#B45B5B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B1526" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0B1526" stop-opacity=".82"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+  
+  <g opacity=".9">
+    <path d="M800 0 L1450 0 L1450 900 L800 900 Z" fill="#5E1F24" opacity=".55"/>
+    <path d="M820 0 C846 260 802 520 830 900" stroke="#F7F5F0" stroke-width="1" opacity=".18" fill="none"/><path d="M902 0 C928 260 884 520 912 900" stroke="#F7F5F0" stroke-width="1" opacity=".18" fill="none"/><path d="M984 0 C1010 260 966 520 994 900" stroke="#F7F5F0" stroke-width="1" opacity=".18" fill="none"/><path d="M1066 0 C1092 260 1048 520 1076 900" stroke="#F7F5F0" stroke-width="1" opacity=".18" fill="none"/><path d="M1148 0 C1174 260 1130 520 1158 900" stroke="#F7F5F0" stroke-width="1" opacity=".18" fill="none"/><path d="M1230 0 C1256 260 1212 520 1240 900" stroke="#F7F5F0" stroke-width="1" opacity=".18" fill="none"/><path d="M1312 0 C1338 260 1294 520 1322 900" stroke="#F7F5F0" stroke-width="1" opacity=".18" fill="none"/><path d="M1394 0 C1420 260 1376 520 1404 900" stroke="#F7F5F0" stroke-width="1" opacity=".18" fill="none"/><path d="M1476 0 C1502 260 1458 520 1486 900" stroke="#F7F5F0" stroke-width="1" opacity=".18" fill="none"/>
+    <g opacity=".9">
+      <path d="M1080 130 L1120 300 L1240 300 L1140 390 L1180 560 L1080 470 L980 560 L1020 390 L920 300 L1040 300 Z" fill="#B45B5B" opacity=".75"/>
+      <circle cx="1080" cy="650" r="6" fill="#F7F5F0" opacity=".6"/>
+    </g>
+    <path d="M820 0 C860 300 830 600 860 900" stroke="#B45B5B" stroke-width="3" fill="none" opacity=".5"/>
+  </g>
+  <rect width="1600" height="900" fill="url(#fade)"/>
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#F7F5F0">
+    <text x="90" y="640" font-size="96" letter-spacing="-2"><tspan x="90" dy="0">La Traviata</tspan><tspan x="90" dy="92">Highlights</tspan></text>
+  </g>
+  <g font-family="'Segoe UI', Arial, sans-serif" fill="#B45B5B">
+    <text x="94" y="150" font-size="18" letter-spacing="6">OPERA GALA</text>
+    <text x="94" y="795" font-size="16" letter-spacing="4" fill="#F7F5F0" opacity=".65">CITYU MDS · DSC5003 · SEASON 2026</text>
+  </g>
+  <g stroke="#B45B5B" fill="none">
+    <path d="M94 185 L360 185" stroke-width="2" opacity=".7"/>
+    <path d="M94 825 L1540 825" stroke-width="1" opacity=".32"/>
+  </g>
+</svg>

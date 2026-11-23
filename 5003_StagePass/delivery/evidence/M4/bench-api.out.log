@@ -1,0 +1,38 @@
+[db] 已连接 127.0.0.1:3306/ticketing_bench
+[api] listening on http://127.0.0.1:3100 (v0.1.0)
+[api] 到期预留清理已启动（每 10 秒）
+[reconcile] worker every 2s, batch 50, min age 1s
+GET /health 200 7.5ms rid=2ece8b94-9ca7-406b-9040-6d250982c44a
+POST /auth/login 200 161.7ms rid=d7af8fdb-0eae-475c-b4b2-6e9a799d50ec
+POST /auth/login 200 113.5ms rid=586cebe0-ead3-49ec-a487-30d78b71f02d
+POST /auth/login 200 127.2ms rid=2b2d0b26-681b-43cb-9f6f-becc13a0b3b9
+POST /auth/login 200 124.6ms rid=574f909f-b77d-42e2-b3da-b39bb784ff21
+POST /admin/performances 201 25.4ms rid=50148366-62b5-4009-8005-1b935d4a3035
+POST /admin/performances/104/publish 200 9.8ms rid=e09d396e-8ae9-4a92-8836-53994ac604ec
+GET /performances/104/seats 200 7.7ms rid=65b97da5-a23e-45fc-b0ba-e983994c5f3f
+POST /orders 201 26.6ms rid=dc52de6b-fd93-4711-ae31-df983780af67
+POST /payments 201 12.0ms rid=c62c37cb-9879-41da-b6f7-ad63f9aa1cc9
+POST /payments/9505/simulate 200 11.4ms rid=4e2a126d-102a-4e1e-a292-c1d666f89621
+GET /orders/10055 200 7.0ms rid=2c7966d5-7ca0-4410-9a80-667d689dfd6e
+GET /tickets/11205 200 5.6ms rid=e06dfbd8-3c38-400f-8693-f37ee7f0c1ca
+POST /admin/checkins 200 21.8ms rid=07279ebb-2331-4915-8ee7-dcddc562c976
+POST /orders/10055/refund 409 76.8ms rid=4588df21-3026-41e1-9585-915bda38fb2f
+POST /admin/performances 201 21.3ms rid=4a3a314a-4dc7-4f76-9bca-e68f6d2d39d8
+POST /admin/performances/105/publish 200 5.9ms rid=71705b73-051b-478b-9af0-07d895f9b87a
+GET /performances/105/seats 200 5.0ms rid=1a9337cb-94b5-4513-9fb3-4cdaf976cea3
+POST /orders 201 14.4ms rid=42be8b2f-3f6d-4c20-9e8b-d216f165ea41
+POST /payments 201 8.2ms rid=b6789c9f-1a51-4677-b2a3-f230bafd04f5
+POST /payments/9506/simulate 200 8.6ms rid=f0875e7a-d96c-4701-a903-d22ad8f0fe6c
+GET /orders/10056 200 5.5ms rid=0de3d37e-085c-426b-8810-057ae1d35be5
+GET /tickets/11206 200 3.7ms rid=7e01443a-dc20-4a33-ac82-a72edfe9eeca
+POST /orders/10056/refund 201 11.1ms rid=1e3c0503-8e57-4202-83a1-ad56756e5f8d
+POST /admin/refunds/2002/resolve 200 10.7ms rid=6d76d454-189c-40e3-be7c-fd9d7d4b8691
+POST /orders 201 12.7ms rid=b7110eac-4499-43c1-a544-4865b3c51b30
+POST /payments 201 6.7ms rid=56a18c26-f0b6-4b17-a26a-8c0574cbc91c
+POST /payments/9507/simulate 200 8.6ms rid=83e3e182-519d-4b7c-89ec-fb866e9fb64c
+GET /orders/10057 200 5.8ms rid=0a3a2f87-c4a6-461d-8f1b-441adbdd9c31
+GET /tickets/11207 200 3.6ms rid=8eb728c5-429d-47fa-8568-927a690b1499
+POST /admin/checkins 409 6.3ms rid=56f92571-c181-414d-b0cf-074697e5a83d
+POST /admin/checkins 200 7.6ms rid=a0f13a04-2afd-4883-8c9f-20d5fe071dfc
+POST /admin/checkins 409 6.3ms rid=064a9149-093b-4f50-b957-1d68d773004b
+GET /health 200 1.7ms rid=5bc77181-0171-4e71-af01-90f25de104dc

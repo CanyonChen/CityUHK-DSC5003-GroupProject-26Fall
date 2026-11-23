@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="Thunderstorm">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1A30"/>
+      <stop offset=".55" stop-color="#172A49"/>
+      <stop offset="1" stop-color="#24395C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".72" cy=".25" r=".7">
+      <stop offset="0" stop-color="#C9A227" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#C9A227" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B1526" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0B1526" stop-opacity=".82"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+  
+  <g opacity=".9">
+    <path d="M1120 70 L980 400 L1090 385 L930 760 L1240 350 L1120 370 L1260 70 Z" fill="#C9A227" opacity=".16"/>
+    <path d="M1120 120 L1010 390 L1100 380 L975 690 L1200 360 L1115 375 L1225 120 Z" fill="#C9A227" opacity=".55"/>
+    <g stroke="#F7F5F0" stroke-width="2" opacity=".18">
+      <path d="M820 120 L760 330"/><path d="M880 90 L820 300"/><path d="M950 140 L890 350"/>
+      <path d="M700 160 L640 370"/><path d="M620 100 L560 310"/><path d="M540 180 L480 390"/>
+    </g>
+    <ellipse cx="820" cy="560" rx="640" ry="40" fill="#000" opacity=".22"/>
+  </g>
+  <rect width="1600" height="900" fill="url(#fade)"/>
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#F7F5F0">
+    <text x="90" y="640" font-size="96" letter-spacing="-2"><tspan x="90" dy="0">Thunderstorm</tspan></text>
+  </g>
+  <g font-family="'Segoe UI', Arial, sans-serif" fill="#C9A227">
+    <text x="94" y="150" font-size="18" letter-spacing="6">DSC DRAMA SOCIETY</text>
+    <text x="94" y="795" font-size="16" letter-spacing="4" fill="#F7F5F0" opacity=".65">CITYU MDS · DSC5003 · SEASON 2026</text>
+  </g>
+  <g stroke="#C9A227" fill="none">
+    <path d="M94 185 L360 185" stroke-width="2" opacity=".7"/>
+    <path d="M94 825 L1540 825" stroke-width="1" opacity=".32"/>
+  </g>
+</svg>
