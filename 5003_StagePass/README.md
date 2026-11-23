@@ -14,12 +14,12 @@ CityU MDS · Semester A · DSC5003 数据库应用 · 小组项目
 | `docs/database-design.md` | 数据库表结构与字段 v1.2（实体清单 / 关系概述 / 字段字典） |
 | `docs/api-contract.md` | API 接口契约 v1.9（47 条契约 + 4 个管理端辅助 + 11.1 WebSocket 失效信号与作用域 + API-47 连座推荐） |
 | `docs/performance-report.md` | M4 性能报告：环境、数据规模、5 类查询 P95、EXPLAIN、索引实验、50 并发预留、AC-14/17/24 |
-| `docs/course-report.md` | 课程报告 v1.8（Track 1）：Group Information/Contribution Statement 表、需求、架构与静态系统图、数据库 ER 图、3 条代表性 SQL、事务与一致性、测试、Track 1 证据地图与 Q-01–Q-07 覆盖表、性能、Challenges/Lessons、References、链接 |
+| `docs/course-report.md` | 课程报告 v1.9（Track 1）：Group Information/Contribution Statement 表、需求、架构与静态系统图、数据库 ER 图、3 条代表性 SQL、事务与一致性、测试、Track 1 证据地图与 Q-01–Q-07 覆盖表、性能、Challenges/Lessons、References、链接 |
 | `docs/system-architecture.svg` / `.png` | 系统结构图静态源文件与 PDF 用位图；报告 §3.1 直接嵌入 PNG |
 | `docs/ER-diagram.png` | 数据库 ER 图（17 实体 / 122 业务字段 / 21+1 关系 / 22 外键 / 20 显式索引） |
 | `docs/member-contributions.md` | 成员贡献记录：8 人均分 12.5%，姓名/学号/邮箱/分工已填 |
 | `docs/team-roster.md` | 小组成员名单：姓名、学号、邮箱、分工 |
-| `docs/submission-checklist.md` | M5 最终提交清单 v1.8：交付状态、包内检查、提交步骤与剩余风险 |
+| `docs/submission-checklist.md` | M5 最终提交清单 v1.9：交付状态、包内检查、提交步骤与剩余风险 |
 | `docs/local-run-guide.md` | Windows 小白本地运行指南：前置软件、双击启动、演示账号、停止与重置、常见问题 |
 | `database/schema.sql` | 17 表 DDL，v1.2，含 token_version、payload_json、严格模式与约束 |
 | `database/seed.sql` | 演示数据，v1.1-demo |
