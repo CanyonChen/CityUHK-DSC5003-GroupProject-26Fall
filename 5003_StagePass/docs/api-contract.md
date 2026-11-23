@@ -1,6 +1,6 @@
 # API 接口契约（双前端共用）
 
-> 版本 v1.9（2026-11-22）｜对应需求《售票系统需求规格说明书》v1.6｜端口 3000
+> 版本 v1.10（2026-11-23）｜对应需求《售票系统需求规格说明书》v1.6｜端口 3000
 > 本文是前后端与验收脚本的唯一接口口径。改接口先改本文，再改前端 mock 与 `scripts\smoke.ps1`。
 > v1.1 变更：角色代码统一为 `USER`/`ADMIN`/`CHECKER`（与 `role_assignments.role` 一致）；补 503 错误码。
 > v1.2 变更：活动字段 `title`→`name`、`event_title`→`event_name`（与 DDL 列名一致）；座位补 `coordinates`；明确列表包结构与座位计数、退款策略字段。
@@ -11,6 +11,7 @@
 > v1.7 变更（R1 实时刷新）：新增 11.1 WebSocket 失效信号；`/ws` 仅广播 `data.changed`（`type`、`at`、`path`），不携带业务数据；订阅不影响 REST 契约与权限，客户端收到后仍按原接口重取。
 > v1.8 变更（R1 限制版）：`data.changed` 增加可选 `order_id`、`performance_id` 作用域；服务端按路径、请求体、`res.locals.realtime` 与数据库关联解析，解析失败退化为仅 `path`。客户端按作用域过滤，并采用 300 ms 防抖、500 ms 最短间隔、500 ms 最大等待、单请求在飞、隐藏暂停/回前台补一次、操作中暂停。帧仍不含金额、用户、座位或票码。
 > v1.9 变更（P1 连座推荐）：新增 API-47 `GET /performances/{performance_id}/seat-recommendations`；按人数 2–4、区域与总预算返回同排、同相邻分组、无通道分隔的可售组合；推荐只读、不预留，按区域中心距离、总价、首个座位号确定性排序。无合适组合返回空数组，不拆散座位、不提高预算。
+> v1.10 变更（Q-06 区域上座率）：新增 API-48 `GET /admin/performances/{performance_id}/occupancy`；按场次与 `seats.region` 汇总区域总座位、BLOCKED、可售座位、成交票数、核销数与上座率/入场率。成交票含 `VALID/USED/REFUND_PENDING`，可售分母排除 `BLOCKED`。
 
 ## 1. 适用范围与原则
 
@@ -88,9 +89,9 @@
 | 管理：用户与角色 | 3 | 否 | 否 | 是 | 否 |
 | 管理：活动与场次 | 11 | 否 | 否 | 是 | 否 |
 | 验票工作区 | 3 | 否 | 否 | 是 | 仅授权场次 |
-| 统计与对账 | 7 | 否 | 否 | 是 | 否 |
+| 统计与对账 | 8 | 否 | 否 | 是 | 否 |
 
-合计 47 个契约端点；另有四个不计编号的管理端辅助（见 9.1、9.3）。验票员登录管理端后只可见验票工作区，其余分组一律 `403 FORBIDDEN`。
+合计 48 个契约端点；另有四个不计编号的管理端辅助（见 9.1、9.3）。验票员登录管理端后只可见验票工作区，其余分组一律 `403 FORBIDDEN`。
 
 ## 4. 认证与健康检查
 
@@ -447,9 +448,9 @@
 | 错误 | `SEAT_NOT_EDITABLE`（目标不是 AVAILABLE/BLOCKED 时计入 `skipped`）、`VALIDATION_ERROR`、`NOT_FOUND` |
 | 说明 | 同一事务只改 AVAILABLE/BLOCKED，HELD/SOLD 跳过；选择 `region` 即整区封锁/恢复；写 `SEATS_BLOCKED`/`SEATS_AVAILABLE` 审计 |
 
-### 9.1 管理端读辅助（实现补充，不计入 47 条契约端点）
+### 9.1 管理端读辅助（实现补充，不计入 48 条契约端点）
 
-这两个接口只服务 8081 的下拉框与票价编辑，不改变 47 条业务契约的编号；字段变更仍需按第 14 节流程登记。
+这两个接口只服务 8081 的下拉框与票价编辑，不改变 48 条业务契约的编号；字段变更仍需按第 14 节流程登记。
 
 | 端点 | 权限 | 成功返回 |
 |---|---|---|
@@ -491,7 +492,7 @@
 | 错误 | `NOT_FOUND`、`LAST_ADMIN`（撤销后系统将没有有效管理员） |
 | 说明 | 只把 `revoked_at` 置为当前时间，保留历史；同一角色/场次再次授予时复用原记录并清空 `revoked_at`；写 `ROLE_REVOKED` 审计 |
 
-### 9.3 自动对账辅助（实现补充，不计入 47 条契约端点）
+### 9.3 自动对账辅助（实现补充，不计入 48 条契约端点）
 
 自动对账 worker 默认每 300 秒扫描一次，环境变量 `RECONCILE_INTERVAL_SECONDS` 可调；单批上限 50 条，处理超过 120 秒仍未完成的支付通知。测试适配器没有真实退款查询能力时，退款仍由管理员通过 API-43 确认，worker 只记录检查结果，不擅自改金额。
 
@@ -600,6 +601,18 @@
 | 成功 | `200`，`refund.status`、`orderStatus`（`REFUNDED`、`PAID` 或迟到付款场景的 `EXPIRED`）、`released_seats`；同结果重放返回 `replayed:true` |
 | 错误 | `REFUND_ALREADY_RESOLVED`（已确认后提交另一种结果）、`REFUND_NOT_ALLOWED`（订单不在退款处理中）、`NOT_FOUND` |
 | 说明 | `SUCCEEDED`：订单转 `REFUNDED`、票据转 `VOID`、原座位回 `AVAILABLE`；`FAILED`：订单回 `PAID`、票据回 `VALID`、座位保持 `SOLD`。迟到付款的 `EXPIRED` 订单只更新退款状态，不改订单状态、不释放座位。同事务写审计；金额以原退款记录为准（FR-10、AC-15、AC-16、AC-24） |
+
+### API-48 各区域上座率
+
+`GET /admin/performances/{performance_id}/occupancy` · 管理员 · FR-12 · Q-06
+
+| 项 | 内容 |
+|---|---|
+| 查询参数 | 无 |
+| 成功 | `200`，含 `performance_id`、`event_name`、`venue_name`、`starts_at`、`status`、`regions[]`、`total`、`definitions`。`regions[]` 每行含 `region`、`total_seats`、`blocked_seats`、`sellable_seats`、`tickets_sold`、`checked_in`、`occupancy_rate`、`attendance_rate`；`total` 为同结构合计行 |
+| 错误 | `NOT_FOUND`（场次不存在）、`FORBIDDEN`（非管理员） |
+| 口径 | 区域总座位取 `session_seats`，`BLOCKED` 单列；`sellable_seats = total_seats - blocked_seats`；成交票数取 `tickets.status IN ('VALID','USED','REFUND_PENDING')`，核销数取 `status='USED'`；`occupancy_rate = tickets_sold / sellable_seats`，`attendance_rate = checked_in / tickets_sold`，均返回 0–100 数值并保留两位小数。`tickets` 经 `order_items → session_seats → seats.region` 归域，并用 `orders.performance_id` 限定场次；区域座位与票务分别聚合后在服务层合并，避免多表连接重复计票 |
+| 说明 | 只读统计，不改变库存；未售座位与 `HELD` 不计入成交票数。定义随响应返回，供管理端表尾说明（FR-12、Q-06） |
 
 ## 11.1 实时刷新通道（WebSocket，非 REST）
 

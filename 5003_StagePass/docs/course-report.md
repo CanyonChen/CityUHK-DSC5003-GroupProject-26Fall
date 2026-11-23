@@ -8,9 +8,9 @@
 | 产品名称 | StagePass（中文沟通名：舞台通行） |
 | 项目 | Track 1：校园演出或小型剧场固定座位售票系统 |
 | 团队规模 | 8 人 |
-| 报告版本 | v1.9（2026-11-23 修订） |
+| 报告版本 | v1.10（2026-11-23 修订） |
 | 完成日期 | 2026-11-23 |
-| 代码与文档基线 | 发布包 `delivery/5003_StagePass`，M1–M5 交付 + R1 实时刷新 + AC-25 连座推荐 |
+| 代码与文档基线 | 发布包 `delivery/5003_StagePass`，M1–M5 交付 + R1 实时刷新 + Q-06 区域上座率 + AC-25 连座推荐 |
 
 ## Group Information 与 Contribution Statement
 
@@ -178,7 +178,7 @@ P1 的座位状态推送、邮件通知、候补和第三方支付沙箱未在�
 | `docs/` | 需求、数据字典、API 契约、性能报告与课程报告 |
 | `delivery/` | 交付索引、验收清单、证据和一致性检查脚本 |
 
-后端源码 5,339 行（30 个 `.js`），用户端源码 2,456 行（17 个 `.js`/`.vue`/`.css`），管理端源码 2,367 行（17 个 `.js`/`.vue`/`.css`）；API 契约共 47 条。
+后端源码 5,339 行（30 个 `.js`），用户端源码 2,456 行（17 个 `.js`/`.vue`/`.css`），管理端源码 2,367 行（17 个 `.js`/`.vue`/`.css`）；API 契约共 48 条。
 
 ---
 
@@ -507,10 +507,12 @@ Q-03 冷缓存首轮 P95 为 2,868.73 ms，warm 为 559.67 ms；报告同时保�
 | Q-03 | 各场次卖得怎么样 | 报告 Q-03 场次销售统计；P95 559.67 ms | 已基准 |
 | Q-04 | 哪些订单应该到期关闭 | `orders.expireDueOrders` 每 10 秒扫描并释放；AC-08 有功能证据 | 已实现，未做独立 HTTP P95 |
 | Q-05 | 哪些款项需要继续处理 | 支付对账与财务异常查询；AC-13/AC-16 有功能证据 | 已实现，未做独立 HTTP P95 |
-| Q-06 | 各区域上座情况如何 | 管理端按场次统计，未单独提供区域上座率查询 | 未单独实现 |
+| Q-06 | 各区域上座情况如何 | Q-06 / API-48 区域上座率；管理端 Dashboard 按场次显示区域表；`region-occupancy.json`、`07-admin-regional-occupancy.png` | 已实现，未做独立 HTTP P95 |
 | Q-07 | 指定预算下哪里还有连座 | AC-25 / API-47 连座推荐；`recommendation-ui-check.json` | 已实现，未做独立 HTTP P95 |
 
-结论：原需求七类查询中，Q-01、Q-02、Q-03 有完整 P95 基准；Q-04、Q-05、Q-07 只有功能验证；Q-06 未单独实现。报告 Q-05 活动列表是补充读路径，不对应原需求 Q-05；答辩时不把七类都说成“已做性能测试”。
+Q-06 不改数据库结构，在共用 API 增加管理员只读接口 API-48：按 `seats.region` 汇总 `session_seats` 的区域总座位与 `BLOCKED` 数，再经 `order_items → session_seats → seats.region` 汇总 `VALID/USED/REFUND_PENDING` 票数与 `USED` 核销数；两条聚合在服务层按区域合并，避免多表连接重复计票。上座率以可售座位（总座位减 `BLOCKED`）为分母，入场率以成交票数为分母。管理端 Dashboard 增加场次下拉与区域表，逐区显示座位、可售、成交、核销、上座率与入场率，并给出合计行。实测场次 1（Thunderstorm，2026-11-24，200 座）：A 区 80 座、2 个 BLOCKED、可售 78、成交 30、上座率 38.46%；B 区 60 座、1 个 BLOCKED、可售 59、成交 26、44.07%；C 区 60 座、1 个 BLOCKED、可售 59、成交 25、42.37%；合计可售 196、成交 81、上座率 41.33%。接口返回与直接 SQL 聚合一致，UI 截图见 `07-admin-regional-occupancy.png`。
+
+结论：原需求七类查询中，Q-01、Q-02、Q-03 有完整 P95 基准；Q-04、Q-05、Q-06、Q-07 只有功能验证，没有独立 HTTP P95。报告 Q-05 活动列表是补充读路径，不对应原需求 Q-05；答辩时不把七类都说成“已做性能测试”。
 
 ### 9.3 执行计划与索引实验
 
@@ -679,13 +681,13 @@ node .\m4_anomaly_check.js
 
 | 交付物 | 链接 / 位置 | 状态 |
 |---|---|---|
-| 源代码仓库（GitHub） | <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall> | 已上传 170 个 StagePass 文件到 `Ft-Hawk-patch-1`，本轮 M5 文档已上传；`main` 与根目录结构待整理 |
+| 源代码仓库（GitHub） | <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall> | 远端 `Ft-Hawk-patch-1` 为 170 个 StagePass 文件，M5 文档仍为 v1.8；本轮 Q-06 新增的代码与 2 个证据文件尚未上传；`main` 与根目录结构待整理 |
 | 演示视频（5–8 分钟） | `[待填写：可公开访问的视频链接]` | 待录制 |
-| 本地发布包 | `delivery/5003_StagePass` | 已完成；新增 `docs/team-roster.md` 后为 170 个文件 |
+| 本地发布包 | `delivery/5003_StagePass` | 已完成；加入 Q-06 代码、`region-occupancy.json` 与区域上座率截图后为 172 个文件 |
 | 项目 README | `README.md` | 已完成 |
 | 课程报告 PDF | `[待导出：XXXX-report.pdf]` | 待导出 |
 
-说明：GitHub 仓库已上传 170 个 StagePass 文件，`server/.env.example` 与 `server/.gitignore` 已补；本轮 `docs/team-roster.md` 与成员/报告/清单修改均已上传；`main` 仍是 248 个文件的 FilmSys 旧基线，根目录结构与旧目录清理按计划后置。视频链接和报告 PDF 仍需在最终提交前替换占位内容；视频需覆盖用户界面、查询执行、数据流和后端操作。
+说明：GitHub 远端 `Ft-Hawk-patch-1` 当前为 170 个 StagePass 文件，`server/.env.example` 与 `server/.gitignore` 已补；远端 `course-report.md`、`submission-checklist.md`、`README.md` 仍为 v1.8，`delivery/delivery.json`、`MANIFEST.md`、`CHECKLISTS.md` 仍是旧版。本地包已升到 v1.10 并新增 Q-06 代码与证据，提交前需再上传本轮差异文件。`main` 仍是 248 个文件的 FilmSys 旧基线，根目录结构与旧目录清理按计划后置。视频链接和报告 PDF 仍需在最终提交前替换占位内容；视频需覆盖用户界面、查询执行、数据流和后端操作。
 
 ---
 
