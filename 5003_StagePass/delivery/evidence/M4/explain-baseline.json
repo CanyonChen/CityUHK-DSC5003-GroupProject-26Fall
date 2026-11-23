@@ -1,0 +1,781 @@
+{
+  "phase": "baseline",
+  "captured_at": "2026-11-22T09:21:34.925Z",
+  "explain": [
+    {
+      "id": "Q-01",
+      "label": "场次座位图",
+      "params": [
+        0,
+        1
+      ],
+      "explain_json": {
+        "query_block": {
+          "select_id": 1,
+          "read_sorted_file": {
+            "filesort": {
+              "sort_key": "s.region, cast(s.row_no as unsigned), cast(s.seat_no as unsigned)",
+              "table": {
+                "table_name": "s",
+                "access_type": "ALL",
+                "possible_keys": [
+                  "PRIMARY"
+                ],
+                "rows": 200,
+                "filtered": 100
+              }
+            }
+          },
+          "table": {
+            "table_name": "o",
+            "access_type": "eq_ref",
+            "possible_keys": [
+              "PRIMARY"
+            ],
+            "key": "PRIMARY",
+            "key_length": "8",
+            "used_key_parts": [
+              "order_id"
+            ],
+            "ref": [
+              "ticketing_bench.ss.holder_order_id"
+            ],
+            "rows": 1,
+            "filtered": 100,
+            "attached_condition": "trigcond(trigcond(ss.holder_order_id is not null))"
+          }
+        }
+      },
+      "explain_table": [
+        {
+          "id": 1,
+          "select_type": "SIMPLE",
+          "table": "s",
+          "type": "ALL",
+          "possible_keys": "PRIMARY",
+          "key": null,
+          "key_len": null,
+          "ref": null,
+          "rows": "200",
+          "Extra": "Using filesort"
+        },
+        {
+          "id": 1,
+          "select_type": "SIMPLE",
+          "table": "ss",
+          "type": "eq_ref",
+          "possible_keys": "uk_session_seats,fk_session_seats_seat,fk_session_seats_tier,idx_session_seats_status",
+          "key": "uk_session_seats",
+          "key_len": "16",
+          "ref": "const,ticketing_bench.s.seat_id",
+          "rows": "1",
+          "Extra": ""
+        },
+        {
+          "id": 1,
+          "select_type": "SIMPLE",
+          "table": "pt",
+          "type": "eq_ref",
+          "possible_keys": "PRIMARY",
+          "key": "PRIMARY",
+          "key_len": "8",
+          "ref": "ticketing_bench.ss.tier_id",
+          "rows": "1",
+          "Extra": ""
+        },
+        {
+          "id": 1,
+          "select_type": "SIMPLE",
+          "table": "o",
+          "type": "eq_ref",
+          "possible_keys": "PRIMARY",
+          "key": "PRIMARY",
+          "key_len": "8",
+          "ref": "ticketing_bench.ss.holder_order_id",
+          "rows": "1",
+          "Extra": "Using where"
+        }
+      ]
+    },
+    {
+      "id": "Q-02",
+      "label": "管理端订单检索",
+      "params": [
+        "PAID",
+        20,
+        0
+      ],
+      "explain_json": {
+        "query_block": {
+          "select_id": 1,
+          "filesort": {
+            "sort_key": "o.created_at desc, o.order_id desc",
+            "temporary_table": {
+              "table": {
+                "table_name": "u",
+                "access_type": "eq_ref",
+                "possible_keys": [
+                  "PRIMARY"
+                ],
+                "key": "PRIMARY",
+                "key_length": "8",
+                "used_key_parts": [
+                  "user_id"
+                ],
+                "ref": [
+                  "ticketing_bench.o.user_id"
+                ],
+                "rows": 1,
+                "filtered": 100
+              },
+              "block-nl-join": {
+                "table": {
+                  "table_name": "e",
+                  "access_type": "ALL",
+                  "possible_keys": [
+                    "PRIMARY"
+                  ],
+                  "rows": 10,
+                  "filtered": 100
+                },
+                "buffer_type": "flat",
+                "buffer_size": "4Kb",
+                "join_type": "BNL"
+              },
+              "subqueries": [
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 3,
+                      "table": {
+                        "table_name": "r",
+                        "access_type": "ref",
+                        "possible_keys": [
+                          "idx_refunds_order"
+                        ],
+                        "key": "idx_refunds_order",
+                        "key_length": "9",
+                        "used_key_parts": [
+                          "order_id"
+                        ],
+                        "ref": [
+                          "ticketing_bench.o.order_id"
+                        ],
+                        "rows": 1,
+                        "filtered": 100,
+                        "attached_condition": "r.order_id <=> o.order_id"
+                      }
+                    }
+                  }
+                },
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 2,
+                      "read_sorted_file": {
+                        "filesort": {
+                          "sort_key": "pa.attempt_id desc",
+                          "table": {
+                            "table_name": "pa",
+                            "access_type": "ref",
+                            "possible_keys": [
+                              "idx_payment_attempts_order"
+                            ],
+                            "key": "idx_payment_attempts_order",
+                            "key_length": "8",
+                            "used_key_parts": [
+                              "order_id"
+                            ],
+                            "ref": [
+                              "ticketing_bench.o.order_id"
+                            ],
+                            "rows": 1,
+                            "filtered": 100,
+                            "attached_condition": "pa.order_id <=> o.order_id"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "explain_table": [
+        {
+          "id": 1,
+          "select_type": "PRIMARY",
+          "table": "v",
+          "type": "index",
+          "possible_keys": "PRIMARY",
+          "key": "uk_venues_name",
+          "key_len": "402",
+          "ref": null,
+          "rows": "1",
+          "Extra": "Using index; Using temporary; Using filesort"
+        },
+        {
+          "id": 1,
+          "select_type": "PRIMARY",
+          "table": "e",
+          "type": "ALL",
+          "possible_keys": "PRIMARY",
+          "key": null,
+          "key_len": null,
+          "ref": null,
+          "rows": "10",
+          "Extra": "Using join buffer (flat, BNL join)"
+        },
+        {
+          "id": 1,
+          "select_type": "PRIMARY",
+          "table": "p",
+          "type": "ref",
+          "possible_keys": "PRIMARY,idx_performances_event,idx_performances_venue",
+          "key": "idx_performances_event",
+          "key_len": "8",
+          "ref": "ticketing_bench.e.event_id",
+          "rows": "5",
+          "Extra": "Using where"
+        },
+        {
+          "id": 1,
+          "select_type": "PRIMARY",
+          "table": "o",
+          "type": "ref",
+          "possible_keys": "uk_orders_idempotency,idx_orders_expiry,idx_orders_user,idx_orders_performance",
+          "key": "idx_orders_performance",
+          "key_len": "90",
+          "ref": "ticketing_bench.p.performance_id,const",
+          "rows": "8",
+          "Extra": "Using index condition"
+        },
+        {
+          "id": 1,
+          "select_type": "PRIMARY",
+          "table": "u",
+          "type": "eq_ref",
+          "possible_keys": "PRIMARY",
+          "key": "PRIMARY",
+          "key_len": "8",
+          "ref": "ticketing_bench.o.user_id",
+          "rows": "1",
+          "Extra": ""
+        },
+        {
+          "id": 3,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "r",
+          "type": "ref",
+          "possible_keys": "idx_refunds_order",
+          "key": "idx_refunds_order",
+          "key_len": "9",
+          "ref": "ticketing_bench.o.order_id",
+          "rows": "1",
+          "Extra": "Using where"
+        },
+        {
+          "id": 2,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "pa",
+          "type": "ref",
+          "possible_keys": "idx_payment_attempts_order",
+          "key": "idx_payment_attempts_order",
+          "key_len": "8",
+          "ref": "ticketing_bench.o.order_id",
+          "rows": "1",
+          "Extra": "Using where; Using filesort"
+        }
+      ]
+    },
+    {
+      "id": "Q-03",
+      "label": "各场次销售统计",
+      "params": [],
+      "explain_json": {
+        "query_block": {
+          "select_id": 1,
+          "filesort": {
+            "sort_key": "p.starts_at, p.performance_id",
+            "temporary_table": {
+              "table": {
+                "table_name": "p",
+                "access_type": "ref",
+                "possible_keys": [
+                  "idx_performances_event",
+                  "idx_performances_venue"
+                ],
+                "key": "idx_performances_event",
+                "key_length": "8",
+                "used_key_parts": [
+                  "event_id"
+                ],
+                "ref": [
+                  "ticketing_bench.e.event_id"
+                ],
+                "rows": 5,
+                "filtered": 100,
+                "attached_condition": "p.venue_id = v.venue_id"
+              },
+              "block-nl-join": {
+                "table": {
+                  "table_name": "e",
+                  "access_type": "ALL",
+                  "possible_keys": [
+                    "PRIMARY"
+                  ],
+                  "rows": 10,
+                  "filtered": 100
+                },
+                "buffer_type": "flat",
+                "buffer_size": "4Kb",
+                "join_type": "BNL"
+              },
+              "subqueries": [
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 9,
+                      "table": {
+                        "table_name": "r",
+                        "access_type": "ref",
+                        "possible_keys": [
+                          "idx_refunds_status",
+                          "idx_refunds_order"
+                        ],
+                        "key": "idx_refunds_order",
+                        "key_length": "9",
+                        "used_key_parts": [
+                          "order_id"
+                        ],
+                        "ref": [
+                          "ticketing_bench.o.order_id"
+                        ],
+                        "rows": 1,
+                        "filtered": 75,
+                        "attached_condition": "r.`status` = 'SUCCEEDED'"
+                      }
+                    }
+                  }
+                },
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 8,
+                      "table": {
+                        "table_name": "o",
+                        "access_type": "ref",
+                        "possible_keys": [
+                          "idx_orders_expiry",
+                          "idx_orders_performance"
+                        ],
+                        "key": "idx_orders_performance",
+                        "key_length": "8",
+                        "used_key_parts": [
+                          "performance_id"
+                        ],
+                        "ref": [
+                          "ticketing_bench.p.performance_id"
+                        ],
+                        "rows": 50,
+                        "filtered": 69.965,
+                        "index_condition": "o.`status` in ('PAID','REFUND_PENDING','REFUNDED')"
+                      }
+                    }
+                  }
+                },
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 7,
+                      "table": {
+                        "table_name": "c",
+                        "access_type": "eq_ref",
+                        "possible_keys": [
+                          "uk_checkins_ticket"
+                        ],
+                        "key": "uk_checkins_ticket",
+                        "key_length": "8",
+                        "used_key_parts": [
+                          "ticket_id"
+                        ],
+                        "ref": [
+                          "ticketing_bench.t.ticket_id"
+                        ],
+                        "rows": 1,
+                        "filtered": 100,
+                        "using_index": true
+                      }
+                    }
+                  }
+                },
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 6,
+                      "table": {
+                        "table_name": "t",
+                        "access_type": "eq_ref",
+                        "possible_keys": [
+                          "uk_tickets_order_item",
+                          "idx_tickets_status"
+                        ],
+                        "key": "uk_tickets_order_item",
+                        "key_length": "8",
+                        "used_key_parts": [
+                          "order_item_id"
+                        ],
+                        "ref": [
+                          "ticketing_bench.oi.order_item_id"
+                        ],
+                        "rows": 1,
+                        "filtered": 50.004,
+                        "attached_condition": "t.`status` <> 'VOID'"
+                      }
+                    }
+                  }
+                },
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 5,
+                      "table": {
+                        "table_name": "ss",
+                        "access_type": "ref",
+                        "possible_keys": [
+                          "uk_session_seats",
+                          "idx_session_seats_status",
+                          "idx_session_seats_expiry"
+                        ],
+                        "key": "idx_session_seats_expiry",
+                        "key_length": "82",
+                        "used_key_parts": [
+                          "session_seat_status"
+                        ],
+                        "ref": [
+                          "const"
+                        ],
+                        "rows": 1,
+                        "filtered": 100,
+                        "index_condition": "ss.session_seat_status = 'BLOCKED'",
+                        "attached_condition": "ss.performance_id = p.performance_id"
+                      }
+                    }
+                  }
+                },
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 4,
+                      "table": {
+                        "table_name": "ss",
+                        "access_type": "ref",
+                        "possible_keys": [
+                          "uk_session_seats",
+                          "idx_session_seats_status",
+                          "idx_session_seats_expiry"
+                        ],
+                        "key": "idx_session_seats_status",
+                        "key_length": "90",
+                        "used_key_parts": [
+                          "performance_id",
+                          "session_seat_status"
+                        ],
+                        "ref": [
+                          "ticketing_bench.p.performance_id",
+                          "const"
+                        ],
+                        "rows": 37,
+                        "filtered": 100,
+                        "attached_condition": "ss.session_seat_status = 'SOLD'",
+                        "using_index": true
+                      }
+                    }
+                  }
+                },
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 3,
+                      "table": {
+                        "table_name": "ss",
+                        "access_type": "ref",
+                        "possible_keys": [
+                          "uk_session_seats",
+                          "idx_session_seats_status",
+                          "idx_session_seats_expiry"
+                        ],
+                        "key": "idx_session_seats_status",
+                        "key_length": "90",
+                        "used_key_parts": [
+                          "performance_id",
+                          "session_seat_status"
+                        ],
+                        "ref": [
+                          "ticketing_bench.p.performance_id",
+                          "const"
+                        ],
+                        "rows": 37,
+                        "filtered": 100,
+                        "attached_condition": "ss.session_seat_status = 'HELD'",
+                        "using_index": true
+                      }
+                    }
+                  }
+                },
+                {
+                  "expression_cache": {
+                    "state": "uninitialized",
+                    "query_block": {
+                      "select_id": 2,
+                      "table": {
+                        "table_name": "ss",
+                        "access_type": "ref",
+                        "possible_keys": [
+                          "uk_session_seats",
+                          "idx_session_seats_status",
+                          "idx_session_seats_expiry"
+                        ],
+                        "key": "idx_session_seats_status",
+                        "key_length": "90",
+                        "used_key_parts": [
+                          "performance_id",
+                          "session_seat_status"
+                        ],
+                        "ref": [
+                          "ticketing_bench.p.performance_id",
+                          "const"
+                        ],
+                        "rows": 37,
+                        "filtered": 100,
+                        "attached_condition": "ss.session_seat_status = 'AVAILABLE'",
+                        "using_index": true
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "explain_table": [
+        {
+          "id": 1,
+          "select_type": "PRIMARY",
+          "table": "v",
+          "type": "index",
+          "possible_keys": "PRIMARY",
+          "key": "uk_venues_name",
+          "key_len": "402",
+          "ref": null,
+          "rows": "1",
+          "Extra": "Using index; Using temporary; Using filesort"
+        },
+        {
+          "id": 1,
+          "select_type": "PRIMARY",
+          "table": "e",
+          "type": "ALL",
+          "possible_keys": "PRIMARY",
+          "key": null,
+          "key_len": null,
+          "ref": null,
+          "rows": "10",
+          "Extra": "Using join buffer (flat, BNL join)"
+        },
+        {
+          "id": 1,
+          "select_type": "PRIMARY",
+          "table": "p",
+          "type": "ref",
+          "possible_keys": "idx_performances_event,idx_performances_venue",
+          "key": "idx_performances_event",
+          "key_len": "8",
+          "ref": "ticketing_bench.e.event_id",
+          "rows": "5",
+          "Extra": "Using where"
+        },
+        {
+          "id": 9,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "o",
+          "type": "ref",
+          "possible_keys": "PRIMARY,idx_orders_performance",
+          "key": "idx_orders_performance",
+          "key_len": "8",
+          "ref": "ticketing_bench.p.performance_id",
+          "rows": "50",
+          "Extra": "Using index"
+        },
+        {
+          "id": 9,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "r",
+          "type": "ref",
+          "possible_keys": "idx_refunds_status,idx_refunds_order",
+          "key": "idx_refunds_order",
+          "key_len": "9",
+          "ref": "ticketing_bench.o.order_id",
+          "rows": "1",
+          "Extra": "Using where"
+        },
+        {
+          "id": 8,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "o",
+          "type": "ref",
+          "possible_keys": "idx_orders_expiry,idx_orders_performance",
+          "key": "idx_orders_performance",
+          "key_len": "8",
+          "ref": "ticketing_bench.p.performance_id",
+          "rows": "50",
+          "Extra": "Using index condition"
+        },
+        {
+          "id": 7,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "o",
+          "type": "ref",
+          "possible_keys": "PRIMARY,idx_orders_performance",
+          "key": "idx_orders_performance",
+          "key_len": "8",
+          "ref": "ticketing_bench.p.performance_id",
+          "rows": "50",
+          "Extra": "Using index"
+        },
+        {
+          "id": 7,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "oi",
+          "type": "ref",
+          "possible_keys": "PRIMARY,uk_order_items",
+          "key": "uk_order_items",
+          "key_len": "8",
+          "ref": "ticketing_bench.o.order_id",
+          "rows": "1",
+          "Extra": "Using index"
+        },
+        {
+          "id": 7,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "t",
+          "type": "eq_ref",
+          "possible_keys": "PRIMARY,uk_tickets_order_item",
+          "key": "uk_tickets_order_item",
+          "key_len": "8",
+          "ref": "ticketing_bench.oi.order_item_id",
+          "rows": "1",
+          "Extra": "Using index"
+        },
+        {
+          "id": 7,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "c",
+          "type": "eq_ref",
+          "possible_keys": "uk_checkins_ticket",
+          "key": "uk_checkins_ticket",
+          "key_len": "8",
+          "ref": "ticketing_bench.t.ticket_id",
+          "rows": "1",
+          "Extra": "Using index"
+        },
+        {
+          "id": 6,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "o",
+          "type": "ref",
+          "possible_keys": "PRIMARY,idx_orders_expiry,idx_orders_performance",
+          "key": "idx_orders_performance",
+          "key_len": "8",
+          "ref": "ticketing_bench.p.performance_id",
+          "rows": "50",
+          "Extra": "Using where; Using index"
+        },
+        {
+          "id": 6,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "oi",
+          "type": "ref",
+          "possible_keys": "PRIMARY,uk_order_items",
+          "key": "uk_order_items",
+          "key_len": "8",
+          "ref": "ticketing_bench.o.order_id",
+          "rows": "1",
+          "Extra": "Using index"
+        },
+        {
+          "id": 6,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "t",
+          "type": "eq_ref",
+          "possible_keys": "uk_tickets_order_item,idx_tickets_status",
+          "key": "uk_tickets_order_item",
+          "key_len": "8",
+          "ref": "ticketing_bench.oi.order_item_id",
+          "rows": "1",
+          "Extra": "Using where"
+        },
+        {
+          "id": 5,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "ss",
+          "type": "ref",
+          "possible_keys": "uk_session_seats,idx_session_seats_status,idx_session_seats_expiry",
+          "key": "idx_session_seats_expiry",
+          "key_len": "82",
+          "ref": "const",
+          "rows": "1",
+          "Extra": "Using index condition; Using where"
+        },
+        {
+          "id": 4,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "ss",
+          "type": "ref",
+          "possible_keys": "uk_session_seats,idx_session_seats_status,idx_session_seats_expiry",
+          "key": "idx_session_seats_status",
+          "key_len": "90",
+          "ref": "ticketing_bench.p.performance_id,const",
+          "rows": "37",
+          "Extra": "Using where; Using index"
+        },
+        {
+          "id": 3,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "ss",
+          "type": "ref",
+          "possible_keys": "uk_session_seats,idx_session_seats_status,idx_session_seats_expiry",
+          "key": "idx_session_seats_status",
+          "key_len": "90",
+          "ref": "ticketing_bench.p.performance_id,const",
+          "rows": "37",
+          "Extra": "Using where; Using index"
+        },
+        {
+          "id": 2,
+          "select_type": "DEPENDENT SUBQUERY",
+          "table": "ss",
+          "type": "ref",
+          "possible_keys": "uk_session_seats,idx_session_seats_status,idx_session_seats_expiry",
+          "key": "idx_session_seats_status",
+          "key_len": "90",
+          "ref": "ticketing_bench.p.performance_id,const",
+          "rows": "37",
+          "Extra": "Using where; Using index"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "captured_at": "2026-11-22T21:36:00+08:00",
+  "page": "http://127.0.0.1:8081/",
+  "build": "production dist, web-admin 39 modules",
+  "scenario": "管理端概览保持打开且未点 Refresh；独立 API 客户端用 buyer06 在 performance 1 下单并 SUCCESS 支付 1 张票，触发 /orders、/payments、/payments/595/simulate 三次 data.changed。页面由后台切回前台后自动重取 /admin/stats。",
+  "before": {
+    "gross_cents": 61281000,
+    "tickets_sold": 1747,
+    "sold": 1751,
+    "available": 1868,
+    "held": 4,
+    "blocked": 6
+  },
+  "after": {
+    "gross_cents": 61329000,
+    "tickets_sold": 1748,
+    "sold": 1752,
+    "available": 1867,
+    "held": 4,
+    "blocked": 6
+  },
+  "expected_delta": {
+    "gross_cents": 48000,
+    "tickets_sold": 1,
+    "sold": 1,
+    "available": -1
+  },
+  "observed": {
+    "gross_before_text": "HKD $612,810",
+    "gross_after_text": "HKD $613,290",
+    "tickets_before": "1747",
+    "tickets_after": "1748",
+    "seats_before": "1751",
+    "seats_after": "1752",
+    "manual_refresh_clicked": false,
+    "visibility": "事件到达时页面处于后台，未发起 /admin/stats；切回前台后触发一次补刷新"
+  },
+  "orders": {
+    "order_id": 595,
+    "payment_id": 595,
+    "performance_id": 1,
+    "buyer": "buyer06"
+  },
+  "result": "pass",
+  "screenshot_before": "04-admin-live-before.png",
+  "screenshot_after": "03-admin-live.png"
+}

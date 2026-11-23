@@ -1,0 +1,497 @@
+{
+  "phase": "reservation",
+  "captured_at": "2026-11-22T09:29:25.792Z",
+  "meta": {
+    "captured_at": "2026-11-22T09:29:25.796Z",
+    "base_url": "http://127.0.0.1:3100",
+    "database": "ticketing_bench",
+    "node_version": "v22.23.2",
+    "platform": "win32 x64",
+    "hostname": "LAPTOP-5MOL2EF7",
+    "cpu": "Intel(R) Core(TM) Ultra X7 358H × 16",
+    "memory_gb": 31.55,
+    "db_version": "10.4.32-MariaDB",
+    "db_version_comment": "mariadb.org binary distribution",
+    "innodb_buffer_pool_bytes": 16777216,
+    "max_connections": 151,
+    "dataset": {
+      "database": "ticketing_bench",
+      "generated_at": "2026-11-22T09:29:06.277Z",
+      "counts": {
+        "performances": 100,
+        "session_seats": 20000,
+        "orders": 10000,
+        "order_items": 14000,
+        "tickets": 11200,
+        "payment_attempts": 9500,
+        "payment_notifications": 8000,
+        "refunds": 2000,
+        "checkins": 2000
+      },
+      "order_status": {
+        "CANCELLED": 500,
+        "EXPIRED": 1200,
+        "PAID": 6000,
+        "PENDING_PAYMENT": 300,
+        "REFUND_PENDING": 500,
+        "REFUNDED": 1500
+      },
+      "seat_status_by_performance_ok": true,
+      "order_amount_mismatch": 0,
+      "paid_order_without_ticket": 0
+    },
+    "load_profile": {
+      "concurrency": 50,
+      "samples_per_query": 500,
+      "warmup_requests_per_query": 20,
+      "client": "Node 22 global fetch, HTTP keep-alive",
+      "pool_default": "DB_POOL=10 unless overridden by the bench API environment"
+    },
+    "workspace": "D:\\_Study\\CityU_MDS\\Courses\\SemesterA\\5003\\Assignment\\GP"
+  },
+  "endpoint": "POST /orders",
+  "target_ms": 1000,
+  "samples": 50,
+  "concurrency": 50,
+  "status_codes": {
+    "201": 50
+  },
+  "errors": 0,
+  "results": [
+    {
+      "worker": 23,
+      "seat": 114,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10001,
+      "ms": 118.97
+    },
+    {
+      "worker": 13,
+      "seat": 97,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10002,
+      "ms": 124.26
+    },
+    {
+      "worker": 12,
+      "seat": 96,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10003,
+      "ms": 130.3
+    },
+    {
+      "worker": 11,
+      "seat": 95,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10004,
+      "ms": 137.62
+    },
+    {
+      "worker": 4,
+      "seat": 88,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10005,
+      "ms": 144.88
+    },
+    {
+      "worker": 15,
+      "seat": 99,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10006,
+      "ms": 149.59
+    },
+    {
+      "worker": 1,
+      "seat": 85,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10007,
+      "ms": 157.26
+    },
+    {
+      "worker": 3,
+      "seat": 87,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10008,
+      "ms": 163.45
+    },
+    {
+      "worker": 18,
+      "seat": 102,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10009,
+      "ms": 168.84
+    },
+    {
+      "worker": 20,
+      "seat": 104,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10010,
+      "ms": 175.11
+    },
+    {
+      "worker": 2,
+      "seat": 86,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10011,
+      "ms": 182.21
+    },
+    {
+      "worker": 5,
+      "seat": 89,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10012,
+      "ms": 187.29
+    },
+    {
+      "worker": 6,
+      "seat": 90,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10013,
+      "ms": 193.88
+    },
+    {
+      "worker": 19,
+      "seat": 103,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10014,
+      "ms": 198.06
+    },
+    {
+      "worker": 26,
+      "seat": 117,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10015,
+      "ms": 204.19
+    },
+    {
+      "worker": 27,
+      "seat": 118,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10016,
+      "ms": 210.17
+    },
+    {
+      "worker": 16,
+      "seat": 100,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10017,
+      "ms": 216.96
+    },
+    {
+      "worker": 17,
+      "seat": 101,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10018,
+      "ms": 221.93
+    },
+    {
+      "worker": 24,
+      "seat": 115,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10019,
+      "ms": 227.5
+    },
+    {
+      "worker": 29,
+      "seat": 120,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10020,
+      "ms": 231.54
+    },
+    {
+      "worker": 22,
+      "seat": 113,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10021,
+      "ms": 237.52
+    },
+    {
+      "worker": 25,
+      "seat": 116,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10022,
+      "ms": 242.65
+    },
+    {
+      "worker": 37,
+      "seat": 128,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10023,
+      "ms": 245.9
+    },
+    {
+      "worker": 39,
+      "seat": 130,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10024,
+      "ms": 250.48
+    },
+    {
+      "worker": 31,
+      "seat": 122,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10025,
+      "ms": 254.76
+    },
+    {
+      "worker": 21,
+      "seat": 105,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10026,
+      "ms": 261.7
+    },
+    {
+      "worker": 28,
+      "seat": 119,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10027,
+      "ms": 268.06
+    },
+    {
+      "worker": 36,
+      "seat": 127,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10028,
+      "ms": 272.02
+    },
+    {
+      "worker": 30,
+      "seat": 121,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10029,
+      "ms": 277.71
+    },
+    {
+      "worker": 33,
+      "seat": 124,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10030,
+      "ms": 282.04
+    },
+    {
+      "worker": 34,
+      "seat": 125,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10031,
+      "ms": 287.43
+    },
+    {
+      "worker": 45,
+      "seat": 143,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10032,
+      "ms": 291.98
+    },
+    {
+      "worker": 35,
+      "seat": 126,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10033,
+      "ms": 298.09
+    },
+    {
+      "worker": 47,
+      "seat": 145,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10034,
+      "ms": 300.9
+    },
+    {
+      "worker": 38,
+      "seat": 129,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10035,
+      "ms": 306.99
+    },
+    {
+      "worker": 40,
+      "seat": 131,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10036,
+      "ms": 312.55
+    },
+    {
+      "worker": 41,
+      "seat": 132,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10037,
+      "ms": 318.07
+    },
+    {
+      "worker": 46,
+      "seat": 144,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10038,
+      "ms": 322.6
+    },
+    {
+      "worker": 48,
+      "seat": 146,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10039,
+      "ms": 330.44
+    },
+    {
+      "worker": 49,
+      "seat": 147,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10040,
+      "ms": 336.36
+    },
+    {
+      "worker": 42,
+      "seat": 133,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10041,
+      "ms": 345.82
+    },
+    {
+      "worker": 43,
+      "seat": 141,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10042,
+      "ms": 350.39
+    },
+    {
+      "worker": 7,
+      "seat": 91,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10043,
+      "ms": 358.08
+    },
+    {
+      "worker": 8,
+      "seat": 92,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10044,
+      "ms": 363.38
+    },
+    {
+      "worker": 9,
+      "seat": 93,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10045,
+      "ms": 367.51
+    },
+    {
+      "worker": 10,
+      "seat": 94,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10046,
+      "ms": 372.23
+    },
+    {
+      "worker": 14,
+      "seat": 98,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10047,
+      "ms": 377.94
+    },
+    {
+      "worker": 32,
+      "seat": 123,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10048,
+      "ms": 380.77
+    },
+    {
+      "worker": 50,
+      "seat": 148,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10049,
+      "ms": 384.1
+    },
+    {
+      "worker": 44,
+      "seat": 142,
+      "status": 201,
+      "code": "OK",
+      "order_id": 10050,
+      "ms": 389.59
+    }
+  ],
+  "post_state": {
+    "new_orders": {
+      "total": 50,
+      "pending": "50"
+    },
+    "held_seats": {
+      "total": 50,
+      "distinct_holders": 50
+    },
+    "global": {
+      "orders": 10050,
+      "session_seats": 20000,
+      "held_total": 470,
+      "sold_total": 9100
+    }
+  },
+  "checks": {
+    "http_201_all": true,
+    "new_orders_50_all_pending": true,
+    "selected_seats_50_held_unique": true,
+    "p95_le_1000ms": true,
+    "no_oversell": true
+  },
+  "latency_ms": {
+    "count": 50,
+    "avg_ms": 258.64,
+    "p50_ms": 254.76,
+    "p95_ms": 380.77,
+    "p99_ms": 389.59,
+    "min_ms": 118.97,
+    "max_ms": 389.59
+  },
+  "wall_ms": 393.78,
+  "throughput_rps": 126.97,
+  "pass": true
+}
