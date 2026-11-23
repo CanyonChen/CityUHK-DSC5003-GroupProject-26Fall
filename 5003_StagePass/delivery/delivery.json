@@ -188,9 +188,9 @@
     "REPORT-M5": {
       "path": "docs/course-report.md",
       "kind": "markdown",
-      "version": "v1.7",
+      "version": "v1.9",
       "status": "ACTIVE",
-      "note": "M5 课程报告 v1.7（2026-11-23 修订）：新增 Group Information/Contribution Statement 表、静态系统结构图、DDL 字段名修正、NFR 目标表和 GitHub 链接；保留 Track 1 证据地图、原需求 Q-01–Q-07 覆盖表与 17/17 缺口补测",
+      "note": "M5 课程报告 v1.9（2026-11-23 修订）：8 人成员表与 12.5% 均分贡献表已填，分工改为 2/2/3/1；保留 Group Information/Contribution Statement、系统图、Track 1 证据地图与 17/17 缺口补测；GitHub 已上传 170 文件",
       "checklist": [
         "覆盖项目背景、需求范围、角色与关键业务规则",
         "覆盖三层架构、技术栈、目录结构与模块职责",
@@ -200,7 +200,7 @@
         "覆盖购票、支付、退款、核销、状态模型与事务边界",
         "覆盖 M1-M4 验收、并发、异常、P95、EXPLAIN 与索引实验",
         "覆盖 M5 干净环境步骤、结果、端口说明与已知限制",
-        "含 Challenges/Lessons、References、GitHub 链接与视频/PDF 待补项（GitHub 远端为 FilmSys 模板基线，待决定替换或合并）",
+        "含 Challenges/Lessons、References、GitHub 链接与视频/PDF 待补项（GitHub main 仍为 FilmSys 旧基线，结构待整理）",
         "引用真实证据文件，不把计划值写成实测值"
       ]
     },
@@ -222,29 +222,41 @@
     "CONTRIB-M5": {
       "path": "docs/member-contributions.md",
       "kind": "markdown",
-      "version": "v1.0",
+      "version": "v1.1",
       "status": "ACTIVE",
-      "note": "M5 成员贡献记录：四组八人角色、任务与证据；姓名/学号/比例待组员确认",
+      "note": "M5 成员贡献记录 v1.1：8 人姓名/学号/邮箱/分工已填，比例均分 12.5%；名单不含专业等扩展字段",
       "checklist": [
-        "按四个小组列出 2+2+2+2 共 8 人",
+        "按数据库 2、前端 2、后端 3、扩展功能 1 共 8 人",
         "每人有具体任务与对应交付证据",
         "贡献比例合计为 100%",
-        "明确姓名、学号、比例需组员确认，不编造",
+        "姓名、学号、邮箱取自已确认的 TeamForming，不编造",
         "包含确认项与确认日期"
+      ]
+    },
+    "ROSTER-M5": {
+      "path": "docs/team-roster.md",
+      "kind": "markdown",
+      "version": "-",
+      "status": "ACTIVE",
+      "note": "小组成员名单：8 人姓名、学号、邮箱、分工；不含专业/电话/任务/证据",
+      "checklist": [
+        "8 人姓名、学号、邮箱与分工齐全",
+        "字段仅姓名/学号/邮箱/分工",
+        "与 member-contributions 的分工一致"
       ]
     },
     "CHECKLIST-M5": {
       "path": "docs/submission-checklist.md",
       "kind": "markdown",
-      "version": "v1.7",
+      "version": "v1.9",
       "status": "ACTIVE",
-      "note": "M5 提交清单 v1.7：报告升到 v1.7 并补 Group Information/Contribution Statement 与静态系统图；课程 brief 已取得（PDF/GitHub/视频）；成员信息、视频与 PDF 待补",
+      "note": "M5 提交清单 v1.9：成员 8 人均分 12.5%、team-roster 已入包；报告 v1.9；GitHub 已上传 170 文件且本轮 M5 文档已上传，但 main/根目录结构待整理；视频与 PDF 待补",
       "checklist": [
         "逐项列出源代码、DDL、种子、README、双前端说明、ER/事务、SQL/计划、验收、报告、视频、贡献记录",
         "写明发布包检查命令与 FAIL/WARN 要求",
         "写明干净环境复现的独立库、依赖、构建、HTTP、购票与统计结果",
         "写明成员贡献、官方通知、视频、默认端口、报告格式等待确认项",
-        "写明 GitHub 直传步骤与提交后核对项"
+        "写明 GitHub 上传现状、main/根目录结构整理项与提交后核对项"
       ]
     },
     "SCRIPT-ACCOV": {

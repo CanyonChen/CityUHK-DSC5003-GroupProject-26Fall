@@ -285,7 +285,7 @@
 - [x] 写明发布包检查命令与 FAIL/WARN 要求
 - [x] 写明干净环境复现的独立库、依赖、构建、HTTP、购票与统计结果
 - [x] 写明成员贡献、官方通知、视频、默认端口、报告格式等待确认项
-- [x] 写明 GitHub 直传步骤与提交后核对项
+- [x] 写明 GitHub 上传现状、main/根目录结构整理项与提交后核对项
 
 ### CHECKSCHEMA · ACTIVE · database/check_schema.py
 
@@ -296,10 +296,10 @@
 
 ### CONTRIB-M5 · ACTIVE · docs/member-contributions.md
 
-- [x] 按四个小组列出 2+2+2+2 共 8 人
+- [x] 按数据库 2、前端 2、后端 3、扩展功能 1 共 8 人
 - [x] 每人有具体任务与对应交付证据
 - [x] 贡献比例合计为 100%
-- [x] 明确姓名、学号、比例需组员确认，不编造
+- [x] 姓名、学号、邮箱取自已确认的 TeamForming，不编造
 - [x] 包含确认项与确认日期
 
 ### DDL · ACTIVE · database/schema.sql
@@ -372,7 +372,7 @@
 - [x] 覆盖购票、支付、退款、核销、状态模型与事务边界
 - [x] 覆盖 M1-M4 验收、并发、异常、P95、EXPLAIN 与索引实验
 - [x] 覆盖 M5 干净环境步骤、结果、端口说明与已知限制
-- [x] 含 Challenges/Lessons、References、GitHub 链接与视频/PDF 待补项
+- [x] 含 Challenges/Lessons、References、GitHub 链接与视频/PDF 待补项（GitHub main 仍为 FilmSys 旧基线，结构待整理）
 - [x] 引用真实证据文件，不把计划值写成实测值
 
 ### REQ · ACTIVE · docs/requirements-spec.md
@@ -382,6 +382,12 @@
 - [x] 每个 P0 功能都有 AC 编号，可追溯到验收用例
 - [x] 两个前端端口 8080/8081 与共用 API 3000 写明
 - [x] 全文无“验票端”、sessions、payment_events 等旧命名
+
+### ROSTER-M5 · ACTIVE · docs/team-roster.md
+
+- [x] 8 人姓名、学号、邮箱与分工齐全
+- [x] 字段仅姓名/学号/邮箱/分工
+- [x] 与 member-contributions 的分工一致
 
 ### SCRIPT-ACCOV · ACTIVE · scripts/ac_coverage_check.js
 
