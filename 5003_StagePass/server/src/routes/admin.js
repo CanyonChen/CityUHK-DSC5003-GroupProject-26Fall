@@ -121,6 +121,12 @@ router.get('/performances/:performanceId', ADMIN_ONLY, wrap(async (req, res) => 
   return sendOk(res, data);
 }));
 
+router.get('/performances/:performanceId/occupancy', ADMIN_ONLY, wrap(async (req, res) => {
+  const performanceId = requireInt(req.params.performanceId, 'performance_id');
+  const data = await admin.regionOccupancy(performanceId);
+  return sendOk(res, data);
+}));
+
 router.post('/performances', ADMIN_ONLY, wrap(async (req, res) => {
   const data = await admin.createPerformance({
     body: req.body || {}, requestId: req.requestId, actorId: req.auth.userId,
