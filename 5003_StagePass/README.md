@@ -4,7 +4,7 @@ CityU MDS · Semester A · DSC5003 数据库应用 · 小组项目
 
 产品名：**StagePass**（中文沟通名：舞台通行）。校园演出与小剧场固定座位的在线售票系统：两个前端（用户端 8080、管理端 8081）共用一个后端 API（3000），数据库为 MySQL/MariaDB。
 
-**当前状态**：数据库层、文档基线、M1、M2、M3、M4、M5（视频、成员信息、最终 PDF 除外）已交付，并额外完成 R1 实时刷新。M3 完成注册与安全退出、角色授权、自动对账和双端联调；M4 在 100 场次 / 20,000 场次座位 / 10,000 订单上完成 5 类查询 P95、EXPLAIN、索引实验、50 并发预留和 AC-14/17/24 异常用例；M5 从发布包在独立目录与独立库复现双前端 + 后端，完成课程报告、M5 证据、成员贡献记录模板和提交清单；R1 在 API 3000 增加 `/ws` 失效信号，用户端座位图/订单页与管理端概览/财务页自动重取，并加入广播作用域、300 ms 防抖、500 ms 最短间隔、单请求在飞、隐藏暂停与操作暂停，`realtime_check.js` 8/8，调度器单测与 UI 实测通过。`smoke.ps1` 5/5、`catalog_check.ps1` 32/32、`m1_check.ps1` 19/19、`m2_check.ps1` 45/45、`m3_check.ps1` 33/33；`m4_bench.js reservation` 为 50/50 HTTP 201、P95 380.77 ms；`m4_anomaly_check.js` 为 3/3。演示视频、8 位成员信息、报告 PDF 和 GitHub 仓库同步仍需在提交前完成；GitHub 地址为 <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>。
+**当前状态**：数据库层、文档基线、M1、M2、M3、M4、M5（视频、最终 PDF 除外）已交付，并额外完成 R1 实时刷新。M3 完成注册与安全退出、角色授权、自动对账和双端联调；M4 在 100 场次 / 20,000 场次座位 / 10,000 订单上完成 5 类查询 P95、EXPLAIN、索引实验、50 并发预留和 AC-14/17/24 异常用例；M5 从发布包在独立目录与独立库复现双前端 + 后端，完成课程报告、M5 证据、成员贡献记录（8 人均分 12.5%）和提交清单；R1 在 API 3000 增加 `/ws` 失效信号，用户端座位图/订单页与管理端概览/财务页自动重取，并加入广播作用域、300 ms 防抖、500 ms 最短间隔、单请求在飞、隐藏暂停与操作暂停，`realtime_check.js` 8/8，调度器单测与 UI 实测通过。`smoke.ps1` 5/5、`catalog_check.ps1` 32/32、`m1_check.ps1` 19/19、`m2_check.ps1` 45/45、`m3_check.ps1` 33/33；`m4_bench.js reservation` 为 50/50 HTTP 201、P95 380.77 ms；`m4_anomaly_check.js` 为 3/3。演示视频、报告 PDF 和 GitHub 根目录结构仍需在提交前完成；GitHub 地址为 <https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>。
 
 ## 目录结构
 
@@ -14,11 +14,12 @@ CityU MDS · Semester A · DSC5003 数据库应用 · 小组项目
 | `docs/database-design.md` | 数据库表结构与字段 v1.2（实体清单 / 关系概述 / 字段字典） |
 | `docs/api-contract.md` | API 接口契约 v1.9（47 条契约 + 4 个管理端辅助 + 11.1 WebSocket 失效信号与作用域 + API-47 连座推荐） |
 | `docs/performance-report.md` | M4 性能报告：环境、数据规模、5 类查询 P95、EXPLAIN、索引实验、50 并发预留、AC-14/17/24 |
-| `docs/course-report.md` | 课程报告 v1.7（Track 1）：Group Information/Contribution Statement 表、需求、架构与静态系统图、数据库 ER 图、3 条代表性 SQL、事务与一致性、测试、Track 1 证据地图与 Q-01–Q-07 覆盖表、性能、Challenges/Lessons、References、链接 |
+| `docs/course-report.md` | 课程报告 v1.8（Track 1）：Group Information/Contribution Statement 表、需求、架构与静态系统图、数据库 ER 图、3 条代表性 SQL、事务与一致性、测试、Track 1 证据地图与 Q-01–Q-07 覆盖表、性能、Challenges/Lessons、References、链接 |
 | `docs/system-architecture.svg` / `.png` | 系统结构图静态源文件与 PDF 用位图；报告 §3.1 直接嵌入 PNG |
 | `docs/ER-diagram.png` | 数据库 ER 图（17 实体 / 122 业务字段 / 21+1 关系 / 22 外键 / 20 显式索引） |
-| `docs/member-contributions.md` | 成员贡献记录：四组八人任务与证据，姓名/比例待组员确认 |
-| `docs/submission-checklist.md` | M5 最终提交清单 v1.7：交付状态、包内检查、提交步骤与剩余风险 |
+| `docs/member-contributions.md` | 成员贡献记录：8 人均分 12.5%，姓名/学号/邮箱/分工已填 |
+| `docs/team-roster.md` | 小组成员名单：姓名、学号、邮箱、分工 |
+| `docs/submission-checklist.md` | M5 最终提交清单 v1.8：交付状态、包内检查、提交步骤与剩余风险 |
 | `docs/local-run-guide.md` | Windows 小白本地运行指南：前置软件、双击启动、演示账号、停止与重置、常见问题 |
 | `database/schema.sql` | 17 表 DDL，v1.2，含 token_version、payload_json、严格模式与约束 |
 | `database/seed.sql` | 演示数据，v1.1-demo |
@@ -139,7 +140,7 @@ node .\m4_anomaly_check.js   # M4 AC-14/17/24（需 3100 bench API）
 - 角色以登录时的 token 快照为准，撤销授权不会立刻让已发 token 失效（8 小时内仍有效）。
 - 用户端为 Vue 3 + Vite；课程模板是 Vue 2 + Mint UI/Element UI + webpack，视觉与信息架构对齐，技术栈差异见 `web-user/README.md`。
 - 课程报告、ER 图和系统结构图在 `docs/`；数据库设计说明 Word、属性清单等如课程要求单独提交，从 `DB/` 或 `docs/` 取对应文件，不要混入无关归档。
-- 演示视频待与组员共同完成；成员贡献记录中的姓名、学号和比例待组员确认，报告 PDF 仍待导出。
+- 演示视频待与组员共同完成；8 人姓名、学号、邮箱、分工和 12.5% 均分已填；报告 PDF 仍待导出。
 - GitHub 仓库：<https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall>；当前 `origin/main` 是 FilmSys 模板基线（`b48385d`，248 个文件），与本地 StagePass 历史无共同祖先；先决定替换或合并，再 push，不能直接快进。
 - M5 干净环境验收使用 3200/8180/8181，因为默认 3000/8080/8081 被演示实例占用；默认配置未改，空机器可直接用默认端口。
 
@@ -152,5 +153,6 @@ node .\m4_anomaly_check.js   # M4 AC-14/17/24（需 3100 bench API）
 - M5 课程报告：`docs/course-report.md`
 - 系统结构图：`docs/system-architecture.png`、`docs/system-architecture.svg`
 - 成员贡献记录：`docs/member-contributions.md`
+- 成员名单：`docs/team-roster.md`
 - 最终提交清单：`docs/submission-checklist.md`
 - 交付清单与验收项：`delivery/MANIFEST.md`、`delivery/CHECKLISTS.md`
