@@ -5,8 +5,12 @@ on:
     branches: [main]
     paths:
       - '5003_StagePass/pages/**'
+      - '5003_StagePass/scripts/sync_cap.py'
+      - '5003_StagePass/scripts/test_sync_cap.py'
       - '5003_StagePass/web-user/public/media/*.svg'
       - '.github/workflows/stagepass-pages.yml'
+  schedule:
+    - cron: '7,37 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -23,6 +27,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Check announcement parsing
+        run: python -m unittest discover -s 5003_StagePass/scripts -p test_sync_cap.py
       - name: Assemble the public site
         run: |
           mkdir -p _site/media
@@ -30,6 +36,37 @@ jobs:
           cp 5003_StagePass/web-user/public/media/*.svg _site/media/
           test -s _site/index.html
           test -s _site/data/snapshot.json
+      - name: Refresh public CityUHK announcements
+        env:
+          TRIGGER: ${{ github.event_name }}
+          LIVE_FEED: https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/data/campus-events.json
+        run: |
+          feed=_site/data/campus-events.json
+          previous="$RUNNER_TEMP/published-campus-events.json"
+          if curl --fail --silent --show-error --location --max-time 20 "$LIVE_FEED?run=$GITHUB_RUN_ID" -o "$previous"; then
+            python - "$previous" "$feed" <<'PY'
+          import json, sys
+          from datetime import datetime
+          from pathlib import Path
+
+          published, bundled = map(Path, sys.argv[1:])
+          try:
+              old = json.loads(published.read_bytes())
+              seed = json.loads(bundled.read_bytes())
+              if old["sourceUrl"] == seed["sourceUrl"] and isinstance(old["events"], list):
+                  if datetime.fromisoformat(old["checkedAt"]) > datetime.fromisoformat(seed["checkedAt"]):
+                      bundled.write_bytes(published.read_bytes())
+          except (ValueError, TypeError, KeyError):
+              print("Published feed was unreadable. Using the bundled snapshot.")
+          PY
+          fi
+          if ! python 5003_StagePass/scripts/sync_cap.py --previous "$feed" --output "$feed"; then
+            if [ "$TRIGGER" = schedule ]; then
+              echo "::error::CAP refresh failed. The previous Pages deployment remains live."
+              exit 1
+            fi
+            echo "::warning::Publishing the website update with the last available CAP snapshot."
+          fi
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site

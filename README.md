@@ -1,8 +1,12 @@
 # StagePass · DSC5003 校园演出售票系统
 
-[打开在线演示](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/) · [项目源码与启动说明](5003_StagePass/) · [课程报告](5003_StagePass/docs/course-report.md)
+城大活动目录 · [English](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/) · [简体中文](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/?lang=zh-cn) · [繁體中文](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/?lang=zh-hk)
 
-在线演示可浏览演出、查看场次座位与区域上座率，数据取自演示数据库快照。完整的购票、出票、退款和验票流程可按项目启动说明运行。
+[项目源码与启动说明](5003_StagePass/) · [课程报告](5003_StagePass/docs/course-report.md)
+
+目录汇集[城大公告平台（CAP）](https://cap.cityu.edu.hk/)公开活动，保留主办方提供的报名、投稿和公告链接。GitHub Actions 每半小时尝试同步，页面标注最近一次成功同步时间。已有中文译文的公告会随页面语言切换，新公告先显示主办方原标题。
+
+名称以 `[Demo]` 开头的活动由项目组编制，可在同一目录打开场次、座位图与区域上座率。GitHub Pages 使用演示数据库快照，完整的购票、出票、退款和验票流程可在本地运行。
 
 ## Show 票务系统开发模板
 

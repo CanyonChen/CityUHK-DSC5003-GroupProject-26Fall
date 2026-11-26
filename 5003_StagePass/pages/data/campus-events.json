@@ -1,0 +1,193 @@
+{
+  "sourceUrl": "https://cap.cityu.edu.hk/",
+  "checkedAt": "2026-11-26T10:06:33+00:00",
+  "timeZone": "Asia/Hong_Kong",
+  "events": [
+    {
+      "id": "V16q0720x262411D164025",
+      "sourceUrl": "https://cap.cityu.edu.hk/postPublic.aspx?id=V16q0720x262411D164025",
+      "title": "(Invitation from Prof. Herman Hu Chairman's Office) [Live Broadcast] Friday Culture | 6th International Forum -\"Energy Is Power: New Developments Remaking Our Future\"",
+      "department": "HKICE",
+      "category": "Academic Seminar",
+      "postedAt": "2026-11-25T16:52:00+08:00",
+      "venue": "M3017 Lecture Theatre 1, 3/F, City University of Hong Kong Run Run Shaw Creative Media Centre, 18 Tat Hong Avenue, Kowloon Tong, Kowloon, Hong Kong",
+      "status": "announced",
+      "sessions": [
+        {
+          "label": null,
+          "start": "2026-12-08T10:00:00+08:00",
+          "end": "2026-12-08T12:45:00+08:00",
+          "precision": "minute",
+          "venue": "M3017 Lecture Theatre 1, 3/F, City University of Hong Kong Run Run Shaw Creative Media Centre, 18 Tat Hong Avenue, Kowloon Tong, Kowloon, Hong Kong"
+        }
+      ],
+      "deadlines": [],
+      "actions": [
+        {
+          "kind": "registration",
+          "url": "https://docs.google.com/forms/d/e/1FAIpQLSdPiYBn1k7-jjGsxV0PnOFSkTW8roITSd1KKrf5lCIlvI_S3A/viewform"
+        }
+      ]
+    },
+    {
+      "id": "R17m2020t263511Y307312",
+      "sourceUrl": "https://cap.cityu.edu.hk/postPublic.aspx?id=R17m2020t263511Y307312",
+      "title": "Join Us for William Benter Distinguished Lecture Series - Professor Weizhu BAO (8 December 2026)",
+      "department": "LBJ",
+      "category": "Academic Seminar",
+      "postedAt": "2026-11-12T17:56:00+08:00",
+      "venue": null,
+      "status": "announced",
+      "sessions": [
+        {
+          "label": null,
+          "start": "2026-12-08",
+          "end": null,
+          "precision": "day",
+          "venue": null
+        }
+      ],
+      "deadlines": [],
+      "actions": []
+    },
+    {
+      "id": "I15g2820a265511K312223",
+      "sourceUrl": "https://cap.cityu.edu.hk/postPublic.aspx?id=I15g2820a265511K312223",
+      "title": "(Reminder) Seminar on Space-Time Metasurface Antennas for Integrated Sensing, Communications, and Computing by Professor Gengbo Wu",
+      "department": "SKLTMW",
+      "category": "Research Seminar",
+      "postedAt": "2026-11-26T00:00:00+08:00",
+      "venue": "Room 15-202, 15/F, State Key Laboratory of Terahertz and Millimeter Waves, Lau Ming Wai Academic Building",
+      "status": "announced",
+      "sessions": [
+        {
+          "label": null,
+          "start": "2026-11-27T14:00:00+08:00",
+          "end": "2026-11-27T14:45:00+08:00",
+          "precision": "minute",
+          "venue": "Room 15-202, 15/F, State Key Laboratory of Terahertz and Millimeter Waves, Lau Ming Wai Academic Building"
+        }
+      ],
+      "deadlines": [],
+      "actions": []
+    },
+    {
+      "id": "O09l2420g264911Q578325",
+      "sourceUrl": "https://cap.cityu.edu.hk/postPublic.aspx?id=O09l2420g264911Q578325",
+      "title": "(Reminder) Seminar on Integrated lithium niobate microwave and terahertz photonics by Professor Cheng Wang",
+      "department": "SKLTMW",
+      "category": "Research Seminar",
+      "postedAt": "2026-11-26T00:00:00+08:00",
+      "venue": "Room 15-202, 15/F, State Key Laboratory of Terahertz and Millimeter Waves, Lau Ming Wai Academic Building",
+      "status": "announced",
+      "sessions": [
+        {
+          "label": null,
+          "start": "2026-11-27T15:15:00+08:00",
+          "end": "2026-11-27T16:15:00+08:00",
+          "precision": "minute",
+          "venue": "Room 15-202, 15/F, State Key Laboratory of Terahertz and Millimeter Waves, Lau Ming Wai Academic Building"
+        }
+      ],
+      "deadlines": [],
+      "actions": []
+    },
+    {
+      "id": "T09q3920l264711V298010",
+      "sourceUrl": "https://cap.cityu.edu.hk/postPublic.aspx?id=T09q3920l264711V298010",
+      "title": "(10 & 12 December)[Seminar & Concert] New Model Asians",
+      "department": "SCM",
+      "category": "Others",
+      "postedAt": "2026-11-23T09:47:00+08:00",
+      "venue": "[ Guest Lecture - Dec 10 ] M1052 ; [ Concert - Dec 12 ] M1060",
+      "status": "announced",
+      "sessions": [
+        {
+          "label": "Guest Lecture",
+          "start": "2026-12-10T15:00:00+08:00",
+          "end": "2026-12-10T16:30:00+08:00",
+          "precision": "minute",
+          "venue": "Screening Theatre (M1052), L1."
+        },
+        {
+          "label": "Concert",
+          "start": "2026-12-12T19:30:00+08:00",
+          "end": "2026-12-12T21:30:00+08:00",
+          "precision": "minute",
+          "venue": "Multimedia Theatre (M1060), L1."
+        }
+      ],
+      "deadlines": [],
+      "actions": [
+        {
+          "kind": "registration",
+          "url": "https://forms.gle/HcckSty7ibAeLMBT8"
+        }
+      ]
+    },
+    {
+      "id": "V16v1020p264911I592003",
+      "sourceUrl": "https://cap.cityu.edu.hk/postPublic.aspx?id=V16v1020p264911I592003",
+      "title": "(30 November 2026) Call for Papers – Gacha Con 2027: Otome Games and Beyond",
+      "department": "SCM",
+      "category": "Others",
+      "postedAt": "2026-11-06T11:21:00+08:00",
+      "venue": null,
+      "status": "announced",
+      "sessions": [
+        {
+          "label": null,
+          "start": "2027-02-01",
+          "end": "2027-02-03",
+          "precision": "day",
+          "venue": null
+        }
+      ],
+      "deadlines": [
+        {
+          "kind": "submission",
+          "at": "2026-11-30T23:59:00+08:00",
+          "precision": "minute"
+        }
+      ],
+      "actions": [
+        {
+          "kind": "submission",
+          "url": "https://tinyurl.com/gachacon2027submit"
+        }
+      ]
+    },
+    {
+      "id": "D11b1320u263211F817425",
+      "sourceUrl": "https://cap.cityu.edu.hk/postPublic.aspx?id=D11b1320u263211F817425",
+      "title": "Workshop: SoundLab Presents: Jiyeon Kim and Dawn Scarfe",
+      "department": "SCM",
+      "category": "Others",
+      "postedAt": "2026-11-25T11:21:00+08:00",
+      "venue": "Screening Room 2 (M6058), L6, Run Run Shaw Creative Media Centre, City University of Hong Kong",
+      "status": "announced",
+      "sessions": [
+        {
+          "label": null,
+          "start": "2026-12-04T12:00:00+08:00",
+          "end": "2026-12-04T13:30:00+08:00",
+          "precision": "minute",
+          "venue": "Screening Room 2 (M6058), L6, Run Run Shaw Creative Media Centre, City University of Hong Kong"
+        }
+      ],
+      "deadlines": [
+        {
+          "kind": "registration",
+          "at": "2026-12-03T17:00:00+08:00",
+          "precision": "minute"
+        }
+      ],
+      "actions": [
+        {
+          "kind": "registration",
+          "url": "https://forms.gle/DkXTyxyMoepdHZzu8"
+        }
+      ]
+    }
+  ]
+}
