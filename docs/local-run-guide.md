@@ -1,234 +1,76 @@
-# CityUHK Events Hub 本地运行指南（Windows 小白版）
+# 本地运行
 
-版本：v1.0（2026-11-23）
+CityUHK Events Hub 包含一个公开活动目录和一套带数据库的演示票务应用。开发公告、翻译或静态页面时，只需启动活动目录。开发选座、订单、支付、退款和验票时，启动票务应用。[票务系统架构图](system-architecture.svg)
 
-适用对象：第一次接触这个项目、只会在 Windows 上双击和复制命令的组员。目标是把项目在本地跑起来，看到用户端和管理端页面。
-
-> 当前一键脚本只支持 Windows。Mac 组员不能直接双击 `.bat`，需要手动安装 Node.js 和 MySQL，或找一台 Windows 电脑演示。
-
-## 1. 先装好 3 个软件
-
-### 1.1 Node.js
-
-1. 打开 <https://nodejs.org>，下载 **LTS 版本**（当前应是 Node.js 20 或 22）。
-2. 安装时一路点“Next”，不要取消 “Add to PATH”。
-3. 安装完成后打开 PowerShell，输入：
-
-```powershell
-node -v
-npm -v
-```
-
-能显示版本号即可。建议 Node.js 20 及以上。
-
-### 1.2 XAMPP
-
-1. 打开 <https://www.apachefriends.org>，下载 Windows 版 XAMPP。
-2. 安装到默认路径 `C:\xampp` 最省事；装到其他盘也可以，脚本会自动查找常见路径。
-3. 打开 **XAMPP Control Panel**，点击 **MySQL** 旁边的 **Start**。
-4. 看到 MySQL 变成绿色、端口为 `3306` 即可。
-
-默认数据库账号是：
-
-- 用户：`root`
-- 密码：空
-- 端口：`3306`
-
-不要改 root 密码，除非你确定知道怎么改项目配置。
-
-### 1.3 Python（建议安装）
-
-1. 打开 <https://www.python.org/downloads>，下载 Python 3.10 以上版本。
-2. 安装时勾选 **Add Python to PATH**。
-3. 检查：
-
-```powershell
-python --version
-```
-
-Python 只用于导入演示数据后的校验。没装也能启动，但会跳过这一步检查。
-
-## 2. 放项目
-
-在准备存放代码的目录打开 PowerShell，运行：
-
-```powershell
+```sh
 git clone https://github.com/CanyonChen/CityUHK-Events-Hub.git CityUHK_Events_Hub
 cd CityUHK_Events_Hub
 ```
 
-若使用下载的压缩包，先解压缩。下文示例假定项目位于 `D:\Projects\CityUHK_Events_Hub`。
+## 预览活动目录
 
-注意：
+在仓库根目录运行以下命令，然后打开 [本地活动目录](http://127.0.0.1:8000/)。目录读取 `pages/data/` 中已保存的公告、译文和演出快照。预览和语言切换都可以在没有票务服务的情况下使用。
 
-- 不要在压缩包里直接双击运行，要先解压。
-- 路径尽量简单，不要放在 OneDrive 同步目录里。
-- 不要只复制 `server` 或 `web-user` 一个子文件夹，要复制整个发布包。
-
-## 3. 一键启动（推荐）
-
-1. 确认 XAMPP 的 MySQL 已经启动。
-2. 进入 `CityUHK_Events_Hub` 文件夹。
-3. 双击 **`Start-CityUHK Events Hub.bat`**。
-4. 第一次启动会自动安装依赖，可能需要 **2–5 分钟**，不要关闭窗口。
-5. 看到 `API`、`User web`、`Admin web` 三个地址后，浏览器会自动打开用户端和管理端。
-6. 如果浏览器提示“无法访问”，等 30–60 秒再刷新一次；前端第一次编译比较慢。
-
-启动成功后会打开三个窗口，标题分别是：
-
-- `CityUHK Events Hub API`
-- `CityUHK Events Hub User web`
-- `CityUHK Events Hub Admin web`
-
-这三个窗口要保留，关掉就停止对应服务。
-
-## 4. 打开页面和登录
-
-用户端：
-
-```text
-http://127.0.0.1:8080
+```sh
+python -m http.server 8000 --bind 127.0.0.1 --directory pages
 ```
 
-管理端：
+### 管理员登录入口
 
-```text
-http://127.0.0.1:8081
-```
+公开看板导航中的「管理员登录」打开站点的 `./admin/`。默认按钮指向访问者本机的 `http://127.0.0.1:8081/login`。先按下节启动管理端，再从同一台电脑打开按钮。[本地预览的管理员入口](http://127.0.0.1:8000/admin/)
 
-演示账号（密码统一为 `Demo@1234`）：
+已部署独立管理端时，在 GitHub 仓库的 **Settings → Secrets and variables → Actions → Variables** 新增仓库变量 `ADMIN_LOGIN_URL`，填写该管理端完整的 HTTPS 登录地址（例如 `https://admin.example.org/login`）。重新运行 Pages 部署后，公开看板的入口会使用该地址。购票端的登录链接单独通过 `web-user/.env.local` 中的 `VITE_ADMIN_LOGIN_URL` 设置；开发时重启 Vite，上线时重新构建购票端。
 
-| 账号 | 用途 |
-|---|---|
-| `buyer01` | 用户端购票、选座、订单、电子票 |
-| `admin` | 管理端全部页面 |
-| `checker01` | 管理端验票、授权场次 |
+## 启动票务应用
 
-推荐先走一遍：
+### Windows 一键启动
 
-1. 用 `buyer01` 登录用户端。
-2. 打开一个活动，进入选座页。
-3. 选 1–2 个座位，进入结算。
-4. 点击“Simulate successful payment”，生成订单和电子票。
-5. 用 `admin` 登录管理端，查看概览、订单和财务页。
+安装 Node.js 20 或更新版本（含 npm）和带 MariaDB 的 XAMPP。启动器使用本机 `127.0.0.1:3306`、XAMPP 默认的 `root` 账号和空密码。Python 3.10 或更新版本可用于导入后的校验。若自行设置了数据库账号或端口，使用下文的手动启动步骤。
 
-## 5. 怎么停止
-
-关闭这三个窗口即可：
-
-- `CityUHK Events Hub API`
-- `CityUHK Events Hub User web`
-- `CityUHK Events Hub Admin web`
-
-MySQL 可以继续开着，不影响电脑使用；不用时在 XAMPP Control Panel 点 **Stop**。
-
-## 6. 恢复演示数据
-
-演示数据被改乱、订单太多，或想重新演示时：
-
-1. 先关闭上面三个 CityUHK Events Hub 窗口。
-2. 双击 **`Reset-CityUHK Events Hub.bat`**。
-3. 等待提示 `Reset complete`。
-
-它会删除并重建 `ticketing_system` 数据库，然后重新导入演示数据。**这个操作会清空你本地的测试订单，不要在有重要数据时运行。**
-
-## 7. 一键启动失败时，用手动方式
-
-如果 `Start-CityUHK Events Hub.bat` 报错，按下面 4 个窗口手动启动。每开一个 PowerShell 窗口，执行一段命令，并保持窗口不关。下面的 `D:\Projects\CityUHK_Events_Hub` 要替换成你实际存放项目的路径。
-
-### 窗口 1：建库和演示数据
+双击根目录里的 **`Start-CityUHK Events Hub.bat`**。它会启动或复用 MariaDB，在 `ticketing_system` 中没有数据表时导入结构和种子，首次安装 Node 依赖，并打开两个网页。也可以从 PowerShell 运行：
 
 ```powershell
-Set-Location -LiteralPath "D:\Projects\CityUHK_Events_Hub\scripts"
-.\reset_demo.ps1
+& '.\Start-CityUHK Events Hub.bat'
 ```
 
-看到 `Reset complete` 再继续。
+| 服务 | 默认地址 | 演示账号 |
+|---|---|---|
+| 用户端 | [购票页面](http://127.0.0.1:8080/) | `buyer01` 至 `buyer30` |
+| 管理端 | [管理控制台](http://127.0.0.1:8081/) | `admin` 管理所有场次，`checker01` 至 `checker03` 仅核销已分配场次 |
+| API | [健康检查](http://127.0.0.1:3000/health) | 公开读取 |
 
-### 窗口 2：后端 API
+种子账号的密码均为 `Demo@1234`。停止应用时，在 API、用户端和管理端各自的窗口按 `Ctrl+C`。数据库可从 XAMPP 控制面板停止。
 
-```powershell
-Set-Location -LiteralPath "D:\Projects\CityUHK_Events_Hub\server"
-npm install
-Copy-Item .env.example .env
-npm start
+### 手动启动（Windows、macOS 或 Linux）
+
+先准备一个可运行 InnoDB 的本地 MySQL 或 MariaDB 实例。以下操作在**空的演示数据库**上执行一次。SQL 文件默认创建或选择 `ticketing_system`。从仓库根目录运行数据库客户端，然后依次导入两个文件：
+
+```sh
+mysql --host=127.0.0.1 --port=3306 --user=root --password --default-character-set=utf8mb4
 ```
 
-看到 API 监听 `3000` 后保持窗口。
-
-### 窗口 3：用户端
-
-```powershell
-Set-Location -LiteralPath "D:\Projects\CityUHK_Events_Hub\web-user"
-npm install
-npm run serve
+```sql
+SOURCE database/schema.sql
+SOURCE database/seed.sql
 ```
 
-### 窗口 4：管理端
+使用 `mariadb` 客户端的系统可将命令名 `mysql` 换成 `mariadb`。已有演示数据时，可直接启动服务。若数据库账号、密码或端口与默认值不同，将 [server/.env.example](../server/.env.example) 复制为 `server/.env`，填写 `DB_HOST`、`DB_PORT`、`DB_USER`、`DB_PASSWORD` 和 `DB_NAME`。API 会自动读取此文件。
 
-```powershell
-Set-Location -LiteralPath "D:\Projects\CityUHK_Events_Hub\web-admin"
-npm install
-npm run serve
-```
+分别打开三个终端，各自在仓库根目录执行对应的一行安装命令和一行启动命令：
 
-然后分别打开 `http://127.0.0.1:8080` 和 `http://127.0.0.1:8081`。
+| 服务 | 首次安装 | 启动 |
+|---|---|---|
+| API | `npm ci --prefix server` | `npm --prefix server start` |
+| 用户端 | `npm ci --prefix web-user` | `npm --prefix web-user run serve` |
+| 管理端 | `npm ci --prefix web-admin` | `npm --prefix web-admin run serve` |
 
-## 8. 常见问题
+前端默认调用 `http://127.0.0.1:3000`。若通过 `server/.env` 更改了 `PORT`，在 `web-user/.env.local` 和 `web-admin/.env.local` 设置 `VITE_API_BASE` 为新的 API 地址，然后重启两个前端。
 
-### `node` 不是内部或外部命令
+## 验证与排查
 
-Node.js 没装好，或安装时没勾选 PATH。重新安装 Node.js LTS，安装后关掉所有 PowerShell 窗口再打开。
+- **页面能打开，目录没有数据。** 打开[健康检查](http://127.0.0.1:3000/health)。服务与数据库均可用时，HTTP 状态为 `200`，`data.db` 为 `ok`。返回 `503` 时核对 MariaDB 是否运行，以及 `server/.env` 中的连接参数。
+- **Windows 提示 `mysqld not found`。** 在同一个 PowerShell 窗口设置 `$env:XAMPP_HOME = 'D:\xampp'`（替换为实际目录），确认其中有 `mysql\bin\mysqld.exe` 和 `mysql\bin\mysql.exe`，再运行启动器。
+- **端口已被占用。** 用 `Get-NetTCPConnection -State Listen -LocalPort 3000,8080,8081,3306` 核对进程。前端固定使用 8080 和 8081，启动器会复用已监听的端口。
+- **需要重新演示验票或恢复种子。** 场次时间按导入时刻生成。先关闭三个应用进程，再双击 `Reset-CityUHK Events Hub.bat`。确认后它会删除本机 `ticketing_system` 数据库并重建，已有订单和账号会被种子数据替换。
 
-### `mysqld not found` 或找不到 XAMPP
-
-脚本会自动找 `C:\xampp`、`D:\xampp`、`D:\_Coding\XAMPP`。如果都不对，在 PowerShell 里设置一次：
-
-```powershell
-setx XAMPP_HOME "你的XAMPP路径"
-```
-
-例如：
-
-```powershell
-setx XAMPP_HOME "C:\xampp"
-```
-
-然后关闭 PowerShell 重新打开，再运行 `Start-CityUHK Events Hub.bat`。
-
-### 端口被占用
-
-项目默认使用：
-
-- MySQL `3306`
-- API `3000`
-- 用户端 `8080`
-- 管理端 `8081`
-
-先关掉占用这些端口的其他程序。最常见的是另一个 MySQL 实例占用了 `3306`，或之前启动过旧项目。
-
-### `npm install` 很慢或失败
-
-第一次安装依赖需要联网。确认网络正常后重试；如果公司/学校网络限制 npm，换一个网络或设置 npm 镜像后再试。
-
-### 页面打不开或空白
-
-1. 确认 `CityUHK Events Hub API` 窗口没有报错。
-2. 等 30–60 秒，Vite 第一次编译较慢。
-3. 刷新浏览器。
-4. 确认地址是 `http://127.0.0.1:8080`，不要写成 `https`。
-
-### 登录提示密码错误
-
-演示账号密码都是 `Demo@1234`，区分大小写。若数据库被改过，双击 `Reset-CityUHK Events Hub.bat` 恢复演示数据。
-
-## 9. 给组员的最短版本
-
-如果只想发一段话到群里，可以复制这段：
-
-> 1. 装 Node.js 20 LTS、XAMPP、Python 3.10+。
-> 2. 打开 XAMPP，点 MySQL 的 Start。
-> 3. 解压 `CityUHK_Events_Hub`，双击 `Start-CityUHK Events Hub.bat`，等 2–5 分钟。
-> 4. 用户端 <http://127.0.0.1:8080>，账号 `buyer01` / `Demo@1234`。
-> 5. 管理端 <http://127.0.0.1:8081>，账号 `admin` / `Demo@1234`。
-> 6. 停止就关掉三个 CityUHK Events Hub 窗口；数据乱了双击 `Reset-CityUHK Events Hub.bat`。
+日常验收与开发命令见[脚本说明](../scripts/README.md)。

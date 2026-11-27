@@ -305,7 +305,6 @@ function clearSelection() {
       <section class="panel panel-pad">
         <div class="section-head" style="margin-bottom: 16px">
           <div>
-            <div class="eyebrow">Pick your seats</div>
             <h2 style="font-size: 24px">Auditorium plan</h2>
           </div>
           <button class="btn btn-outline btn-sm" type="button" @click="load">Refresh</button>
@@ -352,7 +351,6 @@ function clearSelection() {
 
       <aside class="panel summary">
         <div class="recommend-box">
-          <div class="eyebrow">Seats together</div>
           <h3 style="font-size: 18px">Find an adjacent block</h3>
           <p class="muted small">
             Same row, same region, no aisle crossed. Total price must stay within your budget.

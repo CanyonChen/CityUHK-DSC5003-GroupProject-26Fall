@@ -1,8 +1,9 @@
-"""Check whether actual database column counts (excluding generated columns) match the data dictionary."""
+"""Check the expected number of non-generated columns in each ticketing table."""
 import subprocess
 import sys
+from mysql_client import find_mysql
 
-MYSQL = r"D:\_Coding\XAMPP\mysql\bin\mysql.exe"
+MYSQL = find_mysql()
 EXPECTED = {
     "users": 6, "role_assignments": 6, "venues": 6, "seats": 7, "events": 5,
     "event_media": 6, "performances": 11, "price_tiers": 5, "session_seats": 8,
@@ -27,7 +28,7 @@ for line in p.stdout.strip().splitlines()[1:]:
         rows[parts[0]] = (int(parts[1]), int(parts[2]))
 
 ok = True
-print(f"{'Table':<26}{'Total':>5}{'Generated':>7}{'Business':>7}{'Dictionary':>6}  Result")
+print(f"{'Table':<26}{'Total':>6}{'Generated':>11}{'Business':>10}{'Expected':>10}  Result")
 for t, exp in EXPECTED.items():
     if t not in rows:
         print(f"{t:<26}{'Missing':>5}")
@@ -38,7 +39,7 @@ for t, exp in EXPECTED.items():
     status = "OK" if biz == exp else "MISMATCH"
     if biz != exp:
         ok = False
-    print(f"{t:<26}{total:>5}{gen:>7}{biz:>7}{exp:>6}  {status}")
+    print(f"{t:<26}{total:>6}{gen:>11}{biz:>10}{exp:>10}  {status}")
 
 extra = set(rows) - set(EXPECTED)
 if extra:

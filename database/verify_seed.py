@@ -2,19 +2,7 @@
 import os
 import subprocess
 import sys
-from pathlib import Path
-
-
-def find_mysql():
-    """Prefer XAMPP_HOME, then this checkout's portable database and system installations."""
-    portable = Path(__file__).resolve().parents[1] / ".cache" / "runtime"
-    roots = [os.environ.get("XAMPP_HOME"), portable, r"C:\xampp", r"D:\xampp", r"D:\_Coding\XAMPP"]
-    for root in roots:
-        if root:
-            exe = Path(root) / "mysql" / "bin" / "mysql.exe"
-            if exe.exists():
-                return str(exe)
-    return r"C:\xampp\mysql\bin\mysql.exe"
+from mysql_client import find_mysql
 
 
 MYSQL = find_mysql()

@@ -1,67 +1,23 @@
-# 数据库表结构与字段
+# 票务数据库
 
-> 版本 v1.2（2026-11-22），与物化 DDL `schema.sql` 对齐；已在 MariaDB 10.4.32（XAMPP）实际建库，并通过结构与约束用例。
-> 数据类型采用 MySQL 8.0 / MariaDB 10.5+ 实际类型：金额统一 BIGINT 整数分；时间统一 DATETIME(3)，按 UTC 存储，展示层转 Asia/Hong_Kong。
-> 数据库必须开启严格模式（`STRICT_ALL_TABLES` 等），否则 NOT NULL 与 CHECK 会被静默放宽。
+票务 API 使用 InnoDB，默认数据库为 `ticketing_system`，字符集为 `utf8mb4`。以下 17 张表存储本地演出、场次、库存和交易。公开活动目录的 CAP 快照由同步脚本写入 `pages/data/`，独立于这些表。[建表 SQL](../database/schema.sql) · [演示种子](../database/seed.sql) · [启动与导入](local-run-guide.md)
 
----
+## 数据流
 
-## 模块一：实体清单
-
-| 表名（英） | 用途（中） | 主键 | 字段数 |
-|---|---|---|---|
-| users | 用户账号与认证信息 | user_id | 6 |
-| role_assignments | 用户-角色-场次授权关系 | assignment_id | 6 |
-| venues | 场馆基础信息与布局元数据 | venue_id | 6 |
-| seats | 场馆座位明细（区域/排号/坐标/相邻分组） | seat_id | 7 |
-| events | 活动基础信息 | event_id | 5 |
-| event_media | 活动展示资源（多图，含封面） | media_id | 6 |
-| performances | 场次（时间窗口与状态） | performance_id | 11 |
-| price_tiers | 场次票价区 | tier_id | 5 |
-| session_seats | 场次座位库存与归属 | session_seat_id | 8 |
-| orders | 订单（状态/金额/截止/幂等） | order_id | 12 |
-| order_items | 订单明细与成交价格快照 | order_item_id | 5 |
-| payment_attempts | 支付尝试 | attempt_id | 9 |
-| payment_notifications | 支付通知接收与处理结果 | notice_id | 9 |
-| tickets | 电子票据与票码哈希 | ticket_id | 5 |
-| checkins | 核销记录 | checkin_id | 4 |
-| refunds | 退款请求 | refund_id | 9 |
-| audit_logs | 审计日志 | log_id | 9 |
-
----
-
-## 模块二：实体关系概述
-
-| 关系 | 基数 | 说明 |
+| 环节 | 表 | 关键关系 |
 |---|---|---|
-| users ↔ role_assignments | 1 : N | 一个用户可有零个或多个授权记录；一条授权只属于一个用户 |
-| performances ↔ role_assignments | 1 : N | 一条验票授权指向一个场次；管理员与购票用户无场次归属 |
-| users ↔ orders | 1 : N | 一个用户可有零个或多个订单；一个订单只属于一个用户 |
-| users ↔ checkins（验票员） | 1 : N | 一个验票员可核销多张票；一条核销记录只有一个验票员 |
-| venues ↔ seats | 1 : N | 一个场馆包含多个座位；一个座位只属于一个场馆 |
-| venues ↔ performances | 1 : N | 一个场馆可举办多个场次；一个场次只在一个场馆 |
-| events ↔ performances | 1 : N | 一个活动对应多个场次；一个场次只属于一个活动 |
-| events ↔ event_media | 1 : N | 一个活动可有多条展示资源；每条资源只属于一个活动 |
-| performances ↔ price_tiers | 1 : N | 一个场次有多个票价区；一个票价区只属于一个场次 |
-| performances ↔ session_seats | 1 : N | 一个场次包含多个场次座位 |
-| seats ↔ session_seats | 1 : N | 一个座位可在多个场次中作为库存 |
-| price_tiers ↔ session_seats | 1 : N | 一个票价区关联多个场次座位 |
-| performances ↔ orders | 1 : N | 一个场次产生多个订单 |
-| orders ↔ order_items | 1 : N | 一个订单包含多个明细（1–4 张票） |
-| session_seats ↔ order_items | 1 : N | 同一场次座位可出现在不同历史订单明细（旧票作废后可再售） |
-| order_items ↔ tickets | 1 : 1 | 一条明细生成一张票；一张票只源于一条明细 |
-| tickets ↔ checkins | 1 : 1 | 一张票至多一条成功核销记录 |
-| orders ↔ payment_attempts | 1 : N | 一个订单可有多次支付尝试 |
-| payment_attempts ↔ payment_notifications | 1 : N | 一次支付尝试可收到多条通知 |
-| payment_attempts ↔ refunds | 1 : N | 一次支付可发起多次退款尝试 |
-| orders ↔ refunds | 1 : N | 整单退款关联订单；迟到付款等异常款项退款可不填订单 |
-| audit_logs | — | 松耦合：不通过外键关联任何实体，快照式记录 |
+| 身份与授权 | `users`、`role_assignments` | 授权记录将账号关联到角色；验票员的权限可以限定到场次。退出登录时 `users.token_version` 递增。 |
+| 演出与场馆 | `events`、`event_media`、`venues`、`seats` | 活动及其图片可以跨场次复用；场馆座位保存区域、排号、座号和连座分组。 |
+| 排期与库存 | `performances`、`price_tiers`、`session_seats` | 每场演出在一个场馆举行。同一物理座位在不同场次拥有独立库存。 |
+| 订单与付款 | `orders`、`order_items`、`payment_attempts`、`payment_notifications` | 下单时在事务内锁定整组场次座位并保存价格快照。一个订单允许多次支付尝试，支付通知独立记录处理结果。 |
+| 票据与退款 | `tickets`、`checkins`、`refunds` | 支付成功后按订单明细出票；每张票最多有一条成功核销记录。正常整单退款成功后作废票据并释放库存。 |
+| 操作记录 | `audit_logs` | 保存操作者、对象、请求 ID 和变更摘要，便于按 API 日志回查。 |
 
----
+金额字段以整数分存储。数据库与应用连接统一使用 UTC、`DATETIME(3)` 和严格 SQL 模式；用户界面按香港时间展示。`seats.seat_id` 表示场馆内的固定位置，`session_seats.session_seat_id` 表示某一场次的可售库存。前端在创建订单或调整库存时使用后者。
 
-## 模块三：数据字典
+## 数据字典
 
-> 键及属性：PK=主键，FK（表.列）=外键，UK=唯一约束；组合键以"字段1 + 字段2"表达。生成列为实现层辅助列，不计入业务字段数。
+`PK`、`FK` 和 `UK` 分别表示主键、外键和唯一约束。组合约束单列说明。`performance_key` 和 `cover_event_id` 为数据库生成列，其余 122 列为业务字段。完整索引及约束表达式见[建表 SQL](../database/schema.sql)。
 
 **users（用户）**
 
@@ -287,4 +243,3 @@
 | — | 安全约束 | — | — | — | 不保存密码、完整票码、支付密钥等凭证 |
 
 > 无外键实体：users、venues、audit_logs。
-> 版本说明：v1.1 相对 v1.0 修正 6 处阻塞问题（seats 唯一键补 region、role_assignments 的 NULL 唯一、时间类型改 DATETIME(3)、orders 增加内容指纹、payment_notifications 增加接收/处理时间、refunds 增加订单与时间），并补齐索引所需字段；对应 DDL 见同目录 `schema.sql`。

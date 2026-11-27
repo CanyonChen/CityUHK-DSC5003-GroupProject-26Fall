@@ -187,7 +187,6 @@ async function refund() {
     <div class="page-head">
       <div>
         <RouterLink to="/orders" class="backlink">← My orders</RouterLink>
-        <div class="eyebrow">Checkout</div>
         <h1>Complete your booking</h1>
       </div>
       <div v-if="order" class="toolbar">

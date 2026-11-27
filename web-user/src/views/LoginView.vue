@@ -71,9 +71,8 @@ function useDemo(name) {
 <template>
   <div class="login-wrap">
     <section class="login-art">
-      <div class="hero-kicker">CityU MDS · DSC5003</div>
-      <h1>Your seat at the show.</h1>
-      <p>Browse campus performances, pick your exact seat, and keep every ticket in one place. Reserved seating, live availability, and a 5-minute hold to complete checkout.</p>
+      <h1>Your tickets</h1>
+      <p>Sign in to reserve a seat, check your orders or show your ticket at the door.</p>
     </section>
 
     <section class="login-form-wrap">

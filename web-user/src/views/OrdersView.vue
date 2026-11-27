@@ -92,7 +92,6 @@ async function refund(order) {
   <div class="wrap">
     <div class="page-head">
       <div>
-        <div class="eyebrow">Your account</div>
         <h1>My orders</h1>
         <p>Pending holds expire after five minutes. Paid orders keep their seats.</p>
       </div>

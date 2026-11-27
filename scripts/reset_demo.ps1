@@ -9,9 +9,9 @@ param(
 . "$PSScriptRoot\_common.ps1"
 $ErrorActionPreference = "Stop"
 
-$schema = Join-Path $AiDir "schema.sql"
-$seed   = Join-Path $AiDir "seed.sql"
-$verify = Join-Path $AiDir "verify_seed.py"
+$schema = Join-Path $DatabaseDir "schema.sql"
+$seed   = Join-Path $DatabaseDir "seed.sql"
+$verify = Join-Path $DatabaseDir "verify_seed.py"
 
 Write-Step "0/5 Preflight checks"
 $bad = @()

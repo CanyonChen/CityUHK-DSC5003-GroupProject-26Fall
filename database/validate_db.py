@@ -1,16 +1,20 @@
-"""Constraint validation after executing schema.sql on XAMPP MariaDB (real database plus test cases)."""
+"""Clear a local ticketing database and run constraint tests against its schema."""
+import argparse
 import subprocess
 import sys
+from mysql_client import find_mysql
 
-MYSQL = r"D:\_Coding\XAMPP\mysql\bin\mysql.exe"
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--database", default="ticketing_system", help="Database whose tables will be cleared (default: %(default)s)")
+DB = parser.parse_args().database
+MYSQL = find_mysql()
 BASE = [MYSQL, "-u", "root", "-h", "127.0.0.1", "-P", "3306",
         "--default-character-set=utf8mb4"]
-DB = "ticketing_system"
 SQL_MODE = "STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
 
 
 def run(sql):
-    p = subprocess.run(BASE + ["-e", f"SET SESSION sql_mode='{SQL_MODE}'; USE {DB}; {sql}"],
+    p = subprocess.run(BASE + ["--database", DB, "-e", f"SET SESSION sql_mode='{SQL_MODE}'; {sql}"],
                        capture_output=True, text=True, encoding="utf-8", errors="replace")
     return p.returncode, (p.stdout or "") + (p.stderr or "")
 
@@ -25,10 +29,10 @@ def check(label, sql, expect_ok):
 
 
 results = []
-results.append(check("database exists", "SELECT 1 FROM information_schema.schemata WHERE schema_name='ticketing_system';", True))
+results.append(check("database exists", "SELECT 1 FROM information_schema.schemata WHERE schema_name=DATABASE();", True))
 
 # ---------- Clear business data so fixed IDs start at 1 ----------
-# This script clears business data in ticketing_system; run scripts\reset_demo.ps1 afterwards to restore demo data
+# This script clears the tables in the selected database before inserting test fixtures.
 TABLES = ["audit_logs", "refunds", "checkins", "tickets", "payment_notifications",
           "payment_attempts", "order_items", "session_seats", "role_assignments",
           "orders", "price_tiers", "event_media", "performances", "seats",
@@ -94,7 +98,7 @@ for label, sql in negatives:
 print("\n--- Legal boundaries ---")
 positives = [
     ("Same idempotency key with different content: unique key blocks it, service compares hashes (here we verify the unique index exists)",
-     "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema='ticketing_system' AND table_name='orders' AND index_name='uk_orders_idempotency';"),
+     "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='orders' AND index_name='uk_orders_idempotency';"),
     ("Same row and seat number across zones allowed", "INSERT INTO seats (venue_id,region,row_no,seat_no,coordinates) VALUES (1,'C','1','1','9,1');"),
     ("New seat and independent inventory created", "INSERT INTO seats (venue_id,region,row_no,seat_no,coordinates) VALUES (1,'D','1','1','12,1'); "
                              "INSERT INTO session_seats (performance_id,seat_id,tier_id,session_seat_status) VALUES (1,5,1,'AVAILABLE');"),
@@ -103,5 +107,5 @@ for label, sql in positives:
     results.append(check(label, sql, True))
 
 print(f"\n=== {sum(results)}/{len(results)} passed ===")
-print("Note: this test writes test data. To restore demo data, run scripts\\reset_demo.ps1")
+print(f"This run replaced the data in {DB} with constraint-test fixtures.")
 sys.exit(0 if all(results) else 1)

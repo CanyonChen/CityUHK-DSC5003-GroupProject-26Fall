@@ -2,8 +2,8 @@ param(
     [string]$BaseUrl = "http://localhost:3000"
 )
 
-# T2 acceptance: read-only event / performance / seat APIs (API-06 to API-10)
-# Read-only assertions; no database changes. Data distribution comes from AI\seed.sql (8 events / 16 performances, including 1 draft event and 4 finished performances)
+# Read-only catalogue, performance and seat API checks
+# Read-only assertions; no database changes. Data distribution comes from database\seed.sql (8 events / 16 performances, including 1 draft event and 4 finished performances)
 
 . "$PSScriptRoot\_common.ps1"
 $ErrorActionPreference = "Stop"
@@ -33,7 +33,7 @@ if (-not (Test-TcpPort $Cfg.ApiPort)) {
 }
 Write-Ok "API port $($Cfg.ApiPort) is listening"
 
-Write-Step "1/8 Event list (API-06)"
+Write-Step "1/8 Event list"
 $r = Invoke-Api "/events"
 $body = Get-Body $r
 $items = @($body.data.items)
@@ -45,7 +45,7 @@ Add-Result "Card fields complete" ($badFields.Count -eq 0) "missing fields=$($ba
 $multi = @($items | Where-Object { $_.event_id -eq 2 })
 Add-Result "Multi-venue label is Multiple venues" ($multi.Count -eq 1 -and $multi[0].venue_name -eq "Multiple venues") "venue_name=$($multi[0].venue_name)"
 
-Write-Step "2/8 Event detail (API-07)"
+Write-Step "2/8 Event detail"
 $r = Invoke-Api "/events/1"
 $body = Get-Body $r
 Add-Result "Event 1 detail 200" ($r.StatusCode -eq 200) "status=$($r.StatusCode)"
@@ -56,7 +56,7 @@ Add-Result "Detail lists only on-sale performances" ($perfs.Count -ge 1 -and $ba
 $r = Invoke-Api "/events/8"
 Add-Result "Draft event 404" ($r.StatusCode -eq 404 -and (Get-Body $r).code -eq "NOT_FOUND") "status=$($r.StatusCode)"
 
-Write-Step "3/8 Performance list and filters (API-08)"
+Write-Step "3/8 Performance list and filters"
 $r = Invoke-Api "/performances"
 $body = Get-Body $r
 $all = @($body.data.items)
@@ -77,7 +77,7 @@ $byDate = @((Get-Body $r).data.items)
 $dateIds = ($byDate | ForEach-Object { $_.performance_id }) -join ","
 Add-Result "Date filter $p1Date-$p2Date two-day window" ($byDate.Count -eq 2 -and $dateIds -eq "1,2") "ids=$dateIds"
 
-Write-Step "4/8 Performance detail (API-09)"
+Write-Step "4/8 Performance detail"
 $r = Invoke-Api "/performances/1"
 $perfBody = Get-Body $r
 $counts = $perfBody.data.seat_counts
@@ -89,7 +89,7 @@ Add-Result "Purchase limit 4 / refund cutoff 24h" ($perfBody.data.purchase_limit
 $r = Invoke-Api "/performances/12"
 Add-Result "Draft performance 404" ($r.StatusCode -eq 404 -and (Get-Body $r).code -eq "NOT_FOUND") "status=$($r.StatusCode)"
 
-Write-Step "5/8 Seat map (API-10)"
+Write-Step "5/8 Seat map"
 $r = Invoke-Api "/performances/1/seats"
 $body = Get-Body $r
 $seats = @($body.data.seats)

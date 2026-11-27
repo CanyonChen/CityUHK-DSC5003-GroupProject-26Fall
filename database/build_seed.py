@@ -172,7 +172,7 @@ for pid, eid, vid, start, status, frac, opt in PERFS:
         for s in take(1):
             SEAT_STATE[(pid, s)] = ("BLOCKED", "NULL", None)
 
-    # P1 specials: late payment, cancelled, expired history (seats released)
+    # Performance 1 includes late payment, cancellation and expiry with released seats.
     if pid == 1:
         st = take(2)
         oid, total = create_order(pid, 3, st, "EXPIRED", 40, expires_m=30, closed_m=29, seat_status="AVAILABLE")

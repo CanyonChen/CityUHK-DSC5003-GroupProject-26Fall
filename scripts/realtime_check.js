@@ -3,30 +3,13 @@
 const fs = require('fs');
 const path = require('path');
 
-function loadWs() {
-  try {
-    return require('ws');
-  } catch {
-    // Source tree and release package keep ws under different relative paths.
-  }
-  for (const candidate of [
-    path.resolve(__dirname, '..', 'server', 'node_modules', 'ws'),
-    path.resolve(__dirname, '..', 'ticketing-app', 'server', 'node_modules', 'ws'),
-  ]) {
-    try {
-      return require(candidate);
-    } catch {
-      // Try the next candidate.
-    }
-  }
-  throw new Error('ws module not found; run npm install in server/ first');
-}
-
-const WebSocket = loadWs();
+const { createRequire } = require('node:module');
+const serverRequire = createRequire(path.resolve(__dirname, '..', 'server', 'package.json'));
+const WebSocket = serverRequire('ws');
 
 const API = process.env.API_BASE || 'http://127.0.0.1:3000';
 const WS_URL = `${API.replace(/^http/, 'ws')}/ws`;
-const EVIDENCE_DIR = path.resolve(__dirname, '..', 'delivery', 'evidence', 'M5');
+const OUTPUT_DIR = path.resolve(__dirname, '..', '.cache', 'checks');
 
 const checks = [];
 const startedAt = new Date().toISOString();
@@ -216,10 +199,10 @@ async function main() {
     total: checks.length,
     checks,
   };
-  fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
-  const out = path.join(EVIDENCE_DIR, 'realtime-check.json');
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  const out = path.join(OUTPUT_DIR, 'realtime-check.json');
   fs.writeFileSync(out, `${JSON.stringify(summary, null, 2)}\n`, 'utf8');
-  console.log(`\n${passed}/${checks.length} checks passed; evidence: ${out}`);
+  console.log(`\n${passed}/${checks.length} checks passed; results: ${out}`);
   process.exit(passed === checks.length ? 0 : 1);
 }
 

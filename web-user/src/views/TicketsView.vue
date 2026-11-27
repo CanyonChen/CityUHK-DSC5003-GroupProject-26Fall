@@ -49,7 +49,6 @@ const pages = () => Math.max(1, Math.ceil(total.value / pageSize));
   <div class="wrap">
     <div class="page-head">
       <div>
-        <div class="eyebrow">Your wallet</div>
         <h1>My tickets</h1>
         <p>Each ticket carries a rotating QR code, refreshed when you open it.</p>
       </div>

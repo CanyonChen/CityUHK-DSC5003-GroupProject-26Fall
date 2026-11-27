@@ -3,7 +3,7 @@ param(
     [int]$Runs = 5
 )
 
-# M3 smoke timing only: 5 core reads, no EXPLAIN, no P95 report (those belong to M4).
+# Response-time smoke test for five read endpoints.
 
 . "$PSScriptRoot\_common.ps1"
 $ErrorActionPreference = "Stop"
@@ -33,7 +33,7 @@ $targets = @(
     @{ Name = "admin sales stats"; Path = "/admin/stats"; Token = $admin }
 )
 
-Write-Step "M3 core-read smoke timing ($Runs runs each)"
+Write-Step "API read timing ($Runs runs each)"
 "{0,-30} {1,8} {2,8} {3,8}" -f "endpoint", "min_ms", "median_ms", "max_ms"
 foreach ($t in $targets) {
     $values = @()
@@ -44,4 +44,4 @@ foreach ($t in $targets) {
     $median = $sorted[[int]([math]::Floor($sorted.Count / 2))]
     "{0,-30} {1,8:N1} {2,8:N1} {3,8:N1}" -f $t.Name, $sorted[0], $median, $sorted[-1]
 }
-Write-Info "Only smoke-test timing is recorded here; execution plans, P95, and concurrency load tests are covered in M4."
+Write-Info "Use benchmark.js for execution plans, P95 timings and concurrency tests."

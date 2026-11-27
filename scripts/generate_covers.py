@@ -1,12 +1,12 @@
 """Generate the eight SVG production covers used by the user-facing site.
 
 Run from the repository root:  python scripts/generate_covers.py
-Output: ticketing-app/web-user/public/media/*.svg
+Output: web-user/public/media/*.svg and web-admin/public/media/*.svg
 """
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-OUT = Path(__file__).resolve().parents[1] / "ticketing-app" / "web-user" / "public" / "media"
+ROOT = Path(__file__).resolve().parents[1]
 
 SHOWS = [
     {
@@ -210,7 +210,7 @@ def build(show):
   </g>
   <g font-family="'Segoe UI', Arial, sans-serif" fill="{show['accent']}">
     <text x="94" y="150" font-size="18" letter-spacing="6">{escape(show['kicker'])}</text>
-    <text x="94" y="795" font-size="16" letter-spacing="4" fill="#F7F5F0" opacity=".65">CITYU MDS · DSC5003 · SEASON 2026</text>
+    <text x="94" y="795" font-size="16" letter-spacing="4" fill="#F7F5F0" opacity=".65">CITYUHK EVENTS HUB · SEASON 2026</text>
   </g>
   <g stroke="{show['accent']}" fill="none">
     <path d="M94 185 L360 185" stroke-width="2" opacity=".7"/>
@@ -221,11 +221,14 @@ def build(show):
 
 
 def main():
-    OUT.mkdir(parents=True, exist_ok=True)
     for show in SHOWS:
-        path = OUT / show["file"]
-        path.write_text(build(show), encoding="utf-8")
-        print(f"wrote {path.relative_to(OUT.parents[2])}")
+        cover = build(show)
+        for app in ("web-user", "web-admin"):
+            directory = ROOT / app / "public" / "media"
+            directory.mkdir(parents=True, exist_ok=True)
+            path = directory / show["file"]
+            path.write_text(cover, encoding="utf-8")
+            print(f"wrote {path.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

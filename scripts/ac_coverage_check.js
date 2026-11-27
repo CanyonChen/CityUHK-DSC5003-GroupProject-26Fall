@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * AC coverage evidence runner (P0 gap closure).
+ * Run named ticketing acceptance cases against an isolated API and database.
  *
  * Target: an isolated API + isolated MySQL database, never the demo database.
  * Quick start:
@@ -10,7 +10,7 @@
  * Environment:
  *   BASE=http://127.0.0.1:3300
  *   DB_NAME=ticketing_ac
- *   OUT=delivery/evidence/M5/ac-coverage.json
+ *   OUT=.cache/checks/ac-coverage.json
  */
 const fs = require('fs');
 const path = require('path');
@@ -18,9 +18,7 @@ const crypto = require('crypto');
 const { createRequire } = require('module');
 
 const ROOT = path.resolve(__dirname, '..');
-const SERVER = fs.existsSync(path.join(ROOT, 'server', 'package.json'))
-  ? path.join(ROOT, 'server')
-  : path.join(ROOT, 'ticketing-app', 'server');
+const SERVER = path.join(ROOT, 'server');
 const serverRequire = createRequire(path.join(SERVER, 'package.json'));
 const mysql = serverRequire('mysql2/promise');
 
@@ -32,25 +30,23 @@ const DB = {
   password: process.env.DB_PASSWORD ?? '',
   database: process.env.DB_NAME || 'ticketing_ac',
 };
-const OUT = path.resolve(ROOT, process.env.OUT || 'delivery/evidence/M5/ac-coverage.json');
+const OUT = path.resolve(ROOT, process.env.OUT || '.cache/checks/ac-coverage.json');
 const SECRET = process.env.PAYMENT_NOTIFY_SECRET || 'ac-test-secret';
 const PASSWORD = 'Demo@1234';
 const PREFIX = (process.env.AC_PREFIX || `ACX${Date.now().toString(36).toUpperCase()}`);
 const VENUE_ID = Number(process.env.AC_VENUE_ID || 1);
 const RUN_ID = `${new Date().toISOString()} ${PREFIX}`;
 
-const UNVERIFIED = ['AC-02', 'AC-04', 'AC-07', 'AC-08', 'AC-11', 'AC-12', 'AC-13', 'AC-20'];
-const PARTIAL = ['AC-01', 'AC-03', 'AC-06', 'AC-09', 'AC-10', 'AC-18', 'AC-21', 'AC-23'];
-const P1 = ['AC-25'];
-const ALL = [...UNVERIFIED, ...PARTIAL, ...P1];
-
 let pool;
 const tokens = new Map();
 
 function argCases() {
   const arg = process.argv.find((a) => a.startsWith('--cases='));
-  if (process.argv.includes('--all')) return ALL;
-  if (!arg) return UNVERIFIED.slice(0, 1);
+  if (process.argv.includes('--all')) return [
+    'AC-02', 'AC-04', 'AC-07', 'AC-08', 'AC-11', 'AC-12', 'AC-13', 'AC-20',
+    'AC-01', 'AC-03', 'AC-06', 'AC-09', 'AC-10', 'AC-18', 'AC-21', 'AC-23', 'AC-25',
+  ];
+  if (!arg) return ['AC-02'];
   return arg.slice('--cases='.length).split(',').map((s) => s.trim()).filter(Boolean);
 }
 

@@ -30,7 +30,7 @@ $script:Cfg = @{
     UserWebPort = 8080
     AdminWebPort = 8081
 }
-$script:AiDir   = Join-Path $Project "database"
+$script:DatabaseDir   = Join-Path $Project "database"
 $script:SqlMode = "STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
 
 function Write-Step($m) { Write-Host "==> $m" -ForegroundColor Cyan }

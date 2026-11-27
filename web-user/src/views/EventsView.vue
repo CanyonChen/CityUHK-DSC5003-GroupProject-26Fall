@@ -45,9 +45,8 @@ function coverFallback(e) {
 <template>
   <section class="hero">
     <div class="wrap">
-      <div class="hero-kicker">Season 2026 · Campus stages</div>
-      <h1>Small theatres. Big nights.</h1>
-      <p class="hero-sub">Seven productions, three venues, one place to book. Choose a show, pick a seat, and hold it while you pay.</p>
+      <h1>Reserve a seat</h1>
+      <p class="hero-sub">Choose a performance to see its dates, seat availability and prices.</p>
     </div>
   </section>
 
@@ -55,7 +54,6 @@ function coverFallback(e) {
     <div class="wrap">
       <div class="section-head">
         <div>
-          <div class="eyebrow">Now on sale</div>
           <h2>Upcoming performances</h2>
         </div>
         <div class="toolbar">

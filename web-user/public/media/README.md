@@ -1,16 +1,5 @@
-# public/media：活动封面
+# Demo programme covers
 
-8 张 1600×900 SVG，由 `scripts/generate_covers.py` 生成；文件名与 `database/seed.sql` 的活动一一对应。
+These eight SVG covers are used by the local visitor and admin apps. Their filenames match the media URLs in [the seed data](../../../database/seed.sql). Seven programmes appear in the public catalogue, and Light Showcase is seeded as a draft.
 
-| 文件 | 活动 |
-|---|---|
-| `thunderstorm-cover.svg` | Thunderstorm |
-| `city-sound-cover.svg` | City Sound: String Quartet |
-| `four-seasons-cover.svg` | Four Seasons Dance |
-| `late-night-comedy-cover.svg` | Late Night Comedy |
-| `jazz-night-cover.svg` | Jazz in the Black Box |
-| `little-star-cover.svg` | Little Star |
-| `opera-gala-cover.svg` | Opera Gala: La Traviata Highlights |
-| `light-showcase-cover.svg` | Light Showcase（草稿活动，列表不展示） |
-
-重新生成：在 `scripts/` 运行 `python generate_covers.py`。
+From the repository root, run `python scripts/generate_covers.py` to regenerate both apps’ copies from [the cover templates](../../../scripts/generate_covers.py).

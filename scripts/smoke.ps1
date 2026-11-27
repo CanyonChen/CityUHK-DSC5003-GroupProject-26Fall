@@ -4,17 +4,16 @@ param(
     [string]$Password = "Demo@1234"
 )
 
-# Smoke test: call each T1 acceptance endpoint, output PASS / FAIL and a summary
-# If the API is not running, do not mark failure; list the pending checks. Endpoint paths are centralized in $Cases; update here if the T1 contract changes
+# Smoke-test the health, login and current-user endpoints.
+# List skipped checks if the local API is offline.
 
 . "$PSScriptRoot\_common.ps1"
 $ErrorActionPreference = "Stop"
 
-# Endpoint paths and assertions follow API contract API-02 / API-04 / API-05
 $Paths = @{
-    Health = "/health"      # API-05
-    Login  = "/auth/login"  # API-02
-    Me     = "/auth/me"     # API-04
+    Health = "/health"
+    Login  = "/auth/login"
+    Me     = "/auth/me"
 }
 
 function Invoke-Api([string]$Method, [string]$Path, $Body, [string]$Token) {
@@ -41,7 +40,7 @@ function Add-Result([string]$Name, [bool]$Pass, [string]$Detail) {
 
 Write-Step "0/4 Check whether the API is running"
 if (-not (Test-TcpPort $Cfg.ApiPort)) {
-    Write-Warn2 "$BaseUrl is not listening: T1 is not implemented or not started"
+    Write-Warn2 "$BaseUrl is not listening: start the local API before running these checks"
     Write-Info "Run again after starting: .\scripts\smoke.ps1"
     Write-Info "5 pending checks: health 200 / valid login returns token / token returns roles / wrong password 401 / no token 401"
     exit 0

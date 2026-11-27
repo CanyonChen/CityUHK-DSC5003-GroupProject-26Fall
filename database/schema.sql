@@ -1,13 +1,13 @@
--- Version: v1.2 | Dictionary: Database Table Structure and Fields.md v1.2 | Updated: 2026-11-22
+-- Schema version: v1.2
 -- ============================================================
--- Ticketing system database DDL (based on "Database Table Structure and Fields" v1.2)
+-- CityUHK Events Hub ticketing schema. See docs/database-design.md for the data model.
 -- Target: MySQL 8.0+ / MariaDB 10.5+ (InnoDB)
 -- Conventions:
 --   1. All amounts are BIGINT integer cents; currency is a CHAR(3) ISO code
 --   2. All timestamps are DATETIME(3), stored in UTC; the presentation layer converts to Asia/Hong_Kong
 --   3. Historical data is immutable: foreign keys use ON DELETE RESTRICT / ON UPDATE RESTRICT
 --   4. Enumerations use VARCHAR + CHECK constraints to prevent invalid values
---   5. References the 17 entities in "Database Table Structure and Fields"; implementation helper columns (generated columns) are not counted as business fields
+--   5. The 17 tables include generated helper columns, which are excluded from business-field counts
 --   6. Strict mode must be enabled: under the default MariaDB/MySQL sql_mode, NULL written to a NOT NULL column is silently converted to
 --      a zero date or empty value, making CHECK/NOT NULL ineffective. Application connections must set the same sql_mode
 -- ============================================================
@@ -72,7 +72,7 @@ CREATE TABLE seats (
   row_no         VARCHAR(10) NOT NULL COMMENT 'Row number',
   seat_no        VARCHAR(10) NOT NULL COMMENT 'Seat number within the row',
   coordinates    VARCHAR(50) NOT NULL COMMENT 'Layout coordinates, e.g. 3,5',
-  adjacent_group VARCHAR(50) NULL COMMENT 'Identifier for a contiguous physical seat segment in the same row without an aisle; used by P1 adjacent-seat recommendation',
+  adjacent_group VARCHAR(50) NULL COMMENT 'Identifier for a contiguous physical seat segment in the same row without an aisle; used for adjacent-seat recommendation',
   PRIMARY KEY (seat_id),
   CONSTRAINT uk_seats_position UNIQUE (venue_id, region, row_no, seat_no),
   CONSTRAINT fk_seats_venue FOREIGN KEY (venue_id) REFERENCES venues (venue_id)

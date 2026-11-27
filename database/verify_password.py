@@ -1,8 +1,9 @@
 """Verify that demo account password hashes can be validated by bcrypt."""
 import subprocess
 import bcrypt
+from mysql_client import find_mysql
 
-MYSQL = r"D:\_Coding\XAMPP\mysql\bin\mysql.exe"
+MYSQL = find_mysql()
 p = subprocess.run([MYSQL, "-u", "root", "-h", "127.0.0.1", "--default-character-set=utf8mb4",
                     "-e", "USE ticketing_system; SELECT user_name, password_hash FROM users ORDER BY user_id;"],
                    capture_output=True, text=True, encoding="utf-8", errors="replace")

@@ -78,7 +78,6 @@ async function copyGateCode() {
     <div class="page-head">
       <div>
         <RouterLink to="/tickets" class="backlink">← My tickets</RouterLink>
-        <div class="eyebrow">Mobile ticket</div>
         <h1>Your ticket</h1>
       </div>
       <RouterLink v-if="ticket" :to="`/orders/${ticket.order_id}`" class="btn btn-outline btn-sm">View order</RouterLink>
