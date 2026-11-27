@@ -3,7 +3,9 @@ import ConsoleDialog from '../ConsoleDialog.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { listUsers, listPerformances, grantRole, revokeRole } from '../api';
 import { hkt } from '../format';
+import { useAdminI18n } from '../i18n';
 
+const { t, status, errorMessage } = useAdminI18n();
 const users = ref({ items: [], total: 0 });
 const performances = ref([]);
 const loading = ref(true);
@@ -28,7 +30,7 @@ async function load() {
     if (roleFilter.value) params.role = roleFilter.value;
     users.value = await listUsers(params);
   } catch (err) {
-    error.value = err.message;
+    error.value = err;
   } finally {
     loading.value = false;
   }
@@ -39,7 +41,7 @@ async function loadPerformances() {
     const data = await listPerformances({ page_size: 100 });
     performances.value = data.items;
   } catch (err) {
-    error.value = err.message;
+    error.value = err;
   }
 }
 
@@ -67,7 +69,7 @@ async function saveGrant() {
     showGrant.value = false;
     await load();
   } catch (err) {
-    formError.value = err.message;
+    formError.value = err;
   } finally {
     saving.value = false;
   }
@@ -80,7 +82,7 @@ async function confirmRevoke() {
     revokeTarget.value = null;
     await load();
   } catch (err) {
-    error.value = err.message;
+    error.value = err;
     revokeTarget.value = null;
   }
 }
@@ -93,103 +95,101 @@ onMounted(async () => {
 <template>
   <div class="page-head">
     <div>
-      <h1>Users &amp; roles</h1>
-      <p class="muted">Grant ADMIN or per-performance CHECKER access. Revocation takes effect on the next request.</p>
+      <h1>{{ t('shell.usersTitle') }}</h1>
+      <p class="muted">{{ t('shell.usersHint') }}</p>
     </div>
   </div>
 
-  <p v-if="error" class="form-error">{{ error }}</p>
+  <p v-if="error" class="form-error" role="alert">{{ errorMessage(error) }}</p>
 
   <section class="panel">
     <div class="filters" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-      <input v-model="keyword" placeholder="Search account or name" style="max-width:260px" @keyup.enter="load" />
-      <select v-model="roleFilter" style="max-width:180px" @change="load">
-        <option value="">All roles</option>
-        <option value="ADMIN">ADMIN</option>
-        <option value="CHECKER">CHECKER</option>
+      <input v-model="keyword" :placeholder="t('shell.search')" :aria-label="t('shell.search')" style="max-width:260px" @keyup.enter="load" />
+      <select v-model="roleFilter" :aria-label="t('shell.roleFilter')" style="max-width:180px" @change="load">
+        <option value="">{{ t('shell.allRoles') }}</option>
+        <option value="ADMIN">{{ status('ADMIN') }}</option>
+        <option value="CHECKER">{{ status('CHECKER') }}</option>
       </select>
-      <button class="ghost-button" @click="load">Apply</button>
+      <button class="ghost-button" @click="load">{{ t('shell.apply') }}</button>
     </div>
 
-    <div v-if="loading" class="empty-state">Loading users…</div>
-    <div v-else-if="!users.items.length" class="empty-state">No users match this filter.</div>
+    <div v-if="loading" class="empty-state" role="status">{{ t('shell.usersLoading') }}</div>
+    <div v-else-if="!users.items.length" class="empty-state">{{ t('shell.noUsers') }}</div>
     <div v-else class="table-wrap">
       <table class="data-table">
         <thead>
-          <tr><th>User</th><th>Roles</th><th>Active assignments</th><th>Created</th><th></th></tr>
+          <tr><th>{{ t('shell.user') }}</th><th>{{ t('shell.roles') }}</th><th>{{ t('shell.assignments') }}</th><th>{{ t('shell.created') }}</th><th></th></tr>
         </thead>
         <tbody>
           <tr v-for="user in users.items" :key="user.user_id">
             <td>
               <strong>{{ user.user_name }}</strong>
-              <small class="muted">#{{ user.user_id }} · {{ user.display_name || 'No display name' }}</small>
+              <small class="muted">#{{ user.user_id }} · {{ user.display_name || t('shell.noName') }}</small>
             </td>
             <td>
-              <span v-for="role in user.roles" :key="role" class="status" :data-status="role === 'ADMIN' ? 'PUBLISHED' : (role === 'CHECKER' ? 'PAUSED' : 'DRAFT')" style="margin-right:6px">{{ role }}</span>
+              <span v-for="role in user.roles" :key="role" class="status" :data-status="role === 'ADMIN' ? 'PUBLISHED' : (role === 'CHECKER' ? 'PAUSED' : 'DRAFT')" style="margin-right:6px">{{ status(role) }}</span>
             </td>
             <td>
-              <div v-if="!user.assignments.length" class="muted">Base USER only</div>
+              <div v-if="!user.assignments.length" class="muted">{{ t('shell.baseOnly') }}</div>
               <div v-for="a in user.assignments" :key="a.assignment_id" style="margin-bottom:6px">
-                <strong>{{ a.role }}</strong>
+                <strong>{{ status(a.role) }}</strong>
                 <span v-if="a.role === 'CHECKER'"> · {{ a.event_name }} · {{ hkt(a.starts_at) }}</span>
-                <button class="ghost-button small" style="margin-left:8px" @click="revokeTarget = { ...a, user_id: user.user_id, user_name: user.user_name }">Revoke</button>
+                <button class="ghost-button small" style="margin-left:8px" @click="revokeTarget = { ...a, user_id: user.user_id, user_name: user.user_name }">{{ t('shell.revoke') }}</button>
               </div>
             </td>
             <td>{{ hkt(user.created_at, { dateOnly: true }) }}</td>
-            <td class="right"><button class="primary-button small" @click="openGrant(user)">Grant role</button></td>
+            <td class="right"><button class="primary-button small" @click="openGrant(user)">{{ t('shell.grant') }}</button></td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <ConsoleDialog v-if="showGrant" label="Grant staff access" @dismiss="closeGrant">
+  <ConsoleDialog v-if="showGrant" :label="t('shell.grantAccess')" @dismiss="closeGrant">
     <section class="modal" style="max-width:460px">
       <div class="modal-head">
         <div>
-          <p class="eyebrow">GRANT</p>
+          <p class="eyebrow">{{ t('shell.grantAccess') }}</p>
           <h2>{{ grantTarget?.user_name }}</h2>
         </div>
-        <button class="icon-button" type="button" aria-label="Close dialog" @click="closeGrant">×</button>
+        <button class="icon-button" type="button" :aria-label="t('shell.closeDialog')" @click="closeGrant">×</button>
       </div>
       <div class="form-grid">
-        <label>Role
+        <label>{{ t('shell.role') }}
           <select v-model="grantForm.role">
-            <option value="CHECKER">CHECKER — one performance</option>
-            <option value="ADMIN">ADMIN — full access</option>
+            <option value="CHECKER">{{ t('shell.checkerScope') }}</option>
+            <option value="ADMIN">{{ t('shell.adminScope') }}</option>
           </select>
         </label>
-        <label v-if="grantForm.role === 'CHECKER'">Performance
+        <label v-if="grantForm.role === 'CHECKER'">{{ t('shell.performance') }}
           <select v-model="grantForm.performance_id" required>
             <option v-for="p in checkerPerformances" :key="p.performance_id" :value="p.performance_id">
               {{ p.event_name }} · {{ hkt(p.starts_at) }} (#{{ p.performance_id }})
             </option>
           </select>
         </label>
-        <p class="muted span-2">CHECKER can only check in tickets for the selected performance. ADMIN can manage events, refunds, seats and users.</p>
+        <p class="muted span-2">{{ t('shell.scopeHint') }}</p>
       </div>
-      <p v-if="formError" class="form-error">{{ formError }}</p>
+      <p v-if="formError" class="form-error" role="alert">{{ errorMessage(formError) }}</p>
       <div class="modal-actions">
-        <button class="ghost-button" @click="closeGrant">Cancel</button>
-        <button class="primary-button" :disabled="saving" @click="saveGrant">{{ saving ? 'Granting…' : 'Grant role' }}</button>
+        <button class="ghost-button" @click="closeGrant">{{ t('shell.cancel') }}</button>
+        <button class="primary-button" :disabled="saving" @click="saveGrant">{{ t(saving ? 'shell.granting' : 'shell.grant') }}</button>
       </div>
     </section>
   </ConsoleDialog>
 
-  <ConsoleDialog v-if="revokeTarget" label="Remove staff access" @dismiss="revokeTarget = null">
+  <ConsoleDialog v-if="revokeTarget" :label="t('shell.removeAccess')" @dismiss="revokeTarget = null">
     <section class="modal" style="max-width:440px">
       <div class="modal-head">
-        <div><h2>Remove access?</h2></div>
-        <button class="icon-button" type="button" aria-label="Close dialog" @click="revokeTarget = null">×</button>
+        <div><h2>{{ t('shell.removeTitle') }}</h2></div>
+        <button class="icon-button" type="button" :aria-label="t('shell.closeDialog')" @click="revokeTarget = null">×</button>
       </div>
-      <p>
-        Remove <strong>{{ revokeTarget.role }}</strong> from <strong>{{ revokeTarget.user_name }}</strong>
-        <span v-if="revokeTarget.event_name"> for {{ revokeTarget.event_name }}</span>.
-        Their USER account stays active.
-      </p>
+      <p>{{ t(revokeTarget.event_name ? 'shell.removeAssignment' : 'shell.removeRole', {
+        role: status(revokeTarget.role), user: revokeTarget.user_name, event: revokeTarget.event_name,
+      }) }}</p>
       <div class="modal-actions">
-        <button class="ghost-button" @click="revokeTarget = null">Keep access</button>
-        <button class="primary-button" @click="confirmRevoke">Revoke</button>
+        <button class="ghost-button" @click="revokeTarget = null">{{ t('shell.keepAccess') }}</button>
+        <button class="primary-button" @click="confirmRevoke">{{ t('shell.revoke') }}</button>
       </div>
     </section>
   </ConsoleDialog>

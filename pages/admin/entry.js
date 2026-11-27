@@ -35,7 +35,6 @@ function hostedLoginUrl() {
 }
 
 const hostedLogin = hostedLoginUrl();
-document.getElementById('admin-login').href = hostedLogin || localLogin;
 function currentLanguage() {
   const lang = new URL(location.href).searchParams.get('lang')?.toLowerCase();
   if (lang === 'zh' || lang === 'zh-hk') return 'zh-hk';
@@ -45,6 +44,9 @@ function currentLanguage() {
 function render() {
   const lang = currentLanguage();
   const text = copy[lang];
+  const login = new URL(hostedLogin || localLogin);
+  login.searchParams.set('lang', lang);
+  document.getElementById('admin-login').href = login.href;
   const description = hostedLogin ? text.hosted : text.local;
   document.documentElement.lang = text.html;
   document.title = text.heading + ' · CityUHK Events Hub';

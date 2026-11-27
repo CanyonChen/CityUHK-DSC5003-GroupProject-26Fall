@@ -11,7 +11,7 @@ import UsersView from './views/UsersView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
-  scrollBehavior: (_to, _from, saved) => saved || { top: 0 },
+  scrollBehavior: (to, from, saved) => saved || (to.path === from.path && to.hash === from.hash ? false : { top: 0 }),
   routes: [
     { path: '/login', component: LoginView, meta: { public: true } },
     { path: '/', component: DashboardView, meta: { admin: true } },
@@ -27,9 +27,10 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   if (to.meta.public) return true;
-  if (!isLoggedIn()) return '/login';
-  if (to.meta.admin && !isAdmin()) return isChecker() ? '/checkin' : '/login';
-  if (to.meta.checkin && !isAdmin() && !isChecker()) return '/login';
+  const redirect = path => ({ path, query: to.query.lang ? { lang: to.query.lang } : {} });
+  if (!isLoggedIn()) return redirect('/login');
+  if (to.meta.admin && !isAdmin()) return redirect(isChecker() ? '/checkin' : '/login');
+  if (to.meta.checkin && !isAdmin() && !isChecker()) return redirect('/login');
   return true;
 });
 

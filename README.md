@@ -20,6 +20,8 @@
 2. 从活动看板导航选择 **管理员登录 → 打开本机管理后台**，或直接打开[本机登录页](http://127.0.0.1:8081/login)。[看板管理员入口](https://canyonchen.github.io/CityUHK-Events-Hub/admin/?lang=zh-cn)
 3. 使用本地演示账号 **`admin`** 和密码 **`Demo@1234`** 登录。打开 **Performances → Seats** 管理某个场次的座位，或打开 **Orders** 查看订单。仅体验验票可使用 `checker01`，密码相同。
 
+后台支持英文、简体中文和繁体中文。从看板进入时会沿用当前语言，登录前后均可切换。也可直接打开本机对应的登录页：[English](http://127.0.0.1:8081/login?lang=en) · [简体中文](http://127.0.0.1:8081/login?lang=zh-cn) · [繁體中文](http://127.0.0.1:8081/login?lang=zh-hk)。
+
 ## 开发文档
 
 | 想了解什么 | 从哪里开始 |

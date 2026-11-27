@@ -1,9 +1,11 @@
 <script setup>
+import { useAdminI18n } from '../i18n';
 import ConsoleDialog from '../ConsoleDialog.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { listEvents, createEvent, updateEvent } from '../api';
 import { shortDate } from '../format';
 
+const { t, status, errorMessage, n } = useAdminI18n();
 const data = ref({ items: [], total: 0 });
 const loading = ref(true);
 const error = ref('');
@@ -14,23 +16,23 @@ const showForm = ref(false);
 const form = reactive({ title: '', organizer_name: '', description: '', cover_url: '' });
 
 const covers = [
-  { url: '/media/thunderstorm-cover.svg', label: 'Thunderstorm' },
-  { url: '/media/city-sound-cover.svg', label: 'City Sound' },
-  { url: '/media/four-seasons-cover.svg', label: 'Four Seasons' },
-  { url: '/media/late-night-comedy-cover.svg', label: 'Late Night Comedy' },
-  { url: '/media/jazz-night-cover.svg', label: 'Jazz in the Black Box' },
-  { url: '/media/little-star-cover.svg', label: 'The Little Star' },
-  { url: '/media/opera-gala-cover.svg', label: 'Opera Gala' },
-  { url: '/media/light-showcase-cover.svg', label: 'Light Showcase' },
+  { url: '/media/thunderstorm-cover.svg', label: 'programme.coverThunder' },
+  { url: '/media/city-sound-cover.svg', label: 'programme.coverCity' },
+  { url: '/media/four-seasons-cover.svg', label: 'programme.coverSeasons' },
+  { url: '/media/late-night-comedy-cover.svg', label: 'programme.coverComedy' },
+  { url: '/media/jazz-night-cover.svg', label: 'programme.coverJazz' },
+  { url: '/media/little-star-cover.svg', label: 'programme.coverStar' },
+  { url: '/media/opera-gala-cover.svg', label: 'programme.coverOpera' },
+  { url: '/media/light-showcase-cover.svg', label: 'programme.coverLight' },
 ];
 
-const formTitle = computed(() => (editingId.value ? `Edit event #${editingId.value}` : 'New event'));
+const formTitle = computed(() => editingId.value ? t('programme.editEvent', { id: editingId.value }) : t('programme.newEvent'));
 const coverPreview = computed(() => form.cover_url || '/media/thunderstorm-cover.svg');
 
 function eventStatus(e) {
-  if (!e.performance_count) return 'NO PERFORMANCES';
+  if (!e.performance_count) return 'NO_PERFORMANCES';
   if (e.published_count) return 'PUBLISHED';
-  if (e.paused_count) return 'PAUSED';
+  if (e.paused_count) return 'SALES_PAUSED';
   return 'DRAFT';
 }
 
@@ -40,7 +42,7 @@ async function load() {
   try {
     data.value = await listEvents({ page_size: 100 });
   } catch (err) {
-    error.value = err.message;
+    error.value = err;
   } finally {
     loading.value = false;
   }
@@ -85,7 +87,7 @@ async function save() {
     showForm.value = false;
     await load();
   } catch (err) {
-    formError.value = err.message;
+    formError.value = err;
   } finally {
     saving.value = false;
   }
@@ -97,21 +99,21 @@ onMounted(load);
 <template>
   <div class="page-head">
     <div>
-      <h1>Events</h1>
-      <p class="muted">Create the show, then add performances and publish them.</p>
+      <h1>{{ t('programme.events') }}</h1>
+      <p class="muted">{{ t('programme.eventsIntro') }}</p>
     </div>
-    <button class="primary-button" @click="openCreate">New event</button>
+    <button class="primary-button" @click="openCreate">{{ t('programme.newEvent') }}</button>
   </div>
 
-  <p v-if="error" class="form-error">{{ error }}</p>
+  <p v-if="error" class="form-error">{{ errorMessage(error) }}</p>
 
   <section class="panel">
-    <div v-if="loading" class="empty-state">Loading events…</div>
-    <div v-else-if="!data.items.length" class="empty-state">No events yet. Create the first one.</div>
+    <div v-if="loading" class="empty-state">{{ t('programme.loadingEvents') }}</div>
+    <div v-else-if="!data.items.length" class="empty-state">{{ t('programme.emptyEvents') }}</div>
     <div v-else class="table-wrap">
       <table class="data-table">
         <thead>
-          <tr><th>Event</th><th>Organizer</th><th>Performances</th><th>Status</th><th>Created</th><th></th></tr>
+          <tr><th>{{ t('programme.event') }}</th><th>{{ t('programme.organizer') }}</th><th>{{ t('programme.performances') }}</th><th>{{ t('programme.status') }}</th><th>{{ t('programme.created') }}</th><th></th></tr>
         </thead>
         <tbody>
           <tr v-for="event in data.items" :key="event.event_id">
@@ -122,10 +124,10 @@ onMounted(load);
               </div>
             </td>
             <td>{{ event.organizer_name || event.organizer }}</td>
-            <td>{{ event.performance_count }} total · {{ event.published_count }} published</td>
-            <td><span class="status" :data-status="eventStatus(event)">{{ eventStatus(event) }}</span></td>
+            <td>{{ t('programme.eventCounts', { total: n(event.performance_count), published: n(event.published_count) }) }}</td>
+            <td><span class="status" :data-status="eventStatus(event)">{{ eventStatus(event) === 'NO_PERFORMANCES' ? t('programme.noPerformances') : status(eventStatus(event)) }}</span></td>
             <td>{{ shortDate(event.created_at) }}</td>
-            <td class="right"><button class="ghost-button small" @click="openEdit(event)">Edit</button></td>
+            <td class="right"><button class="ghost-button small" @click="openEdit(event)">{{ t('programme.edit') }}</button></td>
           </tr>
         </tbody>
       </table>
@@ -136,30 +138,30 @@ onMounted(load);
     <section class="modal">
       <div class="modal-head">
         <div>
-          <p class="eyebrow">{{ editingId ? 'EDIT' : 'CREATE' }}</p>
+          <p class="eyebrow">{{ editingId ? t('programme.edit') : t('programme.create') }}</p>
           <h2>{{ formTitle }}</h2>
         </div>
-        <button class="icon-button" type="button" aria-label="Close dialog" @click="closeForm">×</button>
+        <button class="icon-button" type="button" :aria-label="t('programme.closeDialog')" @click="closeForm">×</button>
       </div>
       <div class="form-grid">
-        <label>Title<input v-model="form.title" maxlength="100" /></label>
-        <label>Organizer<input v-model="form.organizer_name" maxlength="200" /></label>
-        <label class="span-2">Description<textarea v-model="form.description" rows="4" maxlength="5000"></textarea></label>
-        <label class="span-2">Cover
-          <select v-model="form.cover_url">
-            <option value="">No cover</option>
-            <option v-for="c in covers" :key="c.url" :value="c.url">{{ c.label }}</option>
+        <label>{{ t('programme.title') }}<input v-model="form.title" maxlength="100" /></label>
+        <label>{{ t('programme.organizer') }}<input v-model="form.organizer_name" maxlength="200" /></label>
+        <label class="span-2">{{ t('programme.description') }}<textarea v-model="form.description" rows="4" maxlength="5000"></textarea></label>
+        <label class="span-2">{{ t('programme.cover') }}
+          <select v-model="form.cover_url" :aria-label="t('programme.cover')">
+            <option value="">{{ t('programme.noCover') }}</option>
+            <option v-for="c in covers" :key="c.url" :value="c.url">{{ t(c.label) }}</option>
           </select>
         </label>
         <div class="cover-preview span-2">
-          <img :src="coverPreview" alt="Cover preview" />
-          <div><span class="muted">Preview</span><strong>{{ form.cover_url ? 'Selected cover' : 'Default poster' }}</strong></div>
+          <img :src="coverPreview" :alt="t('programme.coverPreview')" />
+          <div><span class="muted">{{ t('programme.preview') }}</span><strong>{{ form.cover_url ? t('programme.selectedCover') : t('programme.defaultPoster') }}</strong></div>
         </div>
       </div>
-      <p v-if="formError" class="form-error">{{ formError }}</p>
+      <p v-if="formError" class="form-error">{{ errorMessage(formError) }}</p>
       <div class="modal-actions">
-        <button class="ghost-button" @click="closeForm">Cancel</button>
-        <button class="primary-button" :disabled="saving" @click="save">{{ saving ? 'Saving…' : 'Save event' }}</button>
+        <button class="ghost-button" @click="closeForm">{{ t('programme.cancel') }}</button>
+        <button class="primary-button" :disabled="saving" @click="save">{{ saving ? t('programme.saving') : t('programme.saveEvent') }}</button>
       </div>
     </section>
   </ConsoleDialog>

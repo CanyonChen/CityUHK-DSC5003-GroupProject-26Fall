@@ -24,6 +24,9 @@
   justify-content: space-between;
   gap: .75rem;
 }
+.staff-bar nav { margin-inline-start: auto; }
+.staff-bar .admin-language { margin-inline-start: .5rem; }
+.staff-entry:lang(zh) :is(h1, h2) { letter-spacing: -.025em; line-height: 1.18; }
 
 .staff-brand {
   min-height: 2.75rem;
@@ -184,4 +187,11 @@
   .staff-brand { gap: .35rem; font-size: 1rem; line-height: 1.05; }
   .staff-brand .brand-logo { width: 2.75rem; padding: .15rem .2rem; }
   .staff-brand > span > span { display: block; }
+  .staff-bar { flex-wrap: wrap; gap: 0 .5rem; padding-block: .25rem; }
+  .staff-bar .admin-language { margin-inline-start: 0; }
+}
+@media (max-width: 23rem) {
+  .staff-bar { display: grid; grid-template-columns: 1fr auto; }
+  .staff-bar nav { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+  .staff-bar .admin-language { grid-column: 2; grid-row: 1; }
 }
