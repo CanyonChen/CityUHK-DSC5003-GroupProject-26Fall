@@ -1,0 +1,23 @@
+.admin-main {
+  max-width: 52rem;
+  padding-block: clamp(3.5rem, 12vh, 8rem);
+}
+.admin-main h1 {
+  max-width: 18ch;
+  margin: 0;
+  font-size: clamp(2.5rem, 6.3vw, 4.75rem);
+  letter-spacing: -.055em;
+  line-height: 1.05;
+  overflow-wrap: break-word;
+}
+:lang(zh) .admin-main h1 { letter-spacing: -.025em; line-height: 1.15; }
+.admin-description {
+  max-width: 48ch;
+  margin-block: 1.2rem 1.7rem;
+  font-size: clamp(1.04rem, 2vw, 1.24rem);
+  color: var(--muted);
+  line-height: 1.55;
+}
+.admin-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem 1.35rem; }
+.admin-actions .campus-action { gap: .7rem; padding: .65rem 1.2rem; }
+.admin-actions .campus-source { gap: .25rem; }

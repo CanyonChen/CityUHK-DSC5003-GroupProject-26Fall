@@ -2,6 +2,8 @@ import { copy, programmeText, productionsZh, staticZh, staticZhCn } from './i18n
 import { formatCopy } from './event-formats.js';
 
 const get = id => document.getElementById(id);
+const englishPageTitle = document.title;
+const seatHash = event => '#seating/' + encodeURIComponent(event.id);
 const languages = {
   en: { html: 'en', locale: 'en-GB', query: '', translated: {} },
   zh: { html: 'zh-Hant-HK', locale: 'zh-Hant-HK', query: 'zh-hk', translated: staticZh },
@@ -19,6 +21,7 @@ let currentEvent;
 let performances = [];
 let performance;
 let selectedSeat = null;
+let returnToCard = null;
 let loadFailed = false;
 let date, dateTime, percentage, currency;
 
@@ -48,6 +51,10 @@ function element(tag, className, text) {
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
+}
+
+function followsLinkInThisTab(click) {
+  return click.button === 0 && !click.ctrlKey && !click.metaKey && !click.shiftKey && !click.altKey;
 }
 
 // Dates order the demonstrators and CAP announcements together. Archived demos remain available.
@@ -83,17 +90,15 @@ export function demoEntries(now) {
     if (show) details.push(dateTime.format(new Date(show.startsAt)), t.venues[show.venue] || show.venue);
     article.append(element('p', 'demo-meta', details.filter(Boolean).join(' · ')));
     const actions = element('div', 'campus-actions');
-    const button = element('button', 'campus-action demo-open', t.openSeats);
-    button.type = 'button';
-    button.setAttribute('aria-label', t.openSeats + ' · ' + label);
-    button.setAttribute('aria-controls', 'seating');
-    button.setAttribute('aria-pressed', String(event === currentEvent));
-    button.addEventListener('click', () => {
-      if (event !== currentEvent) selectEvent(event);
-      get('detail-title').focus({ preventScroll: true });
-      get('seating').scrollIntoView({ block: 'start' });
+    const open = element('a', 'campus-action demo-open', t.openSeats);
+    open.href = seatHash(event);
+    open.setAttribute('aria-label', t.openSeats + ' · ' + label);
+    open.addEventListener('click', click => {
+      if (followsLinkInThisTab(click)) {
+        history.replaceState({ ...history.state, demoOpener: String(event.id) }, '');
+      }
     });
-    actions.append(button);
+    actions.append(open);
     article.append(actions);
     return { order: next ? Date.parse(next.startsAt) : Infinity, title: label, article };
   });
@@ -101,10 +106,6 @@ export function demoEntries(now) {
 
 function selectEvent(event) {
   currentEvent = event;
-  get('seating').hidden = false;
-  for (const card of document.querySelectorAll('.demo-card')) {
-    card.querySelector('.demo-open').setAttribute('aria-pressed', String(card.dataset.id === String(event.id)));
-  }
   performances = snapshot.performances.filter(show => show.eventId === event.id)
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   performance = performances.find(show => show.startsAt >= snapshot.capturedAt) || performances.at(-1);
@@ -116,6 +117,7 @@ function renderDetails(keepRegion = '') {
   const t = copy[language];
   const { title, description } = programmeText(currentEvent, language);
   get('detail-title').textContent = '[Demo] ' + title;
+  document.title = get('detail-title').textContent + ' · CityUHK Events Hub';
   get('description').textContent = description;
   get('no-performance').hidden = Boolean(performance);
   get('performance-detail').hidden = !performance;
@@ -135,6 +137,49 @@ function renderDetails(keepRegion = '') {
   renderSeats();
   renderOccupancy();
 }
+
+function updateView() {
+  if (!snapshot) return;
+  const hash = location.hash;
+  const seating = get('seating');
+  const event = hash === '#seating' ? snapshot.events[0] : snapshot.events.find(item => seatHash(item) === hash);
+  if (event) {
+    if (hash === '#seating') history.replaceState(history.state, '', seatHash(event));
+    if (event === currentEvent) return;
+    get('main').dataset.view = 'seating';
+    seating.hidden = false;
+    selectEvent(event);
+    get('detail-title').focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+    return;
+  }
+  const unknownSeatMap = hash === '#seating' || hash.startsWith('#seating/');
+  if (unknownSeatMap) history.replaceState(null, '', '#campus');
+  if (!currentEvent && !unknownSeatMap) return;
+
+  currentEvent = null;
+  selectedSeat = null;
+  seating.hidden = true;
+  delete get('main').dataset.view;
+  document.title = languages[language].translated.pageTitle || englishPageTitle;
+
+  // The feed may have refreshed while the visitor was inspecting a seat.
+  const openerId = returnToCard || history.state?.demoOpener;
+  returnToCard = null;
+  const opener = openerId && get('campus-list').querySelector('.demo-card[data-id="' + CSS.escape(openerId) + '"] .demo-open');
+  const destination = get(location.hash.slice(1)) || get('main');
+  const target = opener || destination.querySelector('h1,h2') || destination;
+  if (!opener) target.tabIndex = -1;
+  target.focus({ preventScroll: true });
+  (opener || destination).scrollIntoView({ block: opener ? 'center' : 'start' });
+}
+
+get('seat-back').addEventListener('click', click => {
+  if (followsLinkInThisTab(click)) {
+    returnToCard = currentEvent && String(currentEvent.id);
+  }
+});
+window.addEventListener('hashchange', updateView);
 
 function renderOccupancy() {
   const t = copy[language];
@@ -210,6 +255,10 @@ function applyLanguage() {
   language = languageFromUrl();
   resetFormatters();
   document.documentElement.lang = languages[language].html;
+  const adminEntry = document.querySelector('[data-admin-entry]');
+  const adminUrl = new URL('./admin/', document.baseURI);
+  if (languages[language].query) adminUrl.searchParams.set('lang', languages[language].query);
+  adminEntry.href = adminUrl.href;
   for (const { node, attribute, key, english } of staticText) {
     const text = languages[language].translated[key] ?? english;
     if (attribute) node.setAttribute(attribute, text);
@@ -281,15 +330,13 @@ async function load() {
   get('snapshot-note').textContent = copy[language].snapshot(date.format(new Date(snapshot.capturedAt)));
   get('load-status').hidden = true;
   document.dispatchEvent(new CustomEvent('cityuhk-events-hub:demos'));
-  if (location.hash === '#seating' && snapshot.events.length) {
-    selectEvent(snapshot.events[0]);
-    get('seating').scrollIntoView();
-  }
+  updateView();
 }
 
 applyLanguage();
 load().catch(error => {
   loadFailed = true;
   get('load-status').textContent = copy[language].loadError;
+  if (location.hash === '#seating' || location.hash.startsWith('#seating/')) location.replace('#campus');
   console.error('CityUHK Events Hub catalogue:', error);
 });

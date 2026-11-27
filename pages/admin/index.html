@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="admin-login-url" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Open the CityUHK Events Hub ticketing console to manage performances, seats and orders.">
+  <title>Ticketing administration · CityUHK Events Hub</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="../media/cityuhk-favicon.png">
+  <link rel="stylesheet" href="../site.css">
+  <link rel="stylesheet" href="./admin-entry.css">
+  <script type="module" src="./entry.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main" data-copy="skip">Skip to content</a>
+  <header class="site-head">
+    <div class="wrap header-inner">
+      <a class="brand" href="../" data-board="home">
+        <img class="brand-logo" src="../media/cityuhk-logo.webp" width="1151" height="647" alt="">
+        <span class="brand-name">CityUHK <span>Events Hub</span></span>
+      </a>
+      <nav aria-label="Navigation">
+        <a href="../#campus" data-board="events"><span aria-hidden="true">←&nbsp;</span><span data-copy="back">Back to events</span></a>
+      </nav>
+      <div class="languages" role="group" aria-label="Page language">
+        <button type="button" lang="en" data-lang="en" aria-label="English" aria-pressed="true">EN</button>
+        <button type="button" lang="zh-CN" data-lang="zh-cn" aria-label="简体中文" aria-pressed="false">简体</button>
+        <button type="button" lang="zh-HK" data-lang="zh-hk" aria-label="繁體中文" aria-pressed="false">繁體</button>
+      </div>
+    </div>
+  </header>
+  <main id="main" class="wrap admin-main" aria-labelledby="entry-title">
+    <h1 id="entry-title" data-copy="heading">Ticketing administration</h1>
+    <p class="admin-description" id="entry-description">Start the ticketing app on this computer, then sign in to manage performances, seats and orders.</p>
+    <div class="admin-actions">
+      <a class="campus-action" id="admin-login" href="http://127.0.0.1:8081/login"><span id="login-label">Open local admin console</span><span aria-hidden="true">→</span></a>
+      <a class="campus-source" href="https://github.com/CanyonChen/CityUHK-Events-Hub/blob/main/docs/local-run-guide.md"><span data-copy="guide">Setup guide</span><span aria-hidden="true"> ↗</span></a>
+    </div>
+  </main>
+</body>
+</html>

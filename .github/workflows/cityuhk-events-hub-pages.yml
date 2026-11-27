@@ -39,7 +39,28 @@ jobs:
           cp -R pages/. _site/
           cp web-user/public/media/*.svg _site/media/
           test -s _site/index.html
+          test -s _site/admin/index.html
           test -s _site/data/snapshot.json
+      - name: Link the hosted admin console
+        env:
+          ADMIN_LOGIN_URL: ${{ vars.ADMIN_LOGIN_URL }}
+        if: vars.ADMIN_LOGIN_URL != ''
+        run: |
+          python - <<'PY'
+          import html, os
+          from pathlib import Path
+          from urllib.parse import urlsplit
+
+          url = os.environ["ADMIN_LOGIN_URL"].strip()
+          dest = urlsplit(url)
+          if dest.scheme != "https" or not dest.hostname or dest.username or dest.password:
+              raise ValueError("ADMIN_LOGIN_URL must be an HTTPS login URL without credentials")
+          entry = Path("_site/admin/index.html")
+          template = entry.read_text()
+          marker = '<meta name="admin-login-url" content="">'
+          assert template.count(marker) == 1
+          entry.write_text(template.replace(marker, f'<meta name="admin-login-url" content="{html.escape(url, quote=True)}">'))
+          PY
       - name: Refresh public CityUHK announcements
         env:
           TRIGGER: ${{ github.event_name }}
