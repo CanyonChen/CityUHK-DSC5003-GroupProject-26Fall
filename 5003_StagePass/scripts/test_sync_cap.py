@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from sync_cap import CAP, parse_event, parse_index, sync
+from sync_cap import CAP, official_media_url, parse_event, parse_index, sync
 
 
 INDEX = '<table id="pubAnn"><tr><td><a href="postPublic.aspx?id=abc">Notice</a></td><td>SCM</td></tr></table>'
@@ -38,6 +38,45 @@ class CapTest(unittest.TestCase):
         e = parse_event("abc", "HKICE", event('<p>Please register using the link below:<br>https://forms.gle/live</p>'))
         self.assertEqual(e["actions"][0]["url"], "https://forms.gle/live")
 
+    def test_original_poster_detection(self):
+        body = ('<img src="/images/workshop-logo.png" alt="Workshop">'
+                '<img src="/images/speaker-portrait.jpg" alt="Workshop">'
+                '<img src="/images/workshop_qr-code.png" alt="Workshop">'
+                '<img src="/images/blank.gif" alt="Workshop" style="width:1px">'
+                '<a href="https://forms.gle/register"><img src="https://www.cityu.edu.hk/events/Workshop Poster.png" alt="Workshop"></a>')
+        e = parse_event('abc', 'SCM', event(body))
+        self.assertEqual(e['poster'], {'sourceUrl':'https://www.cityu.edu.hk/events/Workshop%20Poster.png'})
+        self.assertEqual(e['actions'], [])
+        html = event('<img src="/images/slide.jpg" alt="Presentation slide">'
+                     '<img src="https://university.example/poster.jpg" alt="Workshop">'
+                     '<img src="/img/qr-code.png" alt="Workshop">') + '<footer><img src="/poster.jpg" alt="Workshop"></footer>'
+        self.assertNotIn('poster', parse_event('abc', 'SCM', html))
+
+    def test_attachment_posters(self):
+        label = '<div class="cap-body-lower-title">Attachments:</div>'
+        assets = ('<a href="/getpubics.aspx?id=event">Add to calendar</a>'
+                  '<a href="/downloads/map.pdf">Venue map</a>'
+                  '<a href="/uploads/2026/27.pdf#page=1">活動海報</a>')
+        boxes = [f'<div id="divAttachments">{assets}</div>',
+                 f'<div class="cap-body-lower-text">{label}<div>{assets}</div></div>']
+        for box in boxes:
+            with self.subTest(box=box):
+                e = parse_event('abc', 'SCM', event() + box)
+                self.assertEqual(e['poster'], {'sourceUrl':CAP + 'uploads/2026/27.pdf'})
+        e = parse_event('abc', 'SCM', event('<a href="/download.aspx?file=123">Download event flyer</a>'))
+        self.assertEqual(e['poster']['sourceUrl'], CAP + 'download.aspx?file=123')
+        e = parse_event('abc', 'SCM', event('<p>活动海报：<a href="/media/001.png">点击下载</a></p>'))
+        self.assertEqual(e['poster']['sourceUrl'], CAP + 'media/001.png')
+
+    def test_approved_poster_hosts(self):
+        self.assertEqual(official_media_url('//www.scm.cityu.edu.hk:443/p%20p.png?v=1&h=2#poster'),
+                         'https://www.scm.cityu.edu.hk/p%20p.png?v=1&h=2')
+        for url in ['https://cityu.edu.hk.example/p.jpg','http://cityu.edu.hk/p.jpg','//example.com/p.jpg',
+                    'https://name@cityu.edu.hk/p.jpg','https://cityu.edu.hk:8443/p.jpg',
+                    'data:image/png;base64,AAAA','javascript:void(0)','https://cityu.edu.hk/\\path/p.jpg','\n/p.jpg']:
+            with self.subTest(url=url):
+                self.assertIsNone(official_media_url(url))
+
     def test_conference_and_multiple_sessions(self):
         html = event('<p>Abstract submission deadline: 30 November 2026</p><p>Conference: 1–3 February 2027</p>'
                      '<p>Abstract Submission</p><p><a href="https://example.com/submit">https://example.com/submit</a></p>'
@@ -45,6 +84,7 @@ class CapTest(unittest.TestCase):
                      "Call for papers", "2026-11-30 23:59", "2026-11-30 23:59")
         e = parse_event("abc", "SCM", html)
         self.assertEqual(e["deadlines"][0]["at"], "2026-11-30T23:59:00+08:00")
+        self.assertEqual(e["sessions"][0]["label"], "Conference")
         self.assertEqual((e["sessions"][0]["start"],e["sessions"][0]["end"]),("2027-02-01","2027-02-03"))
         self.assertEqual(e["actions"],[{"kind":"submission","url":"https://example.com/submit"}])
         html = event('<p>Guest Lecture</p><p>Date: 10 December, 2026 (Thursday)</p><p>Time: 3:00 pm - 4:30 pm</p><p>Venue: M1052</p>'

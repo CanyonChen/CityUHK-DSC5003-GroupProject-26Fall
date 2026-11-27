@@ -8,8 +8,9 @@ export const campusCopy = {
     noDeadlines: 'No upcoming registration or submission deadlines are listed.',
     noTime: 'See the announcement for the schedule.', original: 'Original CAP title', cancelled: 'Cancelled',
     registration: 'Register with organiser', submission: 'Submit to organiser', source: 'Official announcement',
+    poster: 'View full poster',
     due: { registration: 'Registration deadline', submission: 'Submission deadline' },
-    categories: { 'Academic Seminar': 'Academic seminar', Workshop: 'Workshop' },
+    sessionLabels: {},
   },
   'zh-cn': {
     upcoming: '所有活动', deadlines: '即将截止',
@@ -20,8 +21,9 @@ export const campusCopy = {
     noDeadlines: '当前公告中暂无即将到期的报名或投稿期限。',
     noTime: '具体安排见官方公告。', original: 'CAP 原文标题', cancelled: '已取消',
     registration: '前往主办方报名', submission: '前往提交材料', source: '查看官方公告',
+    poster: '查看海报原件',
     due: { registration: '报名截止', submission: '投稿截止' },
-    categories: { 'Academic Seminar': '学术讲座', Workshop: '工作坊' },
+    sessionLabels: { conference: '学术会议', 'guest lecture': '客席讲座', concert: '音乐会', lecture: '讲座', seminar: '研讨会', workshop: '工作坊', screening: '放映', performance: '演出' },
   },
   'zh-hk': {
     upcoming: '所有活動', deadlines: '即將截止',
@@ -32,7 +34,8 @@ export const campusCopy = {
     noDeadlines: '現有公告暫無即將到期的報名或投稿限期。',
     noTime: '具體安排請參閱官方公告。', original: 'CAP 原文標題', cancelled: '已取消',
     registration: '前往主辦方報名', submission: '前往提交資料', source: '查看官方公告',
+    poster: '查看海報原件',
     due: { registration: '報名截止', submission: '投稿截止' },
-    categories: { 'Academic Seminar': '學術講座', Workshop: '工作坊' },
+    sessionLabels: { conference: '學術會議', 'guest lecture': '客席講座', concert: '音樂會', lecture: '講座', seminar: '研討會', workshop: '工作坊', screening: '放映', performance: '演出' },
   },
 };

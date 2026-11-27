@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 import sys
 from tempfile import NamedTemporaryFile
-from urllib.parse import parse_qs, urljoin, urlsplit
+from urllib.parse import parse_qs, quote, unquote, urljoin, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 
 
@@ -90,6 +90,90 @@ def parse_index(html):
     if not found:
         raise ValueError("No confirmed public listings; keeping the previous snapshot")
     return found
+
+
+def official_media_url(raw, base=CAP):
+    """Return a normalized public HTTPS media link on a CityUHK host."""
+    if not isinstance(raw, str) or not raw.strip() or raw.lstrip().startswith(("#", "?")):
+        return None
+    if "\\" in raw or any(ord(c) < 32 or ord(c) == 127 for c in raw):
+        return None
+    try:
+        url = urlsplit(urljoin(base, raw.strip()))
+        host = url.hostname or ""
+        if (url.scheme != "https" or url.username is not None or url.password is not None
+                or url.port not in (None, 443) or not re.fullmatch(r"(?:[a-z0-9-]+\.)*cityu\.edu\.hk", host)):
+            return None
+    except ValueError:
+        return None
+    # urllib does not encode literal spaces, which occur in the HKICE poster filename.
+    path = quote(url.path, safe="/%:!$&'()*+,;=@~-._")
+    query = quote(url.query, safe="/%?:!$&'()*+,;=@~-._")
+    return urlunsplit(("https", host, path, query, ""))
+
+
+POSTER_LABEL = re.compile(r"(?<![a-z])(?:posters?|flyers?|fliers?)(?![a-z])|海[報报]|宣[傳传][單单]", re.I)
+NON_POSTER = re.compile(r"(?<![a-z])(?:logos?|qr(?:[ _-]?codes?)?|icons?|avatars?|headshots?|spacers?|"
+                        r"portraits?|signatures?|speaker[ _-]?photos?|social[ _-]?media|tracking[ _-]?pixels?)(?![a-z])"
+                        r"|二[維维][碼码]|徽[標标]", re.I)
+POSTER_FILE = re.compile(r"\.(?:jpe?g|png|webp|gif|avif|pdf)$", re.I)
+
+
+def event_poster(root, body, title, source):
+    """Consider only publication content and labelled attachment areas, never the site chrome."""
+    attachment_areas = []
+    for node in root.nodes():
+        marker = (node.attrs.get("id") or "") + " " + (node.attrs.get("class") or "")
+        if "attach" in marker.lower():
+            attachment_areas.append(node)
+        elif "cap-body-lower-text" in marker.split():
+            labels = node.with_class("cap-body-lower-title")
+            if labels and re.search(r"attachment|附件", labels[0].text(), re.I):
+                attachment_areas.append(node)
+    event_words = re.sub(r"[\W_]+", "", title).casefold()
+    best, best_score = None, -1
+    for area in [body, *attachment_areas]:
+        elements = [area, *area.nodes()]
+        # The editor may publish “Event poster: [Download]” with only Download inside the link.
+        captions = {}
+        for block in elements:
+            if block.tag in ("p", "li", "td"):
+                anchors = [link for link in block.nodes() if link.tag == "a"]
+                line = clean(block.text())
+                if len(anchors) == 1 and len(line) <= 100 and POSTER_LABEL.search(line):
+                    captions[anchors[0]] = line
+        for item in elements:
+            if item.tag not in ("img", "a"):
+                continue
+            image = item.tag == "img"
+            url = official_media_url(item.attrs.get("src" if image else "href"), source)
+            if not url:
+                continue
+            path = unquote(urlsplit(url).path)
+            labels = [item.attrs.get(k) or "" for k in ("alt", "title", "aria-label")]
+            if not image:
+                labels.append(captions.get(item) or clean(item.text()))
+                if not POSTER_FILE.search(path) and not re.search(r"attach|download|getpubatt", path, re.I):
+                    continue
+            label = " ".join(labels)
+            if NON_POSTER.search(path + " " + label):
+                continue
+            if image:
+                # Exclude known small decorations even when the CMS supplies a notice title as the alt.
+                style = item.attrs.get("style") or ""
+                sizes = [item.attrs.get(k) or "" for k in ("height", "width")]
+                sizes.extend(re.findall(r"(?:height|width)\s*:\s*(\d+(?:\.\d+)?px)", style, re.I))
+                if any(float(v.removesuffix('px')) < 96 for v in sizes if re.fullmatch(r"\d+(?:\.\d+)?(?:px)?", v)):
+                    continue
+            title_match = bool(event_words) and any(re.sub(r"[\W_]+", "", v).casefold() == event_words for v in labels)
+            labelled = bool(POSTER_LABEL.search(label))
+            named = bool(POSTER_LABEL.search(path))
+            if not (labelled or named or (image and title_match)):
+                continue
+            score = 4 * labelled + 2 * named + title_match + image
+            if score > best_score:
+                best, best_score = url, score
+    return {"sourceUrl": best} if best else None
 
 
 def body_lines(root):
@@ -223,7 +307,7 @@ def event_schedule(title, lines, metadata):
 
     if re.search(r"\bcall for (?:papers|abstracts|submissions)\b", title, re.I):
         conference = next((days(s) for s in texts if re.match(r"^conference\s*:", s, re.I) and days(s)), None)
-        return venue, ([session(*conference, venue)] if conference else []), deadlines
+        return venue, ([session(*conference, venue, label="Conference")] if conference else []), deadlines
 
     # Collect separate explicitly labelled dates, times and venues in multi-session notices.
     marks = [i for i, s in enumerate(texts) if re.match(r"^date\s*:", s, re.I) and days(s)]
@@ -258,7 +342,8 @@ def parse_event(event_id, department, html):
     title = clean(required("cap-header-title").text())
     posted = clean(required("cap-header-time").text()).strip("() ").removeprefix("POSTED:").strip()
     posted_at = datetime.strptime(posted, "%Y-%m-%d %I:%M %p").replace(tzinfo=HKT).isoformat()
-    lines = body_lines(required("cap-body-upper"))
+    body = required("cap-body-upper")
+    lines = body_lines(body)
     metadata = {}
     for field in root.with_class("cap-body-lower-text"):
         label = field.with_class("cap-body-lower-title")
@@ -269,9 +354,13 @@ def parse_event(event_id, department, html):
         raise ValueError(f"{event_id}: incomplete official event metadata")
     venue, sessions, deadlines = event_schedule(title, lines, metadata)
     url = CAP + "postPublic.aspx?id=" + event_id
-    return {"id":event_id, "sourceUrl":url, "title":title, "department":department, "category":metadata["category"],
+    event = {"id":event_id, "sourceUrl":url, "title":title, "department":department, "category":metadata["category"],
             "postedAt":posted_at, "venue":venue, "status":"cancelled" if re.match(r"^\s*[(\[]?cancel(?:l?ed|lation)\b", title, re.I) else "announced",
             "sessions":sessions, "deadlines":deadlines, "actions":action_links(lines, url)}
+    poster = event_poster(root, body, title, url)
+    if poster:
+        event["poster"] = poster
+    return event
 
 
 def fetch(url):

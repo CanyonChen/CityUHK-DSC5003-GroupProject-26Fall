@@ -1,12 +1,14 @@
 import { campusCopy } from './campus-copy.js';
+import { eventFormats, formatCopy, matchesFormat, renderFormatFilter } from './event-formats.js';
 import { demoEntries } from './site.js';
 
 const get = id => document.getElementById(id);
 const localeTags = { en: 'en-GB', 'zh-cn': 'zh-Hans-CN', 'zh-hk': 'zh-Hant-HK' };
 const sourceRoot = 'https://cap.cityu.edu.hk/';
-const halfHour = 30 * 60 * 1000;
+const refreshIntervalMs = 12 * 60 * 60 * 1000;
 let feed, translations = {}, failed = false, loading = false, lastAttempt = 0, timer;
 let mode = 'upcoming';
+let selectedFormat = 'all';
 
 function language() {
   switch (document.documentElement.lang) {
@@ -41,6 +43,40 @@ function link(href, text, className, eventTitle) {
   result.rel = 'noopener noreferrer';
   result.setAttribute('aria-label', text + ' · ' + eventTitle);
   return result;
+}
+
+function addOfficialPoster(poster, article, title, actions, label) {
+  if (!poster?.sourceUrl) return;
+  let original;
+  try {
+    original = new URL(poster.sourceUrl);
+    if (original.protocol !== 'https:' || !/(^|\.)cityu\.edu\.hk$/i.test(original.hostname) || original.username || original.password) return;
+  } catch {
+    return;
+  }
+  const fullPoster = link(original.href, label, 'campus-source', title.textContent);
+  if (/\.pdf$/i.test(original.pathname)) {
+    actions.append(fullPoster);
+    return;
+  }
+  const cover = node('div', 'event-cover official-cover');
+  const image = node('img', 'event-poster');
+  image.alt = '';
+  image.loading = 'lazy';
+  image.decoding = 'async';
+  image.referrerPolicy = 'no-referrer';
+  const head = title.previousElementSibling;
+  image.addEventListener('error', () => {
+    if (document.activeElement === fullPoster) actions.querySelector('.campus-source')?.focus({ preventScroll: true });
+    head.after(title);
+    article.classList.remove('pictured-card');
+    cover.remove();
+  });
+  fullPoster.className = 'poster-link';
+  cover.append(image, title, fullPoster);
+  article.classList.add('pictured-card');
+  article.prepend(cover);
+  image.src = original.href;
 }
 
 // CAP provides Hong Kong times. A date-only deadline remains visible throughout that local day.
@@ -106,8 +142,7 @@ function card(entry, lang, formats) {
   article.dataset.id = event.id;
   const head = node('div', 'campus-card-head');
   if (event.department) head.append(node('span', 'campus-dept', event.department));
-  const category = text?.terms?.[event.category] || t.categories[event.category] || (lang === 'en' ? event.category : null);
-  if (category && !/^Others?$/i.test(event.category)) head.append(node('span', 'campus-kind', category));
+  for (const id of entry.formats) head.append(node('span', 'campus-kind', formatCopy[lang].card[id]));
   if (event.status === 'cancelled') head.append(node('span', 'campus-kind', t.cancelled));
   if (lang !== 'en' && !text?.title) head.append(node('span', 'campus-kind', t.original));
   const title = node('h3', 'campus-title', text?.title || event.title);
@@ -121,7 +156,10 @@ function card(entry, lang, formats) {
       const timing = displayDate(session.start, session.end, session.precision, formats);
       const venue = session.venue || event.venue;
       const detail = node('li', '');
-      if (session.label) detail.append(node('span', 'session-label', term(session.label)));
+      if (session.label) {
+        const label = text?.terms?.[session.label] || t.sessionLabels[session.label.toLowerCase()] || session.label;
+        detail.append(node('span', 'session-label', label));
+      }
       if (timing) {
         const when = node('time', '', timing);
         when.dateTime = session.start;
@@ -152,6 +190,7 @@ function card(entry, lang, formats) {
   }
   actions.append(link(source, t.source, 'campus-source', title.textContent));
   article.append(actions);
+  addOfficialPoster(event.poster, article, title, actions, t.poster);
   return article;
 }
 
@@ -165,10 +204,12 @@ function render() {
   }
   if (feed) get('campus-asof').textContent = t.checked(formats.minute.format(moment(feed.checkedAt)));
   const now = Date.now();
-  const entries = currentEntries(now).map(entry => ({
+  const current = currentEntries(now).map(entry => ({ ...entry, formats: eventFormats(entry.event, entry.sessions) }));
+  renderFormatFilter(get('campus-formats'), lang, selectedFormat, current.some(entry => entry.formats.includes('other')));
+  const entries = current.filter(entry => matchesFormat(entry.formats, selectedFormat)).map(entry => ({
     order: entry.order, title: entry.event.title, article: card(entry, lang, formats),
   }));
-  if (mode !== 'deadlines') entries.push(...demoEntries(now));
+  if (mode !== 'deadlines' && matchesFormat(['performance'], selectedFormat)) entries.push(...demoEntries(now));
   entries.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
   const list = get('campus-list');
   const focused = list.contains(document.activeElement) && document.activeElement;
@@ -181,7 +222,9 @@ function render() {
   }
   if (!feed) status.textContent = failed ? t.loadError : t.loading;
   else if (failed) status.textContent = t.saved;
-  else status.textContent = entries.length ? '' : mode === 'deadlines' ? t.noDeadlines : t.none;
+  else if (entries.length) status.textContent = '';
+  else if (selectedFormat === 'all') status.textContent = mode === 'deadlines' ? t.noDeadlines : t.none;
+  else status.textContent = mode === 'deadlines' ? formatCopy[lang].noDeadlines : formatCopy[lang].empty;
 }
 
 async function readJson(path) {
@@ -194,7 +237,7 @@ function schedule() {
   clearTimeout(timer);
   if (document.hidden) return;
   const now = Date.now();
-  let next = lastAttempt + halfHour;
+  let next = loading ? Infinity : lastAttempt + refreshIntervalMs;
   // If the page stays open, remove closed actions at their explicit deadline.
   for (const event of feed?.events || []) {
     const boundaries = [
@@ -203,14 +246,17 @@ function schedule() {
     ];
     for (const boundary of boundaries) if (boundary > now) next = Math.min(next, boundary);
   }
-  timer = setTimeout(refresh, Math.max(50, next - now));
+  if (Number.isFinite(next)) timer = setTimeout(refresh, Math.max(1, next - now));
 }
 
 async function refresh() {
-  if (loading) return;
-  if (Date.now() - lastAttempt >= halfHour) {
+  if (!loading && Date.now() - lastAttempt >= refreshIntervalMs) {
     loading = true;
     lastAttempt = Date.now();
+    if (feed) {
+      render();
+      schedule();
+    }
     try {
       const [data, captions] = await Promise.all([
         readJson('./data/campus-events.json'),
@@ -230,6 +276,12 @@ async function refresh() {
   schedule();
 }
 
+get('campus-formats').addEventListener('click', event => {
+  const button = event.target.closest('button[data-format]');
+  if (!button || button.dataset.format === selectedFormat) return;
+  selectedFormat = button.dataset.format;
+  render();
+});
 for (const name of ['upcoming', 'deadlines']) {
   get('campus-' + name).addEventListener('click', () => {
     mode = name;

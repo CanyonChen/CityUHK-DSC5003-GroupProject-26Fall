@@ -7,10 +7,12 @@ on:
       - '5003_StagePass/pages/**'
       - '5003_StagePass/scripts/sync_cap.py'
       - '5003_StagePass/scripts/test_sync_cap.py'
+      - '5003_StagePass/scripts/test_event_formats.mjs'
       - '5003_StagePass/web-user/public/media/*.svg'
       - '.github/workflows/stagepass-pages.yml'
   schedule:
-    - cron: '7,37 * * * *'
+    # 08:07 and 20:07 in Hong Kong.
+    - cron: '7 0,12 * * *'
   workflow_dispatch:
 
 permissions:
@@ -29,6 +31,8 @@ jobs:
           persist-credentials: false
       - name: Check announcement parsing
         run: python -m unittest discover -s 5003_StagePass/scripts -p test_sync_cap.py
+      - name: Check event formats
+        run: node --test 5003_StagePass/scripts/test_event_formats.mjs
       - name: Assemble the public site
         run: |
           mkdir -p _site/media

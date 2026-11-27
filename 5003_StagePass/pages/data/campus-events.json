@@ -1,6 +1,6 @@
 {
   "sourceUrl": "https://cap.cityu.edu.hk/",
-  "checkedAt": "2026-11-26T10:06:33+00:00",
+  "checkedAt": "2026-11-27T02:24:33+00:00",
   "timeZone": "Asia/Hong_Kong",
   "events": [
     {
@@ -27,7 +27,10 @@
           "kind": "registration",
           "url": "https://docs.google.com/forms/d/e/1FAIpQLSdPiYBn1k7-jjGsxV0PnOFSkTW8roITSd1KKrf5lCIlvI_S3A/viewform"
         }
-      ]
+      ],
+      "poster": {
+        "sourceUrl": "https://www.cityu.edu.hk/hkice/assets/images/Energy%20Is%20Power_Poster.png"
+      }
     },
     {
       "id": "R17m2020t263511Y307312",
@@ -48,7 +51,10 @@
         }
       ],
       "deadlines": [],
-      "actions": []
+      "actions": [],
+      "poster": {
+        "sourceUrl": "https://www.cityu.edu.hk/rcms/img/news/poster111226.jpg"
+      }
     },
     {
       "id": "I15g2820a265511K312223",
@@ -123,7 +129,10 @@
           "kind": "registration",
           "url": "https://forms.gle/HcckSty7ibAeLMBT8"
         }
-      ]
+      ],
+      "poster": {
+        "sourceUrl": "https://www.scm.cityu.edu.hk/-/media/project/cityuhk/academic/scm/events/poster/v2nma-banner-mobile-405-x-720-px.png?rev=840a55eee1da4170a9fa61fee9ecbcc0&hash=90E81CD620EEFE8FC97FB7C89E6D5C29"
+      }
     },
     {
       "id": "V16v1020p264911I592003",
@@ -136,7 +145,7 @@
       "status": "announced",
       "sessions": [
         {
-          "label": null,
+          "label": "Conference",
           "start": "2027-02-01",
           "end": "2027-02-03",
           "precision": "day",
@@ -155,7 +164,10 @@
           "kind": "submission",
           "url": "https://tinyurl.com/gachacon2027submit"
         }
-      ]
+      ],
+      "poster": {
+        "sourceUrl": "https://www.scm.cityu.edu.hk/-/media/project/cityuhk/academic/scm/events/poster/gachacon2027webportrait.png?rev=d91d1e6113e04335b425bcf282309dac&hash=46169DC3A5006068C0D7C5FC823A401E"
+      }
     },
     {
       "id": "D11b1320u263211F817425",
@@ -187,7 +199,10 @@
           "kind": "registration",
           "url": "https://forms.gle/DkXTyxyMoepdHZzu8"
         }
-      ]
+      ],
+      "poster": {
+        "sourceUrl": "https://www.scm.cityu.edu.hk/-/media/project/cityuhk/academic/scm/events/poster/dawn_jiyeon_450px.png?rev=28b0517dd51d403b98a5f1f3a54bcb3f&hash=4AB6B5458BB2502F2EB7E32B95B59C06"
+      }
     }
   ]
 }

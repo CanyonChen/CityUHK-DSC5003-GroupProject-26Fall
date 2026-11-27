@@ -1,4 +1,5 @@
 import { copy, programmeText, productionsZh, staticZh, staticZhCn } from './i18n.js';
+import { formatCopy } from './event-formats.js';
 
 const get = id => document.getElementById(id);
 const languages = {
@@ -60,21 +61,23 @@ export function demoEntries(now) {
     const t = copy[language];
     const { title, genre, description, poster } = programmeText(event, language);
     const label = '[Demo] ' + title;
-    const article = element('article', 'campus-card demo-card event-card');
+    const article = element('article', 'campus-card pictured-card demo-card event-card');
     article.dataset.id = event.id;
     const heading = element('h3', 'campus-title', label);
     if (poster) {
-      const cover = element('div', 'demo-cover');
-      const img = element('img', 'demo-poster');
+      const cover = element('div', 'event-cover demo-cover');
+      const img = element('img', 'event-poster demo-poster');
       img.alt = '';
       img.loading = 'lazy';
-      img.width = 1600;
-      img.height = 900;
-      img.src = productionsZh[event.id] ? './media/posters/' + event.id + '.webp' : poster;
+      const illustrated = Boolean(productionsZh[event.id]);
+      img.width = illustrated ? 1200 : 1600;
+      img.height = illustrated ? 800 : 900;
+      img.src = illustrated ? './media/posters/' + event.id + '.webp' : poster;
       cover.append(img, heading);
       article.append(cover);
     } else article.append(heading);
-    article.append(element('div', 'campus-card-head', ['StagePass', genre].filter(Boolean).join(' · ')),
+    const format = formatCopy[language === 'zh' ? 'zh-hk' : language].card.performance;
+    article.append(element('div', 'campus-card-head', ['StagePass', format, genre === format ? null : genre].filter(Boolean).join(' · ')),
       element('p', 'campus-summary', description));
     const details = [t.performances(shows.length)];
     if (show) details.push(dateTime.format(new Date(show.startsAt)), t.venues[show.venue] || show.venue);
