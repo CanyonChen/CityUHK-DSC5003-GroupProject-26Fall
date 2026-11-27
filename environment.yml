@@ -1,6 +1,0 @@
-name: showsys
-channels:
-  - conda-forge
-  - nodefaults
-dependencies:
-  - nodejs=22.23.2

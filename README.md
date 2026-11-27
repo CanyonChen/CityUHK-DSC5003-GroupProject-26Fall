@@ -1,131 +1,166 @@
-# StagePass · DSC5003 校园演出售票系统
+# CityUHK Events Hub · 城大校园活动与演出票务
 
-城大活动目录 · [English](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/) · [简体中文](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/?lang=zh-cn) · [繁體中文](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/?lang=zh-hk)
+CityU MDS · Semester A · DSC5003 数据库应用 · Track 1 小组项目
 
-[项目源码与启动说明](5003_StagePass/) · [课程报告](5003_StagePass/docs/course-report.md)
+[English](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/) · [简体中文](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/?lang=zh-cn) · [繁體中文](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/?lang=zh-hk)
 
-目录汇集[城大公告平台（CAP）](https://cap.cityu.edu.hk/)公开活动，展示公告所附的活动海报，并保留主办方提供的报名、投稿和公告链接。GitHub Actions 每 12 小时尝试同步一次，计划时间为香港时间 08:07 和 20:07。页面标注最近一次成功同步时间，报名和投稿入口按各自的截止时间关闭。已有中文译文的公告会随页面语言切换，新公告先显示主办方原标题。
+活动目录汇集城大 CAP 的公开公告、主办方发布的海报，以及原公告提供的报名与投稿入口。可按讲座与论坛、工作坊、演出或会议筛选，也可查看即将截止的项目。同一公告的不同场次可归入多个类别。已有中文译文的活动随页面语言切换，新公告先显示主办方原标题。[城大公告平台](https://cap.cityu.edu.hk/)
 
-名称以 `[Demo]` 开头的活动由项目组编制，可在同一目录打开场次、座位图与区域上座率。GitHub Pages 使用演示数据库快照，完整的购票、出票、退款和验票流程可在本地运行。
+GitHub Actions 每 12 小时尝试同步一次，计划时间为香港时间 08:07 和 20:07。页面显示最近一次成功同步的时间，报名和投稿入口在公告列明的截止时间后关闭。
 
-活动可按讲座与论坛、工作坊、演出或会议筛选，也可与「即将截止」组合查看。同一条公告如包含讲座与音乐会，会同时出现在两个筛选结果里。
+标有 `[Demo]` 的演出使用项目组编制的数据。线上可以查看场次、座位和区域上座率。本地票务系统可实际执行演示购票、出票、退款和验票，通过用户端（8080）和管理端（8081）调用同一个 API（3000）。数据库为 MySQL/MariaDB。[本地运行指南](docs/local-run-guide.md) · [课程报告](docs/course-report.md)
 
-## Show 票务系统开发模板
+**当前状态**：数据库层、文档基线、M1、M2、M3、M4、M5（视频、最终 PDF 除外）已交付，并额外完成 R1 实时刷新、Q-06 区域上座率与 AC-25 连座推荐。M3 完成注册与安全退出、角色授权、自动对账和双端联调；M4 在 100 场次 / 20,000 场次座位 / 10,000 订单上完成 5 类查询 P95、EXPLAIN、索引实验、50 并发预留和 AC-14/17/24 异常用例；M5 从发布包在独立目录与独立库复现双前端 + 后端，完成课程报告、M5 证据、成员贡献记录（8 人均分 12.5%）和提交清单；R1 在 API 3000 增加 `/ws` 失效信号，用户端座位图/订单页与管理端概览/财务页自动重取，并加入广播作用域、300 ms 防抖、500 ms 最短间隔、单请求在飞、隐藏暂停与操作暂停，`realtime_check.js` 8/8，调度器单测与 UI 实测通过；Q-06 新增管理员区域上座率接口 API-48 与管理端区域表，按场次/区域统计可售、成交、核销、上座率与入场率。`smoke.ps1` 5/5、`catalog_check.ps1` 32/32、`m1_check.ps1` 19/19、`m2_check.ps1` 45/45、`m3_check.ps1` 33/33；`m4_bench.js reservation` 为 50/50 HTTP 201、P95 380.77 ms；`m4_anomaly_check.js` 为 3/3。演示视频和报告 PDF 仍待完成。
 
-DSC5003 小组项目的开发基线，基于 FilmSys 模板整理。当前保留电影浏览、影院与排片、选座、模拟支付、个人订单、影评及管理后台功能，后续在此基础上开发团队自己的业务。
+## 目录结构
 
-## 项目结构
+| 路径 | 内容 |
+|---|---|
+| `pages/` | GitHub Pages 活动目录、公告快照、译文和演出座位展示 |
+| [docs/design-history/](docs/design-history/) | 早期需求、数据库实体关系说明与字段设计 |
+| `docs/requirements-spec.md` | 需求规格说明书 v1.6（双前端版，17 实体；含 R1 实时刷新 AC-26 与节流/作用域要求；支持多场馆、演示种子 3 场馆/670 座） |
+| `docs/database-design.md` | 数据库表结构与字段 v1.2（实体清单 / 关系概述 / 字段字典） |
+| `docs/api-contract.md` | API 接口契约 v1.10（48 条契约 + 4 个管理端辅助 + 11.1 WebSocket 失效信号与作用域 + API-47 连座推荐 + API-48 区域上座率） |
+| `docs/performance-report.md` | M4 性能报告：环境、数据规模、5 类查询 P95、EXPLAIN、索引实验、50 并发预留、AC-14/17/24 |
+| `docs/course-report.md` | 课程报告 v1.10（Track 1）：Group Information/Contribution Statement 表、需求、架构与静态系统图、数据库 ER 图、3 条代表性 SQL、事务与一致性、测试、Track 1 证据地图与 Q-01–Q-07 覆盖表（含 Q-06 区域上座率）、性能、Challenges/Lessons、References、链接 |
+| `docs/system-architecture.svg` / `.png` | 系统结构图静态源文件与 PDF 用位图；报告 §3.1 直接嵌入 PNG |
+| `docs/ER-diagram.png` | 数据库 ER 图（17 实体 / 122 业务字段 / 21+1 关系 / 22 外键 / 20 显式索引） |
+| `docs/member-contributions.md` | 成员贡献记录：8 人均分 12.5%，姓名/学号/邮箱/分工已填 |
+| `docs/team-roster.md` | 小组成员名单：姓名、学号、邮箱、分工 |
+| `docs/submission-checklist.md` | M5 最终提交清单 v1.10：交付状态、包内检查、提交步骤与剩余风险 |
+| `docs/local-run-guide.md` | Windows 小白本地运行指南：前置软件、双击启动、演示账号、停止与重置、常见问题 |
+| `database/schema.sql` | 17 表 DDL，v1.2，含 token_version、payload_json、严格模式与约束 |
+| `database/seed.sql` | 演示数据，v1.1-demo |
+| `database/*.py` | 种子生成器与四个校验脚本 |
+| `server/` | 共用 API（Node 20+ / Express / mysql2）：登录、目录、订单、支付、票据、退款、管理后台 |
+| `web-user/` | 用户端（Vue 3 + Vite，8080）：活动、选座、结算、订单、电子票、退票 |
+| `web-admin/` | 管理端（Vue 3 + Vite，8081）：概览、活动、场次/票价、验票、订单、对账、用户与角色 |
+| `scripts/` | 一键起环境、重置演示数据、T1/T2/M1/M2/M3 验收、R1 实时刷新验证、M4 规模数据/基准/异常用例、对账与性能冒烟、封面生成 |
+| `delivery/` | 交付索引、验收清单与一致性检查脚本 |
 
-| 目录／文件 | 用途 | 技术／默认端口 |
-| --- | --- | --- |
-| [show/](show/) | 用户购票端，移动端页面 | Vue 2、Mint UI、Element UI；8080 |
-| [show_admin/](show_admin/) | 用户、电影、影院、影厅、排片、评论、订单管理 | Vue 2、Element UI；8081 |
-| [show_api/](show_api/) | 两个前端共用的接口及静态图片服务 | Express、MySQL；3000 |
-| [db_show.sql](db_show.sql) | 独立数据库初始化与原始样例 | MySQL 数据库 `db_show` |
-| [requirements.md](requirements.md) | 团队与社区开发环境配置指南、完整依赖版本表 | 环境管理工具由开发者自行选择 |
-| [environment.yml](environment.yml) | 可选的 Conda 环境定义 | `showsys`；Node.js 22.23.2 |
-| [数据库结构参考](docs/FilmSys-数据库表结构与字段参考.md) | 模板数据库的字段、关系和建表说明 | 9 张表、67 个字段、9 个外键、19 个索引 |
+## 快速开始
 
-`template/` 是本地参考副本，按现有忽略规则不纳入 Git；新应用运行不依赖该目录。`movie`、`cinema` 等业务命名、接口路径和表结构沿用模板。
+前置：Windows、XAMPP（MariaDB 10.4）、Node 20+、Python 3.10+。
 
-## 本地准备与启动
+> 第一次运行或发给组员，直接看 `docs/local-run-guide.md`；最简方式是双击根目录的 `Start-CityUHK Events Hub.bat`，启动后打开 `http://127.0.0.1:8080`（`buyer01` / `Demo@1234`）和 `http://127.0.0.1:8081`（`admin` / `Demo@1234`）。
 
-2026-10-10 已在 macOS arm64 的 `showsys` Conda 环境中完成依赖安装、前端构建、API 依赖与语法检查，以及 MariaDB 11.4.13 的 SQL 导入和基础接口联调。该记录代表已验证的开发环境；首次克隆项目的开发者仍需在自己的机器上完成配置。
+```powershell
+cd scripts
 
-开发环境使用 **Node.js 22.23.2、npm 10.9.8**；运行完整业务还需可连接的 MySQL。项目沿用模板的 Vue 2、Webpack 3 及历史依赖锁文件，没有升级应用依赖；现有 `engines` 声明来自模板，不代表所有满足最低版本的环境均兼容。
+# 建库 → 建表 → 导入演示数据 → 校验（约 3 秒）
+.\reset_demo.ps1
 
-首次配置请阅读 [requirements.md](requirements.md)：包含团队与社区使用方式、Conda/nvm 环境准备、数据库安装与初始化、`.env` 配置、启动与验证、常见问题及全部直接依赖版本。开发者可以自行选择工具准备相同版本。当前已验证 MariaDB 11.4.13 的 SQL 导入及 API 查询；数据库结构参考文档中的 MySQL 8.4.8 尚未进行运行验证。
-
-应用依赖通过各目录的 `npm ci` 安装，完整依赖树以对应的 `package-lock.json` 为准；更新依赖时同步更新指南中的版本表。下面保留常用启动步骤，数据库初始化仅在首次配置或明确重置样例时执行。
-
-使用本机已配置的 Conda 环境时，每个开发终端先执行：
-
-```sh
-conda activate showsys
-node --version   # v22.23.2
-npm --version    # 10.9.8
-```
-
-新机器可在项目根目录通过 `conda env create -f environment.yml` 创建环境，已有环境可用 `conda env update -n showsys -f environment.yml` 安装指定 Node.js。环境不需要安装 Python。其他平台安装后应核对 Node.js/npm 版本，再执行依赖安装和构建验证。
-
-`command -v node` 和 `command -v npm` 应指向当前 Conda 环境的 `bin/`。如果激活后仍指向 Homebrew 或其他 Node.js，按配置指南检查终端 PATH 顺序；个人机器的激活钩子不会随仓库分发。
-
-### 1. 初始化独立数据库
-
-在项目根目录执行，按本机情况调整主机、端口及用户名；`--password` 会提示输入 MySQL 密码：
-
-```sh
-mysql --host=127.0.0.1 --port=3306 --user=root --password < db_show.sql
-```
-
-脚本创建并选中 `db_show`，会重建其中的九张同名表与样例记录。它不针对原模板数据库执行修改。执行前应确认 `db_show` 中没有需要保留的开发数据；执行账号需要建库、建表及写入权限。
-
-所有原样例、记录 ID、订单、评论及配套图片保留。导入末尾使用数据库服务器的当前日期，将最早排片移到次日，其余排片应用相同的天数偏移，保持日期间隔和放映时间。电影上映日期、订单日期及评论日期保留原值。重复初始化会重新导入样例，并以新的导入日期计算偏移。
-
-### 2. 配置并启动 API
-
-在一个新终端中，从项目根目录执行：
-
-```sh
-cd show_api
-test -f .env || cp .env.example .env
-```
-
-编辑 `.env`，填写本机数据库连接信息。默认值与用途见 [API 说明](show_api/README.md)。数据库密码示例为空，不包含模板作者的连接密码。
-
-```sh
-npm ci
-set -a
-. ./.env
-set +a
+# 安装并启动 API（另开一个窗口保持运行）
+cd ..\server
+npm install
+Copy-Item .env.example .env
 npm start
+
+# 安装并启动用户端（再开一个窗口保持运行）
+cd ..\web-user
+npm install
+npm run serve
+
+# 安装并启动管理端（再开一个窗口保持运行）
+cd ..\web-admin
+npm install
+npm run serve
+
+# 回到 scripts 跑验收：T1 5/5，T2 32/32，M1 19/19，M2 45/45，M3 33/33
+cd ..\scripts
+.\smoke.ps1
+.\catalog_check.ps1
+.\m1_check.ps1
+.\m2_check.ps1
+.\m3_check.ps1
+node .\realtime_check.js
+.\recon_auto_check.ps1
+.\perf_smoke.ps1
+.\reset_demo.ps1   # 验收会写测试数据，跑完恢复干净种子
+
+# 或一条命令起数据库 + API + 两个前端
+cd ..
+.\scripts\dev.ps1 -ResetSeed -Visible
 ```
 
-`.env` 使用 shell 的 `KEY=value` 语法，含空格或特殊字符的值请加引号。`npm start` 不会自动读取 `.env`，需要先在同一终端显式加载。API 默认入口是 <http://localhost:3000/>；应用由 `bin/www` 统一监听，勿使用 `node app.js` 启动。
+M4 使用独立基准库 `ticketing_bench`，不碰演示库 `ticketing_system`：
 
-### 3. 启动用户端和管理端
-
-另开两个终端，各自从项目根目录执行，避免继承 API 的 `PORT=3000`：
-
-用户端：
-
-```sh
-cd show
-npm ci
-npm start
+```powershell
+cd ..\scripts
+node .\m4_scale_setup.js      # 100 场次 / 20,000 场次座位 / 10,000 订单
+node .\m4_bench.js baseline   # 50 并发 × 500 样本 × 5 接口
+node .\m4_bench.js indexes    # 创建 4 个候选索引
+node .\m4_bench.js tuned      # 对比 baseline
+node .\m4_bench.js drop       # 删除候选索引，恢复基线
+node .\m4_bench.js reservation # 50 并发预留
+node .\m4_anomaly_check.js    # AC-14/17/24
 ```
 
-打开 <http://localhost:8080/>，可使用浏览器的移动设备视图。
+M4 需要 bench API 在 3100 运行，环境变量为 `DB_NAME=ticketing_bench`、`PORT=3100`、`DB_POOL=10`、`REFUND_CUTOFF_HOURS=0`、`RECONCILE_INTERVAL_SECONDS=2`、`RECONCILE_MIN_AGE_SECONDS=1`。
 
-管理端：
+M5 干净环境复现：把发布包复制到独立目录，不复制 `.git` 与 `node_modules`；建立独立库 `ticketing_m5clean`，替换 `schema.sql` / `seed.sql` 的库名后导入；三个项目分别 `npm install`；两个前端设置 `VITE_API_BASE` 后 `npm run build`；后端用 `DB_NAME=ticketing_m5clean` 启动；两个前端 `vite preview`。M5 证据在 `delivery/evidence/M5/`，详细步骤见 `docs/submission-checklist.md` 与 `delivery/evidence/M5/README.md`。
 
-```sh
-cd show_admin
-npm ci
-npm start
+R1 实时刷新：API 3000 同时提供 `ws://127.0.0.1:3000/ws`。服务端只在成功的写请求后广播 `data.changed`，携带 `type`、`at`、`path` 与可选 `order_id`、`performance_id`，不传金额、用户、座位或票码；两个前端收到后仍用原 REST 接口重取，并按作用域过滤。客户端采用 300 ms 防抖、500 ms 最短间隔、500 ms 最大等待、同一时刻最多一个请求在飞；页面隐藏时暂停、回前台补一次；支付、取消、退款、对账操作中暂停。座位图保留手动 Refresh，订单页保留 15 秒兜底轮询；断线 2 秒后重连。验证脚本 `node .\realtime_check.js` 会注册临时账号、下单并取消，跑完用 `reset_demo.ps1` 恢复种子。证据在 `delivery/evidence/M5/realtime-check.json`、`realtime-ui-check.json`、`03-admin-live.png` 与 `04-admin-live-before.png`。
+
+打开 `http://127.0.0.1:8080`，用 `buyer01` / `Demo@1234` 登录；结算页的“Simulate successful payment”即完成测试支付并出票。管理端打开 `http://127.0.0.1:8081`，用 `admin` / `Demo@1234`（全部页面）或 `checker01` / `Demo@1234`（仅验票、仅授权场次）。脚本会自动查找 `C:\xampp`、`D:\xampp`、`D:\_Coding\XAMPP`，也可以设置 `XAMPP_HOME`；默认 root 空密码、库名 `ticketing_system`。路径或 root 密码不同时，先按 `docs/local-run-guide.md` 处理，不要逐个改脚本。
+
+## 数据规模
+
+- 17 张表、122 个业务字段、22 个外键（全部 `RESTRICT`）
+- 3 个场馆共 670 座；8 个活动、16 个场次、3630 条场次座位
+- 594 个订单、1761 条明细、1751 张票、593 条支付通知、629 条核销、6 条退款
+- 34 个演示账号（buyer01–buyer30、admin、checker01–checker03），密码统一 `Demo@1234`
+- M4 基准库另有 100 场次、20,000 条场次座位、10,000 条订单、14,000 条明细、11,200 张票、9,500 条支付尝试、8,000 条通知、2,000 条退款、2,000 条核销；102 个 bench 账号密码统一 `Demo@1234`
+
+## 数据库约定
+
+- 严格模式必须开启；否则 `NOT NULL` 写入 NULL 会被静默转型，CHECK 形同虚设
+- 金额一律整数分，时间为 `DATETIME(3)` 按 UTC 存储、展示层转 `Asia/Hong_Kong`
+- 外键统一 `ON DELETE RESTRICT / ON UPDATE RESTRICT`，历史数据不删改
+- 枚举用 `VARCHAR + CHECK`；座位唯一键含区域，避免 A/B 区同排同号撞键
+
+## 校验脚本
+
+```powershell
+cd database
+python check_schema.py     # 静态校验 DDL（不依赖数据库）
+python validate_db.py      # 33 条约束用例（脚本先清空业务表，跑完用 reset_demo.ps1 恢复）
+python check_fields.py     # 实库列数 vs 字典字段数
+python verify_seed.py      # 13 项种子不变量
+python verify_password.py  # 34 个账号 bcrypt 校验（需 pip install bcrypt）
+
+cd ..\scripts
+.\m1_check.ps1             # 19 条 M1 断言：下单/幂等/支付/出票/QR/取消/并发
+.\m2_check.ps1             # 45 条 M2 断言：角色/活动/场次/票价/批量封座/验票/退款终态/对账/统计
+node .\m4_bench.js baseline  # M4 查询基准（需 3100 bench API）
+node .\m4_anomaly_check.js   # M4 AC-14/17/24（需 3100 bench API）
 ```
 
-打开 <http://localhost:8081/>。原样例中的管理员账号和密码均为 `admin`。
+## 已知限制
 
-两个前端沿用访问 `http://localhost:3000` 的代理和图片地址，首次运行请保持默认 API 端口。修改 API 端口时，需要同步调整两个前端的代理配置和页面中的资源地址。前端端口被占用时，开发服务器可能另选端口，以终端输出为准。
+- `seed.sql` 的时间相对导入时刻生成，P13 场次的核销窗口只在导入后约 40 分钟内有效，演示前重跑 `reset_demo.ps1` 即可重置。
+- 管理端验票接受票码文本（二维码 JWT 载荷或 64 位票码哈希），不要求摄像头或硬件扫码；座位页支持单座、批量选择和整区封锁/恢复。
+- 退款由管理员在管理端确认成功/失败：成功作废票据并释放座位，失败恢复 PAID 与 VALID；不接真实支付网关。
+- 支付为测试模式，结算页按钮模拟成功/失败/超时，不接真实支付网关、不产生真实扣款。
+- 活动列表的 `venue_name` 在多场馆活动显示 `Multiple venues`；`min_price_cents` 取全部在售场次最低价。
+- 座位图一次返回整场座位（最多 350 条），未做分页或增量刷新；R1 只提供失效信号与可选 ID，页面仍需整场重取；窄屏在座位图内部横向滚动，页面本身不横向溢出。
+- 实时刷新只在页面可见且不处于支付、取消、退款、对账操作时发起；后台页面不刷新，回前台补一次。
+- 角色以登录时的 token 快照为准，撤销授权不会立刻让已发 token 失效（8 小时内仍有效）。
+- 用户端为 Vue 3 + Vite；课程模板是 Vue 2 + Mint UI/Element UI + webpack，视觉与信息架构对齐，技术栈差异见 `web-user/README.md`。
+- 课程报告、ER 图和系统结构图在 `docs/`；数据库设计说明 Word、属性清单等如课程要求单独提交，从 [早期设计资料](docs/design-history/) 取对应文件，不要混入无关归档。
+- 演示视频待与组员共同完成；8 人姓名、学号、邮箱、分工和 12.5% 均分已填；报告 PDF 仍待导出。
+- 项目源码、课程报告和 M4/M5 证据均收录在仓库 `main` 分支。[GitHub 仓库](https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall)
+- M5 干净环境验收使用 3200/8180/8181，因为默认 3000/8080/8081 被演示实例占用；默认配置未改，空机器可直接用默认端口。
 
-两个前端各自支持 `npm run build`，本机已构建通过。安装和构建生成的 `node_modules/`、`dist/` 已被 Git 忽略。
+## 文档索引
 
-API 的旧版可选文件监听扩展 `fsevents` 无法在本机 Node.js 22 / Apple Silicon 环境中编译，因此 [show_api/.npmrc](show_api/.npmrc) 设置了 `ignore-scripts=true`。该配置跳过依赖安装脚本；当前 API 的直接依赖加载和文件监听回退机制均已验证。显式 `npm start` 仍会执行，后续新增需要安装脚本的依赖时应重新检查此设置。详见 [API 说明](show_api/README.md)。
-
-安装和构建期间会出现模板历史依赖的弃用、循环依赖等提示；本轮保留原依赖版本，没有执行依赖升级或安全修复。
-
-## 当前功能边界
-
-- 支付为页面确认后直接创建订单的模拟流程，没有连接微信或支付宝；手机验证码由接口返回，没有发送短信。
-- 座位图为固定的 6 排 × 10 座。座位占用保存在排片的文本字段中，倒计时与释放依赖页面，没有新增服务端并发预留或自动过期任务。
-- 保留取票码与历史订单展示；本次没有新增退款、二维码电子票、验票核销、支付对账或销售统计。
-- 保留模板的认证、权限及业务逻辑。已验证服务启动、浏览查询及后台登录；选座、下单、模拟支付和管理端增删改等完整业务流程仍待验证。
-
-## 来源与本次改动
-
-上游参考：[J1ong/FilmSys](https://github.com/J1ong/FilmSys)。2026-10-10 从本地模板复制，更新项目品牌、包名、启动说明、数据库名称及环境配置，并移除 API 重复监听。
-
-三个复制应用分别保存模板随附的完整许可证：[用户端 LICENSE](show/LICENSE)、[管理端 LICENSE](show_admin/LICENSE)、[API LICENSE](show_api/LICENSE)，内容为 GNU GPL version 3。数据库脚本也来自同一模板。根目录已有的 `LICENSE` 保持原样；复制部分的来源与随附许可由上述文件记录。
-
-基线静态验收覆盖文件完整性、依赖锁定、源码语法、命名和 SQL 结构。后续已完成依赖安装、前端构建、数据库导入、API 数据库连接与基础页面检查。导入结果为 9 张表、67 个字段、9 个外键、19 个索引、151 条样例记录；本次导入后的最早场次为 2026-10-11。未执行完整购票流程或管理端数据修改测试。
+- 需求：`docs/requirements-spec.md`
+- 数据字典：`docs/database-design.md`
+- 接口契约：`docs/api-contract.md`
+- M4 性能报告：`docs/performance-report.md`
+- M5 课程报告：`docs/course-report.md`
+- 系统结构图：`docs/system-architecture.png`、`docs/system-architecture.svg`
+- 成员贡献记录：`docs/member-contributions.md`
+- 成员名单：`docs/team-roster.md`
+- 最终提交清单：`docs/submission-checklist.md`
+- 交付清单与验收项：`delivery/MANIFEST.md`、`delivery/CHECKLISTS.md`

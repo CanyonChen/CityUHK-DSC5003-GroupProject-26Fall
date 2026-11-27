@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" data-i18n-content="metaDescription" content="Browse CityUHK campus announcements, registration links and deadlines alongside CityUHK Events Hub demo productions.">
+  <link rel="icon" type="image/png" sizes="64x64" href="./media/cityuhk-favicon.png">
+  <title data-i18n="pageTitle">CityUHK Events Hub · CityUHK campus events</title>
+  <link rel="stylesheet" href="./site.css">
+  <script type="module" src="./site.js"></script>
+  <script type="module" src="./campus.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <header class="site-head">
+    <div class="wrap header-inner">
+      <a class="brand" href="#main" aria-label="CityUHK Events Hub home" data-i18n-aria="brandHome"><img class="brand-logo" src="./media/cityuhk-logo.webp" width="1151" height="647" alt="City University of Hong Kong" data-i18n-alt="universityLogo"><span class="brand-name">CityUHK <span>Events Hub</span></span></a>
+      <nav aria-label="Site navigation" data-i18n-aria="navLabel">
+        <a href="#campus" data-i18n="navCampus">Campus events</a>
+        <a href="#project" data-i18n="navProject">Project</a>
+      </nav>
+      <div class="languages" role="group" aria-label="Page language" data-i18n-aria="languageLabel">
+        <button type="button" id="lang-en" lang="en" aria-label="English" aria-pressed="true">EN</button>
+        <button type="button" id="lang-zh-cn" lang="zh-CN" aria-label="简体中文" aria-pressed="false">简体</button>
+        <button type="button" id="lang-zh" lang="zh-HK" aria-label="繁體中文" aria-pressed="false">繁體</button>
+      </div>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <img class="hero-art" src="./media/stage-curtain.webp" alt="" fetchpriority="high">
+      <div class="hero-copy">
+        <p class="context hero-context" data-i18n="heroContext">CityUHK · DSC5003 Group Project</p>
+        <h1 id="hero-title" data-i18n="heroTitle">Campus events</h1>
+        <p class="intro" data-i18n="heroIntro">Explore CityUHK activities, check upcoming deadlines and register with the organisers.</p>
+        <a class="primary-link" href="#campus"><span data-i18n="heroAction">Browse campus events</span><span aria-hidden="true">↓</span></a>
+      </div>
+    </section>
+
+    <section id="campus" class="wrap section campus" aria-labelledby="campus-title">
+      <div class="section-head campus-heading">
+        <h2 id="campus-title" data-i18n="campusTitle">Events &amp; deadlines</h2>
+        <a class="text-link" href="https://cap.cityu.edu.hk/"><span data-i18n="campusPortal">CityUHK Announcement Portal</span><span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="campus-toolbar">
+        <div class="view-switch" role="group" aria-label="Event list view" data-i18n-aria="campusView">
+          <button type="button" id="campus-upcoming" aria-controls="campus-list" aria-pressed="true" data-i18n="campusUpcoming">All events</button>
+          <button type="button" id="campus-deadlines" aria-controls="campus-list" aria-pressed="false" data-i18n="campusDeadlines">Deadlines</button>
+        </div>
+        <p id="campus-asof" class="note"></p>
+      </div>
+      <div id="campus-formats" class="format-filter" role="group"></div>
+      <p id="campus-status" role="status" aria-live="polite"></p>
+      <p id="load-status" role="status"></p>
+      <noscript><a href="https://cap.cityu.edu.hk/">CityUHK Announcement Portal · 城大公告系统 · 城大公告系統</a></noscript>
+      <div id="campus-list" class="campus-list"></div>
+    </section>
+
+    <section id="seating" class="inventory" hidden aria-labelledby="detail-title">
+      <div class="wrap section">
+        <div class="section-head detail-head">
+          <div>
+            <p class="context" data-i18n="navSeats">Demo seat explorer</p>
+            <h2 id="detail-title" tabindex="-1"></h2>
+          </div>
+          <a class="text-link" href="#campus"><span aria-hidden="true">↑</span><span data-i18n="allEvents">All events</span></a>
+        </div>
+        <p id="snapshot-note" class="note snapshot-note" data-i18n="snapshotFallback">Read-only demo snapshot</p>
+        <p id="description" class="description"></p>
+        <p id="no-performance" hidden data-i18n="noPerformance">This snapshot contains no public performance for this production.</p>
+        <div id="performance-detail" hidden>
+          <div class="controls">
+            <label for="performance-select"><span data-i18n="performanceLabel">Performance · Hong Kong time</span><select id="performance-select"></select></label>
+            <label for="section-select"><span data-i18n="sectionLabel">Seating section</span><select id="section-select"></select></label>
+          </div>
+          <div class="inspector">
+            <section class="panel seat-panel" aria-labelledby="seat-map-title">
+              <div class="panel-head"><h3 id="seat-map-title" data-i18n="seatMapTitle">Seat map</h3><span id="seat-count" class="note"></span></div>
+              <ul class="legend" aria-label="Seat statuses" data-i18n-aria="legendLabel">
+                <li><i class="available"></i><span data-i18n="available">Available</span></li>
+                <li><i class="held"></i><span data-i18n="held">On hold</span></li>
+                <li><i class="sold"></i><span data-i18n="sold">Sold</span></li>
+                <li><i class="blocked"></i><span data-i18n="blocked">Blocked</span></li>
+              </ul>
+              <div class="seat-scroll">
+                <div class="seat-layout">
+                  <div class="stage" data-i18n="stage">Stage</div>
+                  <div id="seat-map" role="group" aria-label="Seats by row and number" data-i18n-aria="seatMapLabel"></div>
+                </div>
+              </div>
+              <p id="seat-detail" class="seat-detail" aria-live="polite"></p>
+            </section>
+            <section class="panel occupancy-panel" aria-labelledby="occupancy-title">
+              <h3 id="occupancy-title" data-i18n="occupancyTitle">Section occupancy</h3>
+              <p class="note" data-i18n="occupancyHint">Tickets sold as a share of sellable seats.</p>
+              <div id="occupancy"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="project" class="wrap section project" aria-labelledby="project-title">
+      <div>
+        <p class="context" data-i18n="projectContext">DSC5003 Group Project</p>
+        <h2 id="project-title" data-i18n="projectTitle">Behind CityUHK Events Hub</h2>
+        <p class="description" data-i18n="projectIntro">Explore how the ticketing system handles seat reservations, simulated payments, refunds and gate check-in.</p>
+      </div>
+      <ul class="resources">
+        <li><a href="https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall/blob/main/docs/course-report.md"><span data-i18n="reportLink">Course report</span><span aria-hidden="true">↗</span></a></li>
+        <li><a href="https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall/blob/main/docs/ER-diagram.png"><span data-i18n="diagramLink">Database ER diagram</span><span aria-hidden="true">↗</span></a></li>
+        <li><a href="https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall/blob/main/docs/performance-report.md"><span data-i18n="benchLink">Performance experiments</span><span aria-hidden="true">↗</span></a></li>
+        <li><a href="https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall/tree/main/delivery/evidence/M5"><span data-i18n="testsLink">Recorded tests and screenshots</span><span aria-hidden="true">↗</span></a></li>
+        <li><a href="https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall/tree/main"><span data-i18n="sourceLink">Source code and local setup</span><span aria-hidden="true">↗</span></a></li>
+      </ul>
+    </section>
+  </main>
+  <footer><div class="wrap footer-inner"><a class="brand" href="#main" aria-label="CityUHK Events Hub home" data-i18n-aria="brandHome"><img class="brand-logo" src="./media/cityuhk-logo.webp" width="1151" height="647" alt="City University of Hong Kong" data-i18n-alt="universityLogo"><span class="brand-name">CityUHK <span>Events Hub</span></span></a><span data-i18n="footerCredit">CityUHK · DSC5003</span></div></footer>
+</body>
+</html>

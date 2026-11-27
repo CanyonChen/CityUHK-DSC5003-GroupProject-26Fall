@@ -1,0 +1,90 @@
+name: Publish CityUHK Events Hub to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pages/**'
+      - 'scripts/sync_cap.py'
+      - 'scripts/test_sync_cap.py'
+      - 'scripts/test_event_formats.mjs'
+      - 'web-user/public/media/*.svg'
+      - '.github/workflows/cityuhk-events-hub-pages.yml'
+  schedule:
+    # 08:07 and 20:07 in Hong Kong.
+    - cron: '7 0,12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cityuhk-events-hub-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check announcement parsing
+        run: python -m unittest discover -s scripts -p test_sync_cap.py
+      - name: Check event formats
+        run: node --test scripts/test_event_formats.mjs
+      - name: Assemble the public site
+        run: |
+          mkdir -p _site/media
+          cp -R pages/. _site/
+          cp web-user/public/media/*.svg _site/media/
+          test -s _site/index.html
+          test -s _site/data/snapshot.json
+      - name: Refresh public CityUHK announcements
+        env:
+          TRIGGER: ${{ github.event_name }}
+          LIVE_FEED: https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/data/campus-events.json
+        run: |
+          feed=_site/data/campus-events.json
+          previous="$RUNNER_TEMP/published-campus-events.json"
+          if curl --fail --silent --show-error --location --max-time 20 "$LIVE_FEED?run=$GITHUB_RUN_ID" -o "$previous"; then
+            python - "$previous" "$feed" <<'PY'
+          import json, sys
+          from datetime import datetime
+          from pathlib import Path
+
+          published, bundled = map(Path, sys.argv[1:])
+          try:
+              old = json.loads(published.read_bytes())
+              seed = json.loads(bundled.read_bytes())
+              if old["sourceUrl"] == seed["sourceUrl"] and isinstance(old["events"], list):
+                  if datetime.fromisoformat(old["checkedAt"]) > datetime.fromisoformat(seed["checkedAt"]):
+                      bundled.write_bytes(published.read_bytes())
+          except (ValueError, TypeError, KeyError):
+              print("Published feed was unreadable. Using the bundled snapshot.")
+          PY
+          fi
+          if ! python scripts/sync_cap.py --previous "$feed" --output "$feed"; then
+            if [ "$TRIGGER" = schedule ]; then
+              echo "::error::CAP refresh failed. The previous Pages deployment remains live."
+              exit 1
+            fi
+            echo "::warning::Publishing the website update with the last available CAP snapshot."
+          fi
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: publish
+        uses: actions/deploy-pages@v5
