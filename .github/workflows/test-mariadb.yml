@@ -1,0 +1,102 @@
+name: Test ticketing API with MariaDB
+
+on:
+  push:
+    branches: [ci/test-mariadb]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ticketing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: disposable-ci-root
+          MARIADB_DATABASE: ticketing_system
+          MARIADB_USER: hub_ci
+          MARIADB_PASSWORD: disposable-ci-user
+        ports:
+          - '127.0.0.1:3307:3306'
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install API dependencies
+        working-directory: server
+        run: npm ci --registry=https://registry.npmjs.org --replace-registry-host=always --no-audit --no-fund
+
+      - name: Import the schema and demo records into the service container
+        env:
+          DB_CONTAINER: ${{ job.services.mariadb.id }}
+        run: |
+          db() {
+            docker exec -i "$DB_CONTAINER" sh -c 'export MYSQL_PWD="$MARIADB_PASSWORD"; exec mariadb --default-character-set=utf8mb4 --user="$MARIADB_USER" --database="$MARIADB_DATABASE" --batch --skip-column-names'
+          }
+          db < database/schema.sql
+          db < database/seed.sql
+          version=$(db <<< "SELECT VERSION()")
+          tables=$(db <<< "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE'")
+          test "$tables" -eq 17
+          echo "Imported $tables tables into MariaDB $version." | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Check admin login, performances, orders and saved activity after a new login
+        env:
+          HOST: 127.0.0.1
+          PORT: '3100'
+          DB_HOST: 127.0.0.1
+          DB_PORT: '3307'
+          DB_USER: hub_ci
+          DB_PASSWORD: disposable-ci-user
+          DB_NAME: ticketing_system
+          JWT_SECRET: disposable-ci-signing-key
+        run: |
+          node server/src/server.js &
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true' EXIT
+          api="http://$HOST:$PORT"
+          curl -fsS --retry 20 --retry-delay 1 --retry-connrefused --max-time 3 "$api/health" | jq -e '.data.db == "ok"'
+
+          login() {
+            curl -fsS --json '{"user_name":"admin","password":"Demo@1234"}' "$api/auth/login" |
+              jq -er '.data | select(.user.roles | index("ADMIN")) | .token | select(length > 0)'
+          }
+          status=$(curl -sS -o /dev/null -w '%{http_code}' "$api/admin/performances")
+          test "$status" = 401
+          token=$(login)
+          auth="Authorization: Bearer $token"
+          performances=$(curl -fsS -H "$auth" "$api/admin/performances?page_size=1" | jq -er '.data | select(.items | length == 1) | .total')
+          orders=$(curl -fsS -H "$auth" "$api/admin/orders?page_size=1" | jq -er '.data | select(.items | length == 1) | .total')
+          test "$performances" -gt 0
+          test "$orders" -gt 0
+          echo "The admin API returned $performances performances and $orders orders." | tee -a "$GITHUB_STEP_SUMMARY"
+
+          title="CI activity $GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          event=$(jq -n --arg title "$title" '{title: $title, organizer_name: "CI"}')
+          event_id=$(curl -fsS -H "$auth" --json "$event" "$api/admin/events" | jq -er '.data.event_id | select(. > 0)')
+          logout_status=$(curl -sS -X POST -H "$auth" -o /dev/null -w '%{http_code}' "$api/auth/logout")
+          test "$logout_status" = 204
+          old_status=$(curl -sS -H "$auth" -o /dev/null -w '%{http_code}' "$api/auth/me")
+          test "$old_status" = 401
+
+          new_token=$(login)
+          curl -fsS -H "Authorization: Bearer $new_token" -G --data-urlencode "keyword=$title" "$api/admin/events" |
+            jq -e --argjson id "$event_id" --arg title "$title" 'any(.data.items[]; .event_id == $id and .title == $title and .organizer_name == "CI")'
+          echo "A newly signed-in administrator read back activity $event_id after sign-out." | tee -a "$GITHUB_STEP_SUMMARY"
