@@ -12,7 +12,9 @@
 
 ## 本地运行
 
-只预览活动看板需要 Python。完整票务应用使用 Node.js 20+ 和 MariaDB，默认用户端在 `8080`，管理端在 `8081`，API 在 `3000`。[安装与本地运行指南](docs/local-run-guide.md)
+只预览活动看板需要 Python。完整票务应用使用 Node.js 20+ 和 MariaDB，默认用户端在 `8080`，管理端在 `8081`，API 在 `3000`。
+
+**票务系统资源** · [安装与本地运行指南](docs/local-run-guide.md) · [票务 API 参考](docs/api-contract.md) · [GitHub 源码](https://github.com/CanyonChen/CityUHK-Events-Hub/tree/main)
 
 ### 管理员怎么登录？
 
@@ -28,7 +30,7 @@
 | --- | --- |
 | 公告来源、活动分类与刷新 | [看板代码](pages/) · [CAP 同步脚本](scripts/sync_cap.py) · [发布流程](.github/workflows/cityuhk-events-hub-pages.yml) |
 | 票务系统各部分如何协作 | [架构图](docs/system-architecture.svg) · [用户端](web-user/) · [管理端](web-admin/) · [API 服务](server/) |
-| 接口、权限与数据约束 | [API 参考](docs/api-contract.md) · [数据库设计](docs/database-design.md) |
+| 数据表、关系与约束 | [数据库设计](docs/database-design.md) |
 | 验证功能或复现基准 | [脚本指南](scripts/README.md) |
 
 项目代码采用 [MIT 许可证](LICENSE)。

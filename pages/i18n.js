@@ -151,7 +151,7 @@ export const copy = {
 
 // Static English copy is taken from the original accessible HTML.
 export const staticZh = {
-  metaDescription: '查找即將舉行的城大活動、查看截止日期，並向主辦方報名。舉辦對號入座活動的主辦方可自行架設票務系統。',
+  metaDescription: '查找即將舉行的城大活動、查看報名截止日期，並向主辦方報名。',
   pageTitle: 'CityUHK Events Hub · 城大校園活動',
   skip: '跳至主要內容',
   brandHome: 'CityUHK Events Hub 首頁',
@@ -183,15 +183,10 @@ export const staticZh = {
   seatMapLabel: '按行列及號碼排列的座位',
   occupancyTitle: '各區上座率',
   occupancyHint: '已售門票佔該區可售座位的百分比。',
-  projectTitle: '對號入座活動的票務安排',
-  projectIntro: '如果你的活動需要編配座位，可以自行架設票務系統，管理訂座及入場驗票。本站標有 [Demo] 的節目提供座位圖預覽。',
-  setupLink: '架設票務系統',
-  apiLink: '票務 API 參考文件',
-  sourceLink: '在 GitHub 查看原始碼',
 };
 
 export const staticZhCn = {
-  metaDescription: '查找即将举行的城大活动，查看截止日期并向主办方报名。举办对号入座活动的主办方可自行部署票务系统。',
+  metaDescription: '查找即将举行的城大活动，查看报名截止日期，并向主办方报名。',
   pageTitle: 'CityUHK Events Hub · 城大校园活动',
   skip: '跳至主要内容',
   brandHome: 'CityUHK Events Hub 首页',
@@ -223,9 +218,4 @@ export const staticZhCn = {
   seatMapLabel: '按排号和座号排列的座位',
   occupancyTitle: '各区上座率',
   occupancyHint: '已售门票占该区可售座位的百分比。',
-  projectTitle: '对号入座活动的票务安排',
-  projectIntro: '如果你的活动需要安排座位，可以自行部署票务系统，管理订座和入场验票。本站标有 [Demo] 的节目提供座位图预览。',
-  setupLink: '部署票务系统',
-  apiLink: '票务 API 参考文档',
-  sourceLink: '在 GitHub 查看源代码',
 };
