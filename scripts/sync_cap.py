@@ -364,7 +364,7 @@ def parse_event(event_id, department, html):
 
 
 def fetch(url):
-    request = Request(url, headers={"User-Agent":"CityUHK-Events-Hub/1.0 (+https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall)"})
+    request = Request(url, headers={"User-Agent":"CityUHK-Events-Hub/1.0 (+https://github.com/CanyonChen/CityUHK-Events-Hub)"})
     with urlopen(request, timeout=15) as result:
         if urlsplit(result.geturl()).netloc.lower() != "cap.cityu.edu.hk":
             raise ValueError("CAP redirected to a different service")

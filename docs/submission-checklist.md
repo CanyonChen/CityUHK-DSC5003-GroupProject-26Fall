@@ -28,7 +28,7 @@
 | 演示数据 | 完成 | `database/seed.sql`；导入计数见 M5 证据 |
 | 成员贡献记录 | 已生成，待签字确认 | `docs/member-contributions.md` 与 `docs/team-roster.md`；8 人姓名/学号/邮箱/分工已填，比例均分 12.5%；报告开头表已同步 |
 | 演示视频 | 待与组员共同完成 | 按用户要求延后；完成后把可访问链接写入报告 §16 与提交清单 |
-| GitHub 代码仓库 | `main` 分支包含课程项目及 Q-06 证据 | [项目源码](https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall) · [Q-06 实验记录](../delivery/evidence/M5/region-occupancy.json) |
+| GitHub 代码仓库 | `main` 分支包含课程项目及 Q-06 证据 | [项目源码](https://github.com/CanyonChen/CityUHK-Events-Hub) · [Q-06 实验记录](../delivery/evidence/M5/region-occupancy.json) |
 | 课程官方要求 | 已取得 brief | 报告 PDF `XXXX-report.pdf`、GitHub repo、5–8 分钟视频；提交平台/仓库命名/截止时间以课程通知为准 |
 
 ## 2. 发布包检查
@@ -84,7 +84,7 @@ Get-ChildItem -Recurse -File | Measure-Object | Select-Object Count
 3. **演示视频**：与组员确定脚本、录制、剪辑和字幕；视频完成后把链接或文件放入提交包，并在报告/README/清单登记。
 4. **默认端口可选验收**：如课程要求必须用 3000/8080/8081 演示，先在空机器或停止占用的演示实例后重跑一次 M5 干净环境。
 5. **报告格式**：用 `docs/course-report.md` 导出 PDF，文件名按 brief 使用 `XXXX-report.pdf`；导出后检查中文字体、表格、分页，以及 `system-architecture.png` 是否正常显示。
-6. **代码版本**：核对提交的 commit 与 `main` 分支的课程报告、Q-06 证据及部署版本。[仓库](https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall)
+6. **代码版本**：核对提交的 commit 与 `main` 分支的课程报告、Q-06 证据及部署版本。[仓库](https://github.com/CanyonChen/CityUHK-Events-Hub)
 
 ## 5. 建议提交物结构
 

@@ -53,7 +53,7 @@ Python 只用于导入演示数据后的校验。没装也能启动，但会跳�
 在准备存放代码的目录打开 PowerShell，运行：
 
 ```powershell
-git clone https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall.git CityUHK_Events_Hub
+git clone https://github.com/CanyonChen/CityUHK-Events-Hub.git CityUHK_Events_Hub
 cd CityUHK_Events_Hub
 ```
 

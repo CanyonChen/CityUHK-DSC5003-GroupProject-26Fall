@@ -43,11 +43,11 @@ jobs:
       - name: Refresh public CityUHK announcements
         env:
           TRIGGER: ${{ github.event_name }}
-          LIVE_FEED: https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/data/campus-events.json
         run: |
           feed=_site/data/campus-events.json
           previous="$RUNNER_TEMP/published-campus-events.json"
-          if curl --fail --silent --show-error --location --max-time 20 "$LIVE_FEED?run=$GITHUB_RUN_ID" -o "$previous"; then
+          live_feed="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/data/campus-events.json"
+          if curl --fail --silent --show-error --location --max-time 20 "$live_feed?run=$GITHUB_RUN_ID" -o "$previous"; then
             python - "$previous" "$feed" <<'PY'
           import json, sys
           from datetime import datetime

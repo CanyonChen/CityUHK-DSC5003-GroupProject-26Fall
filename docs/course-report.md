@@ -681,7 +681,7 @@ node .\m4_anomaly_check.js
 
 | 交付物 | 链接 / 位置 | 状态 |
 |---|---|---|
-| 源代码仓库（GitHub） | [仓库 `main` 分支](https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall) | 根目录包含双前端、API、数据库脚本、GitHub Pages 页面与 Q-06 证据 |
+| 源代码仓库（GitHub） | [仓库 `main` 分支](https://github.com/CanyonChen/CityUHK-Events-Hub) | 根目录包含双前端、API、数据库脚本、GitHub Pages 页面与 Q-06 证据 |
 | 演示视频（5–8 分钟） | `[待填写：可公开访问的视频链接]` | 待录制 |
 | 本地发布包 | [项目根目录](../) | v1.10 交付时共有 172 个文件，包含 `region-occupancy.json` 与区域上座率截图 |
 | 项目 README | `README.md` | 已完成 |

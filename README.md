@@ -2,7 +2,7 @@
 
 CityU MDS · Semester A · DSC5003 数据库应用 · Track 1 小组项目
 
-[English](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/) · [简体中文](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/?lang=zh-cn) · [繁體中文](https://canyonchen.github.io/CityUHK-DSC5003-GroupProject-26Fall/?lang=zh-hk)
+[English](https://canyonchen.github.io/CityUHK-Events-Hub/) · [简体中文](https://canyonchen.github.io/CityUHK-Events-Hub/?lang=zh-cn) · [繁體中文](https://canyonchen.github.io/CityUHK-Events-Hub/?lang=zh-hk)
 
 活动目录汇集城大 CAP 的公开公告、主办方发布的海报，以及原公告提供的报名与投稿入口。可按讲座与论坛、工作坊、演出或会议筛选，也可查看即将截止的项目。同一公告的不同场次可归入多个类别。已有中文译文的活动随页面语言切换，新公告先显示主办方原标题。[城大公告平台](https://cap.cityu.edu.hk/)
 
@@ -149,7 +149,7 @@ node .\m4_anomaly_check.js   # M4 AC-14/17/24（需 3100 bench API）
 - 用户端为 Vue 3 + Vite；课程模板是 Vue 2 + Mint UI/Element UI + webpack，视觉与信息架构对齐，技术栈差异见 `web-user/README.md`。
 - 课程报告、ER 图和系统结构图在 `docs/`；数据库设计说明 Word、属性清单等如课程要求单独提交，从 [早期设计资料](docs/design-history/) 取对应文件，不要混入无关归档。
 - 演示视频待与组员共同完成；8 人姓名、学号、邮箱、分工和 12.5% 均分已填；报告 PDF 仍待导出。
-- 项目源码、课程报告和 M4/M5 证据均收录在仓库 `main` 分支。[GitHub 仓库](https://github.com/CanyonChen/CityUHK-DSC5003-GroupProject-26Fall)
+- 项目源码、课程报告和 M4/M5 证据均收录在仓库 `main` 分支。[GitHub 仓库](https://github.com/CanyonChen/CityUHK-Events-Hub)
 - M5 干净环境验收使用 3200/8180/8181，因为默认 3000/8080/8081 被演示实例占用；默认配置未改，空机器可直接用默认端口。
 
 ## 文档索引
