@@ -95,7 +95,6 @@ onMounted(async () => {
 <template>
   <div class="page-head">
     <div>
-      <p class="eyebrow">GATE</p>
       <h1>Check-in</h1>
       <p class="muted">Pick your performance, then enter or paste a ticket code. Each code works once.</p>
     </div>
@@ -155,7 +154,7 @@ onMounted(async () => {
 
     <section class="panel">
       <div class="panel-head">
-        <div><p class="eyebrow">RECENT</p><h2>Latest check-ins</h2></div>
+        <div><h2>Latest check-ins</h2></div>
         <span class="muted">{{ historyTotal }} total</span>
       </div>
       <div v-if="!history.length" class="empty-state">No check-ins recorded for this performance yet.</div>

@@ -58,9 +58,8 @@ onMounted(async () => {
 <template>
   <div class="page-head">
     <div>
-      <p class="eyebrow">ORDERS</p>
       <h1>Order book</h1>
-      <p class="muted">Search by order number (TIX-…) or buyer. Refund status is read-only here.</p>
+      <p class="muted">Search by order number or buyer to review payments and refunds.</p>
     </div>
     <button class="ghost-button" @click="load">Refresh</button>
   </div>
@@ -68,7 +67,7 @@ onMounted(async () => {
   <p v-if="error" class="form-error">{{ error }}</p>
 
   <section class="toolbar wrap">
-    <label>Keyword<input v-model="filters.keyword" placeholder="TIX-20261122-000123 / buyer01" @keyup.enter="search" /></label>
+    <label class="filter-keyword">Keyword<input v-model="filters.keyword" placeholder="Order number or buyer" @keyup.enter="search" /></label>
     <label>Status
       <select v-model="filters.status" @change="search">
         <option value="">All</option>
@@ -91,18 +90,18 @@ onMounted(async () => {
     <div v-if="loading" class="empty-state">Loading orders…</div>
     <div v-else-if="!rows.length" class="empty-state">No orders match.</div>
     <div v-else class="table-wrap">
-      <table class="data-table">
+      <table class="data-table record-table" aria-label="Orders">
         <thead><tr><th>Order</th><th>Buyer</th><th>Performance</th><th>Status</th><th>Payment</th><th>Refund</th><th class="num">Total</th><th>Created</th></tr></thead>
         <tbody>
           <tr v-for="row in rows" :key="row.order_id">
-            <td><strong class="mono">{{ row.order_no }}</strong></td>
-            <td>{{ row.buyer }}<small>{{ row.user_name }}</small></td>
-            <td>{{ row.event_name }}<small>{{ row.venue_name }} · {{ hkt(row.starts_at) }}</small></td>
-            <td><span class="status" :data-status="row.status">{{ row.status }}</span></td>
-            <td>{{ row.payment_status }}</td>
-            <td>{{ row.refund_status || '—' }}</td>
-            <td class="num">{{ money(row.total_amount_cents, row.currency) }}</td>
-            <td>{{ hkt(row.created_at) }}</td>
+            <td class="record-title" data-label="Order"><strong class="mono">{{ row.order_no }}</strong></td>
+            <td data-label="Buyer">{{ row.buyer }}<small>{{ row.user_name }}</small></td>
+            <td class="record-wide" data-label="Performance">{{ row.event_name }}<small>{{ row.venue_name }} · {{ hkt(row.starts_at) }}</small></td>
+            <td data-label="Status"><span class="status" :data-status="row.status">{{ row.status }}</span></td>
+            <td data-label="Payment">{{ row.payment_status }}</td>
+            <td data-label="Refund">{{ row.refund_status || '—' }}</td>
+            <td class="num" data-label="Total">{{ money(row.total_amount_cents, row.currency) }}</td>
+            <td data-label="Created">{{ hkt(row.created_at) }}</td>
           </tr>
         </tbody>
       </table>

@@ -74,9 +74,8 @@ onBeforeUnmount(() => {
 <template>
   <div class="page-head">
     <div>
-      <p class="eyebrow">OPERATIONS OVERVIEW</p>
-      <h1>Tonight, at a glance</h1>
-      <p class="muted">Live numbers from the same database the box office uses. Updates automatically when orders, payments or check-ins change.</p>
+      <h1>Ticket sales and attendance</h1>
+      <p class="muted">Figures update as orders, payments and check-ins change.</p>
     </div>
     <button class="ghost-button" @click="load">Refresh</button>
   </div>
@@ -109,7 +108,6 @@ onBeforeUnmount(() => {
   <section class="panel">
     <div class="panel-head">
       <div>
-        <p class="eyebrow">PERFORMANCE LEDGER</p>
         <h2>Sales by performance</h2>
       </div>
       <span class="muted">{{ data.items.length }} rows</span>
@@ -165,7 +163,6 @@ onBeforeUnmount(() => {
   <section class="panel">
     <div class="panel-head">
       <div>
-        <p class="eyebrow">REGIONAL OCCUPANCY</p>
         <h2>Occupancy by region</h2>
       </div>
       <select v-if="data.items.length" v-model.number="selectedPerformanceId" @change="loadOccupancy()">

@@ -1,4 +1,5 @@
 <script setup>
+import ConsoleDialog from '../ConsoleDialog.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { listUsers, listPerformances, grantRole, revokeRole } from '../api';
 import { hkt } from '../format';
@@ -92,7 +93,6 @@ onMounted(async () => {
 <template>
   <div class="page-head">
     <div>
-      <p class="eyebrow">ACCESS CONTROL</p>
       <h1>Users &amp; roles</h1>
       <p class="muted">Grant ADMIN or per-performance CHECKER access. Revocation takes effect on the next request.</p>
     </div>
@@ -143,14 +143,14 @@ onMounted(async () => {
     </div>
   </section>
 
-  <div v-if="showGrant" class="modal-backdrop" @click.self="closeGrant">
+  <ConsoleDialog v-if="showGrant" label="Grant staff access" @dismiss="closeGrant">
     <section class="modal" style="max-width:460px">
       <div class="modal-head">
         <div>
           <p class="eyebrow">GRANT</p>
           <h2>{{ grantTarget?.user_name }}</h2>
         </div>
-        <button class="icon-button" @click="closeGrant">×</button>
+        <button class="icon-button" type="button" aria-label="Close dialog" @click="closeGrant">×</button>
       </div>
       <div class="form-grid">
         <label>Role
@@ -174,13 +174,13 @@ onMounted(async () => {
         <button class="primary-button" :disabled="saving" @click="saveGrant">{{ saving ? 'Granting…' : 'Grant role' }}</button>
       </div>
     </section>
-  </div>
+  </ConsoleDialog>
 
-  <div v-if="revokeTarget" class="modal-backdrop" @click.self="revokeTarget = null">
+  <ConsoleDialog v-if="revokeTarget" label="Remove staff access" @dismiss="revokeTarget = null">
     <section class="modal" style="max-width:440px">
       <div class="modal-head">
-        <div><p class="eyebrow">REVOKE</p><h2>Remove access?</h2></div>
-        <button class="icon-button" @click="revokeTarget = null">×</button>
+        <div><h2>Remove access?</h2></div>
+        <button class="icon-button" type="button" aria-label="Close dialog" @click="revokeTarget = null">×</button>
       </div>
       <p>
         Remove <strong>{{ revokeTarget.role }}</strong> from <strong>{{ revokeTarget.user_name }}</strong>
@@ -192,5 +192,5 @@ onMounted(async () => {
         <button class="primary-button" @click="confirmRevoke">Revoke</button>
       </div>
     </section>
-  </div>
+  </ConsoleDialog>
 </template>

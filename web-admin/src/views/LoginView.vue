@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { login } from '../api';
 import { setSession, session, clearSession } from '../auth';
+import stageCurtain from '../../../pages/media/stage-curtain.webp';
+import './login.css';
 
 const router = useRouter();
 const userName = ref('admin');
@@ -41,35 +43,49 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="login-screen">
-    <section class="login-visual">
-      <div class="login-brand"><img class="brand-logo" src="/media/cityuhk-logo.webp" width="1151" height="647" alt="City University of Hong Kong"> CityUHK Events Hub</div>
-      <p class="eyebrow">BOX OFFICE · OPERATIONS</p>
-      <h1>Run the room.<br />Keep the night moving.</h1>
-      <p class="login-lede">Programming, pricing, gate check-in and reconciliation — one console for campus stages.</p>
-      <div class="login-stats">
-        <div><strong>3</strong><span>venues</span></div>
-        <div><strong>7</strong><span>live events</span></div>
-        <div><strong>24h</strong><span>refund window</span></div>
+  <div class="staff-entry">
+    <header class="staff-header">
+      <div class="staff-wrap staff-bar">
+        <a class="staff-brand" href="https://canyonchen.github.io/CityUHK-Events-Hub/">
+          <img class="brand-logo" src="/media/cityuhk-logo.webp" width="1151" height="647" alt="">
+          <span>CityUHK <span>Events Hub</span></span>
+        </a>
+        <nav aria-label="Site navigation">
+          <a class="staff-back" href="https://canyonchen.github.io/CityUHK-Events-Hub/#campus">
+            <span aria-hidden="true">←</span> Back to events
+          </a>
+        </nav>
       </div>
-    </section>
-    <section class="login-panel">
-      <div class="login-card">
-        <p class="eyebrow">STAFF ACCESS</p>
-        <h2>Sign in to operations</h2>
-        <p class="muted">Admin accounts manage the programme. Checker accounts only see assigned performances.</p>
-        <form @submit.prevent="submit">
-          <label>Username<input v-model="userName" autocomplete="username" required /></label>
-          <label>Password<input v-model="password" type="password" autocomplete="current-password" required /></label>
-          <p v-if="error" class="form-error">{{ error }}</p>
-          <button class="primary-button block" :disabled="busy">{{ busy ? 'Checking…' : 'Enter console' }}</button>
-        </form>
-        <div class="quick-users">
-          <button type="button" class="ghost-button small" @click="quick('admin')">admin</button>
-          <button type="button" class="ghost-button small" @click="quick('checker01')">checker01</button>
-          <span class="muted tiny">demo password Demo@1234</span>
+    </header>
+    <main class="staff-wrap staff-layout" aria-labelledby="staff-title">
+      <div class="staff-cover">
+        <img :src="stageCurtain" alt="" fetchpriority="high">
+        <div class="staff-heading">
+          <h1 id="staff-title">Ticketing administration</h1>
+          <p>Manage performances and ticket sales, or check guests in at the door.</p>
         </div>
       </div>
-    </section>
+      <section class="staff-panel" aria-labelledby="sign-in-title">
+        <h2 id="sign-in-title">Staff sign-in</h2>
+        <form :aria-busy="busy" @submit.prevent="submit">
+          <label for="staff-username">Username</label>
+          <input id="staff-username" v-model="userName" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+          <label for="staff-password">Password</label>
+          <input id="staff-password" v-model="password" type="password" name="password" autocomplete="current-password" required>
+          <p v-if="error" class="staff-error" role="alert">{{ error }}</p>
+          <button class="primary-button staff-submit" type="submit" :disabled="busy">
+            {{ busy ? 'Checking…' : 'Enter console' }}
+          </button>
+        </form>
+        <div class="staff-demo">
+          <h3 id="demo-accounts">Try a demo account</h3>
+          <p>Both accounts use the password <code>Demo@1234</code>.</p>
+          <div class="staff-options" role="group" aria-labelledby="demo-accounts">
+            <button type="button" @click="quick('admin')">Administrator</button>
+            <button type="button" @click="quick('checker01')">Ticket checker</button>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 </template>

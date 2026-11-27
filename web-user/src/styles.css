@@ -1,16 +1,8 @@
+@import "../../pages/brand.css";
+
 :root {
-  color-scheme: light;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", system-ui, sans-serif;
-  --pressed: #6b203e;
-  font-optical-sizing: auto;
-  --ink: #212529;
   --ink-2: #46333d;
-  --burgundy: #bf165e;
-  --rose: #f4cddd;
-  --backdrop: #f7f6f8;
-  --paper: #ffffff;
-  --line: #e4dfe2;
-  --muted: #655f66;
+  --paper: var(--surface);
   --danger: #a33232;
   --success: #2f6b4f;
   --warning: #8a5a16;

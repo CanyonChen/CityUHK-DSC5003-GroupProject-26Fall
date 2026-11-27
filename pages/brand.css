@@ -1,0 +1,17 @@
+:root {
+  color-scheme: light;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", system-ui, sans-serif;
+  /* CityUHK's CAP web template uses these burgundy, plum and pressed colours. */
+  --burgundy: #bf165e;
+  --plum: #7c257c;
+  --pressed: #6b203e;
+  --ink: #212529;
+  --muted: #66616a;
+  --line: #e5dfe3;
+  --surface: #fff;
+  --backdrop: #f7f6f8;
+  --rose: #f9eaf0;
+  --gutter: clamp(1rem, 4.3vw, 4rem);
+  --header-height: 4.25rem;
+  font-optical-sizing: auto;
+}

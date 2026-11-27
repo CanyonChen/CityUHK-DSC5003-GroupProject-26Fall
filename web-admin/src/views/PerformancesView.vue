@@ -1,4 +1,5 @@
 <script setup>
+import ConsoleDialog from '../ConsoleDialog.vue';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import {
   listEvents, listVenues, listPerformances, getPerformance, createPerformance,
@@ -328,9 +329,8 @@ onMounted(async () => {
 <template>
   <div class="page-head">
     <div>
-      <p class="eyebrow">SCHEDULE &amp; INVENTORY</p>
       <h1>Performances</h1>
-      <p class="muted">Create drafts, publish sales windows, and keep price zones aligned with the room.</p>
+      <p class="muted">Set performance times, sales windows and seat prices.</p>
     </div>
     <button class="primary-button" @click="resetCreate">New performance</button>
   </div>
@@ -361,7 +361,7 @@ onMounted(async () => {
     <div v-if="loading" class="empty-state">Loading performances…</div>
     <div v-else-if="!rows.length" class="empty-state">No performances match this filter.</div>
     <div v-else class="table-wrap">
-      <table class="data-table">
+      <table class="data-table record-table" aria-label="Performances">
         <thead>
           <tr>
             <th>Performance</th><th>Window</th><th>Status</th><th class="num">Seats</th>
@@ -370,40 +370,40 @@ onMounted(async () => {
         </thead>
         <tbody>
           <tr v-for="row in rows" :key="row.performance_id">
-            <td>
+            <td class="record-title" data-label="Performance">
               <strong>{{ row.event_name }}</strong>
               <small>{{ row.venue_name }} · #{{ row.performance_id }}</small>
             </td>
-            <td class="tight">
+            <td class="tight record-wide" data-label="Window">
               <span>{{ hkt(row.starts_at) }}</span>
               <small>Sales {{ hkt(row.sale_start_at) }} → {{ hkt(row.sale_end_at) }}</small>
             </td>
-            <td><span class="status" :data-status="row.status">{{ statusLabel(row.status) }}</span></td>
-            <td class="num tight">
+            <td data-label="Status"><span class="status" :data-status="row.status">{{ statusLabel(row.status) }}</span></td>
+            <td class="num tight" data-label="Seats">
               <span>{{ row.seat_counts.sold }} sold · {{ row.seat_counts.available }} free</span>
               <small>{{ row.seat_counts.held }} held · {{ row.seat_counts.blocked }} blocked</small>
             </td>
-            <td class="num">{{ money(row.min_price_cents) }}</td>
-            <td class="num">{{ row.checked_in_count }}</td>
-            <td class="actions">
+            <td class="num" data-label="From">{{ money(row.min_price_cents) }}</td>
+            <td class="num" data-label="Gate">{{ row.checked_in_count }}</td>
+            <td class="record-wide record-actions" data-label="Actions"><div class="actions">
               <button class="ghost-button small" @click="openEdit(row)">Edit</button>
               <button class="ghost-button small" @click="openSeats(row)">Seats</button>
               <button class="ghost-button small" @click="openPrice(row)">Prices</button>
               <button v-if="row.status === 'DRAFT'" class="primary-button small" @click="action(row, 'publish')">Publish</button>
               <button v-if="row.status === 'PUBLISHED'" class="ghost-button small warn" @click="action(row, 'pause')">Pause</button>
               <button v-if="row.status === 'SALES_PAUSED'" class="primary-button small" @click="action(row, 'resume')">Resume</button>
-            </td>
+            </div></td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <div v-if="showForm" class="modal-backdrop" @click.self="showForm = false">
+  <ConsoleDialog v-if="showForm" :label="formTitle" @dismiss="showForm = false">
     <section class="modal wide">
       <div class="modal-head">
         <div><p class="eyebrow">{{ formMode === 'create' ? 'CREATE DRAFT' : 'EDIT' }}</p><h2>{{ formTitle }}</h2></div>
-        <button class="icon-button" @click="showForm = false">×</button>
+        <button class="icon-button" type="button" aria-label="Close dialog" @click="showForm = false">×</button>
       </div>
       <div class="form-grid">
         <label>Event
@@ -439,13 +439,13 @@ onMounted(async () => {
         <button class="primary-button" :disabled="saving" @click="save">{{ saving ? 'Saving…' : (formMode === 'create' ? 'Create draft' : 'Save changes') }}</button>
       </div>
     </section>
-  </div>
+  </ConsoleDialog>
 
-  <div v-if="showPrice" class="modal-backdrop" @click.self="showPrice = false">
+  <ConsoleDialog v-if="showPrice" label="Edit performance prices" @dismiss="showPrice = false">
     <section class="modal">
       <div class="modal-head">
         <div><p class="eyebrow">PRICING</p><h2>{{ priceTarget.event_name }}</h2><span class="muted">{{ hkt(priceTarget.starts_at) }}</span></div>
-        <button class="icon-button" @click="showPrice = false">×</button>
+        <button class="icon-button" type="button" aria-label="Close dialog" @click="showPrice = false">×</button>
       </div>
       <div class="tier-row" v-for="(tier, i) in priceRows" :key="i">
         <input v-model="tier.tier_name" placeholder="Zone name" />
@@ -458,13 +458,13 @@ onMounted(async () => {
         <button class="primary-button" :disabled="priceSaving" @click="savePrices">{{ priceSaving ? 'Saving…' : 'Save prices' }}</button>
       </div>
     </section>
-  </div>
+  </ConsoleDialog>
 
-  <div v-if="showSeats" class="modal-backdrop" @click.self="showSeats = false">
+  <ConsoleDialog v-if="showSeats" label="Seat inventory" @dismiss="showSeats = false">
     <section class="modal wide">
       <div class="modal-head">
         <div><p class="eyebrow">SEAT INVENTORY</p><h2>{{ seatsTarget.event_name }}</h2><span class="muted">{{ seatsTarget.venue_name }} · {{ hkt(seatsTarget.starts_at) }}</span></div>
-        <button class="icon-button" @click="showSeats = false">×</button>
+        <button class="icon-button" type="button" aria-label="Close dialog" @click="showSeats = false">×</button>
       </div>
       <div class="seat-legend">
         <span><i data-s="AVAILABLE"></i>Free</span>
@@ -510,5 +510,5 @@ onMounted(async () => {
         <button class="ghost-button" @click="showSeats = false">Close</button>
       </div>
     </section>
-  </div>
+  </ConsoleDialog>
 </template>

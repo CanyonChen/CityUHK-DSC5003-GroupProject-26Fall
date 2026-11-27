@@ -1,4 +1,5 @@
 <script setup>
+import ConsoleDialog from '../ConsoleDialog.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { listEvents, createEvent, updateEvent } from '../api';
 import { shortDate } from '../format';
@@ -47,7 +48,7 @@ async function load() {
 
 function openCreate() {
   editingId.value = null;
-  Object.assign(form, { title: '', organizer_name: 'DSC Campus Stages', description: '', cover_url: '' });
+  Object.assign(form, { title: '', organizer_name: '', description: '', cover_url: '' });
   formError.value = '';
   showForm.value = true;
 }
@@ -96,7 +97,6 @@ onMounted(load);
 <template>
   <div class="page-head">
     <div>
-      <p class="eyebrow">PROGRAMME</p>
       <h1>Events</h1>
       <p class="muted">Create the show, then add performances and publish them.</p>
     </div>
@@ -132,14 +132,14 @@ onMounted(load);
     </div>
   </section>
 
-  <div v-if="showForm" class="modal-backdrop" @click.self="closeForm">
+  <ConsoleDialog v-if="showForm" :label="formTitle" @dismiss="closeForm">
     <section class="modal">
       <div class="modal-head">
         <div>
           <p class="eyebrow">{{ editingId ? 'EDIT' : 'CREATE' }}</p>
           <h2>{{ formTitle }}</h2>
         </div>
-        <button class="icon-button" @click="closeForm">×</button>
+        <button class="icon-button" type="button" aria-label="Close dialog" @click="closeForm">×</button>
       </div>
       <div class="form-grid">
         <label>Title<input v-model="form.title" maxlength="100" /></label>
@@ -162,5 +162,5 @@ onMounted(load);
         <button class="primary-button" :disabled="saving" @click="save">{{ saving ? 'Saving…' : 'Save event' }}</button>
       </div>
     </section>
-  </div>
+  </ConsoleDialog>
 </template>

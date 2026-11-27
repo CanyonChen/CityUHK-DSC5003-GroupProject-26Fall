@@ -127,7 +127,6 @@ onBeforeUnmount(() => {
 <template>
   <div class="page-head">
     <div>
-      <p class="eyebrow">FINANCE</p>
       <h1>Reconciliation</h1>
       <p class="muted">Sales ledger, gateway exceptions, refund progress and the audit trail.</p>
     </div>
@@ -178,7 +177,7 @@ onBeforeUnmount(() => {
   </section>
 
   <section v-else-if="tab === 'exceptions'" class="panel">
-    <div class="panel-head"><div><p class="eyebrow">GATEWAY</p><h2>Payment exceptions</h2></div><span class="muted">{{ exceptions.total }} open</span></div>
+    <div class="panel-head"><div><h2>Payment exceptions</h2></div><span class="muted">{{ exceptions.total }} open</span></div>
     <div v-if="!exceptions.items.length" class="empty-state">No gateway exceptions. Clean ledger.</div>
     <ul v-else class="exception-list">
       <li v-for="row in exceptions.items" :key="row.type + row.payment_id + row.reason">
@@ -192,7 +191,7 @@ onBeforeUnmount(() => {
   </section>
 
   <section v-else-if="tab === 'refunds'" class="panel">
-    <div class="panel-head"><div><p class="eyebrow">REFUNDS</p><h2>Refund progress</h2></div><span class="muted">{{ refunds.total }} records</span></div>
+    <div class="panel-head"><div><h2>Refund progress</h2></div><span class="muted">{{ refunds.total }} records</span></div>
     <div v-if="!refunds.items.length" class="empty-state">No refund requests yet.</div>
     <ul v-else class="exception-list">
       <li v-for="row in refunds.items" :key="row.refund_id">
@@ -217,7 +216,7 @@ onBeforeUnmount(() => {
   </section>
 
   <section v-else class="panel">
-    <div class="panel-head"><div><p class="eyebrow">AUDIT</p><h2>Audit trail</h2></div><span class="muted">{{ audits.total }} entries</span></div>
+    <div class="panel-head"><div><h2>Audit trail</h2></div><span class="muted">{{ audits.total }} entries</span></div>
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Object</th><th>Result</th></tr></thead>

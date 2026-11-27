@@ -11,6 +11,7 @@ import UsersView from './views/UsersView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior: (_to, _from, saved) => saved || { top: 0 },
   routes: [
     { path: '/login', component: LoginView, meta: { public: true } },
     { path: '/', component: DashboardView, meta: { admin: true } },
