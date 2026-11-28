@@ -18,9 +18,10 @@ async function api(method, endpoint, { token, body, idempotencyKey, status = 200
       ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const payload = await response.json();
+  const text = await response.text();
+  const payload = text ? JSON.parse(text) : null;
   assert.equal(response.status, status, method + ' ' + endpoint + ': ' + JSON.stringify(payload));
-  return payload.data;
+  return payload?.data;
 }
 async function q(sql, params = []) { return (await pool.query(sql, params))[0]; }
 async function login(user_name) {
@@ -134,7 +135,7 @@ async function run() {
   });
   assert.equal(revoked.status, 204);
   await api('GET', '/admin/checker/performances', { token: checker, status: 403 });
-  await api('POST', '/auth/logout', { token: checker });
+  await api('POST', '/auth/logout', { token: checker, status: 204 });
   await api('GET', '/auth/me', { token: checker, status: 401 });
   console.log('PASS live role grant/revocation, checker boundaries and server-side logout');
 
