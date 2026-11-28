@@ -76,7 +76,7 @@ async function run() {
     const refunds = await q("SELECT refund_id FROM refunds WHERE payment_attempt_id = ? AND status = 'PENDING'", [oldPayment.payment_id]);
     assert.equal(refunds.length, 1);
     const resolved = await api('POST', '/admin/refunds/' + refunds[0].refund_id + '/resolve', { token: admin, body: { result: 'SUCCEEDED' } });
-    assert.equal(resolved.order_status, priorStatus);
+    assert.equal(resolved.orderStatus, priorStatus);
     assert.equal((await q('SELECT session_seat_status FROM session_seats WHERE session_seat_id = ?', [seat]))[0].session_seat_status, 'SOLD');
     assert.equal((await api('GET', '/orders/' + resale.order_id, { token: buyerB })).status, 'PAID');
     assert.equal((await api('GET', '/orders/' + old.order_id, { token: buyerA })).status, priorStatus);
