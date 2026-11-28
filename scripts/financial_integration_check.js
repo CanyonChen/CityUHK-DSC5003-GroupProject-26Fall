@@ -105,5 +105,58 @@ async function run() {
   assert.equal(replay.order_status, 'REFUNDED');
   assert.equal(replay.status, 'SUCCEEDED');
   console.log('PASS concurrent refund retries, ownership and final-state replay');
+
+  // Check the failed-refund branch and replay against the real database as well.
+  const failedOrder = await reserve(buyerA, perf, seats[3].session_seat_id);
+  await simulate(buyerA, await payment(buyerA, failedOrder), 'SUCCESS');
+  const failedKey = key();
+  const failedEndpoint = '/orders/' + failedOrder.order_id + '/refund';
+  const failedRefund = await api('POST', failedEndpoint, { token: buyerA, idempotencyKey: failedKey, body: { reason: 'Failure branch' }, status: 201 });
+  await api('POST', '/admin/refunds/' + failedRefund.refund_id + '/resolve', { token: admin, body: { result: 'FAILED' } });
+  const failedReplay = await api('POST', failedEndpoint, { token: buyerA, idempotencyKey: failedKey, body: {} });
+  assert.equal(failedReplay.order_status, 'PAID');
+  assert.equal(failedReplay.status, 'FAILED');
+  assert.equal((await q('SELECT session_seat_status FROM session_seats WHERE session_seat_id = ?', [seats[3].session_seat_id]))[0].session_seat_status, 'SOLD');
+  console.log('PASS failed refund restores the paid order and replays the failed record');
+
+  // Existing tokens must gain and lose checker access immediately when a grant changes.
+  const checker = await register('c');
+  const checkerMe = await api('GET', '/auth/me', { token: checker });
+  await api('GET', '/admin/checker/performances', { token: checker, status: 403 });
+  const grant = await api('POST', '/admin/users/' + checkerMe.user_id + '/roles', {
+    token: admin, body: { role: 'CHECKER', performance_id: perf }, status: 201,
+  });
+  const assigned = await api('GET', '/admin/checker/performances', { token: checker });
+  assert.ok(assigned.items.some(item => Number(item.performance_id) === Number(perf)));
+  await api('GET', '/admin/orders', { token: checker, status: 403 });
+  const revoked = await fetch(base + '/admin/users/' + checkerMe.user_id + '/roles/' + grant.assignment_id, {
+    method: 'DELETE', headers: { Authorization: 'Bearer ' + admin },
+  });
+  assert.equal(revoked.status, 204);
+  await api('GET', '/admin/checker/performances', { token: checker, status: 403 });
+  await api('POST', '/auth/logout', { token: checker });
+  await api('GET', '/auth/me', { token: checker, status: 401 });
+  console.log('PASS live role grant/revocation, checker boundaries and server-side logout');
+
+  // Replay an already-paid notification through the actual reconciliation endpoint.
+  const attempts = await q('SELECT attempt_id, amount, currency FROM payment_attempts WHERE order_id = ?', [order.order_id]);
+  const noticeId = 'audit-' + key();
+  const payload = JSON.stringify({
+    payment_id: Number(attempts[0].attempt_id), provider_txn_id: noticeId,
+    order_no: order.order_no, amount_cents: Number(attempts[0].amount),
+    currency: attempts[0].currency, result: 'SUCCESS',
+  });
+  await q(`INSERT INTO payment_notifications
+    (source, notification_id, payment_attempt_id, received_at, processed_result, payload_digest, payload_json)
+    VALUES ('mockpay', ?, ?, UTC_TIMESTAMP(3) - INTERVAL 10 MINUTE, 'PENDING', ?, ?)`,
+    [noticeId, attempts[0].attempt_id, crypto.createHash('sha256').update(payload).digest('hex'), payload]);
+  const reconciliation = await api('POST', '/admin/reconciliation/run', { token: admin });
+  assert.ok(reconciliation.scanned >= 1);
+  const notice = await q('SELECT processed_result FROM payment_notifications WHERE notification_id = ?', [noticeId]);
+  assert.equal(notice[0].processed_result, 'DUPLICATE');
+  const logs = await api('GET', '/admin/audit-logs?action=ROLE_GRANTED', { token: admin });
+  assert.ok(logs.total >= 1);
+  console.log('PASS reconciliation replay and audit log access');
+
 }
 run().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => { await pool?.end(); });
