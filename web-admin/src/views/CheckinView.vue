@@ -2,7 +2,6 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { checkerPerformances, checkin, listCheckins } from '../api';
 import { hkt } from '../format';
-import CameraScanner from '../CameraScanner.vue';
 
 import { useAdminI18n } from '../i18n';
 
@@ -37,12 +36,6 @@ async function loadHistory() {
   } catch (err) {
     errorText.value = err;
   }
-}
-
-function scanned(value) {
-  if (busy.value) return;
-  code.value = value;
-  submit();
 }
 
 async function submit() {
@@ -145,7 +138,6 @@ onMounted(async () => {
         </label>
         <button class="primary-button" :disabled="busy || !code.trim()">{{ t(busy ? 'ops.checking' : 'ops.validate') }}</button>
       </form>
-      <CameraScanner :key="selectedId" @detected="scanned" />
 
       <div v-if="result" class="checkin-result" role="status" :class="result.ok ? 'ok' : 'bad'">
         <template v-if="result.ok">
