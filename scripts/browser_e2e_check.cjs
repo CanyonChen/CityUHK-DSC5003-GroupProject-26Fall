@@ -111,6 +111,7 @@ async function main() {
   await user.getByRole('link').filter({ has: user.getByRole('heading', { name: fixtures.paidEventName, exact: true }) }).click();
   await visible(user.getByRole('img', { name: 'Ticket QR code', exact: true }));
   await user.getByRole('button', { name: 'Refresh QR', exact: true }).click();
+  await visible(user.getByRole('button', { name: 'Refresh QR', exact: true }));
   await user.getByRole('button', { name: 'Copy gate code (demo)', exact: true }).click();
   await visible(user.getByRole('button', { name: 'Code copied', exact: true }));
   const copiedCode = await user.evaluate(() => navigator.clipboard.readText());
