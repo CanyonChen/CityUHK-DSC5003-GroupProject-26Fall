@@ -78,7 +78,7 @@ async function main() {
   const used = await order(buyer, free, fsSeats[1].session_seat_id);
   const usedOrder = await api('POST', '/orders/' + used.order_id + '/confirm-free', { token: buyer });
   const ticket = await api('GET', '/tickets/' + usedOrder.tickets[0].ticket_id, { token: buyer });
-  await api('POST', '/admin/checkins', { token: admin, body: { performance_id: free, ticket_code: ticket.qr_token } });
+  await api('POST', '/admin/checkins', { token: admin, key: key(), body: { performance_id: free, ticket_code: ticket.qr_token } });
   await api('POST', '/orders/' + used.order_id + '/cancel', { token: buyer, status: 409 });
   assert.equal((await ticketRows(used.order_id))[0].status, 'USED');
   const png = await fetch(BASE + '/tickets/' + ticket.ticket_id + '/qr.png', { headers: { Authorization: 'Bearer ' + buyer } });
@@ -120,7 +120,12 @@ async function main() {
   assert.equal(all.filter(r => r.status === 'SUCCEEDED').reduce((sum, r) => sum + Number(r.amount), 0), 10000);
   assert.equal((await ticketRows(resale.order_id))[0].status, 'VALID');
   assert.equal((await q('SELECT session_seat_status FROM session_seats WHERE session_seat_id=?', [psSeats[0].session_seat_id]))[0].session_seat_status, 'SOLD');
-  checks.push('failed late refunds keep history, serialize retries, reject excess refunds and preserve resold tickets');
+  const ledger = (await api('GET', '/admin/stats?performance_id=' + paid, { token: admin })).items[0];
+  assert.equal(ledger.gross_cents, 10000);
+  assert.equal(ledger.refunded_cents, 0);
+  assert.equal(ledger.net_cents, 10000);
+  assert.equal(ledger.excess_refunded_cents, 10000);
+  checks.push('failed late refunds keep history, serialize retries, reject excess refunds and preserve resold tickets and sales totals');
 
   for (const origin of ['https://tickets.example.test', 'https://admin.example.test']) {
     const response = await fetch(BASE + '/health', { headers: { Origin: origin } });
@@ -148,7 +153,7 @@ async function main() {
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'browser-fixtures.json'), JSON.stringify({
     freeEventName, paidEventName, freeEventId: freeEvent.event_id, paidEventId: paidEvent.event_id,
-    freePerformance: free, paidPerformance: paid, draftPerformance: uiDraft, retryRefundId: uiRefund,
+    freePerformance: free, paidPerformance: paid, draftPerformance: uiDraft, retryRefundId: uiRefund, retryOrderId: uiOld.order_id, retryOrderNo: uiOld.order_no,
   }, null, 2));
   fs.writeFileSync(path.join(dir, 'extended-integration.json'), JSON.stringify({ checks, passed: checks.length }, null, 2));
   for (const check of checks) console.log('PASS EXT ' + check);

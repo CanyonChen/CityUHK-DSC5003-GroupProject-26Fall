@@ -4,7 +4,7 @@ function parseOrigins(raw = '') {
   return [...new Set(raw.split(',').map(value => value.trim()).filter(Boolean).map(value => {
     let url;
     try { url = new URL(value); } catch { throw new Error('CORS_ORIGINS must contain complete HTTP(S) origins'); }
-    if (url.username || url.password || url.search || url.hash || url.pathname !== '/' ||
+    if (url.hostname.includes('*') || url.username || url.password || url.search || url.hash || url.pathname !== '/' ||
         (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback(url.hostname)))) {
       throw new Error('CORS_ORIGINS requires HTTPS origins without paths, credentials or wildcards; loopback HTTP is allowed');
     }

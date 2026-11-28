@@ -1037,7 +1037,13 @@ async function salesStats({ performanceId, dateFrom, dateTo }) {
             (SELECT IFNULL(SUM(o.total_amount),0) FROM orders o
              WHERE o.performance_id = p.performance_id AND o.status IN ('PAID','REFUND_PENDING','REFUNDED')) AS gross,
             (SELECT IFNULL(SUM(r.amount),0) FROM refunds r JOIN orders o ON o.order_id = r.order_id
-             WHERE o.performance_id = p.performance_id AND r.status = 'SUCCEEDED') AS refunded
+             WHERE o.performance_id = p.performance_id AND r.status = 'SUCCEEDED'
+               AND NOT (r.idempotency_key = CONCAT('late-', r.payment_attempt_id)
+                 OR r.idempotency_key LIKE CONCAT('late-', r.payment_attempt_id, ':retry:%'))) AS refunded,
+            (SELECT IFNULL(SUM(r.amount),0) FROM refunds r JOIN orders o ON o.order_id = r.order_id
+             WHERE o.performance_id = p.performance_id AND r.status = 'SUCCEEDED'
+               AND (r.idempotency_key = CONCAT('late-', r.payment_attempt_id)
+                 OR r.idempotency_key LIKE CONCAT('late-', r.payment_attempt_id, ':retry:%'))) AS excess_refunded
        FROM performances p
        JOIN events e ON e.event_id = p.event_id
        JOIN venues v ON v.venue_id = p.venue_id
@@ -1059,6 +1065,7 @@ async function salesStats({ performanceId, dateFrom, dateTo }) {
     checked_in: toInt(r.checked_in),
     gross_cents: toInt(r.gross),
     refunded_cents: toInt(r.refunded),
+    excess_refunded_cents: toInt(r.excess_refunded),
     net_cents: toInt(r.gross) - toInt(r.refunded),
   }));
   const total = items.reduce((acc, x) => ({
@@ -1070,8 +1077,9 @@ async function salesStats({ performanceId, dateFrom, dateTo }) {
     checked_in: acc.checked_in + x.checked_in,
     gross_cents: acc.gross_cents + x.gross_cents,
     refunded_cents: acc.refunded_cents + x.refunded_cents,
+    excess_refunded_cents: acc.excess_refunded_cents + x.excess_refunded_cents,
     net_cents: acc.net_cents + x.net_cents,
-  }), { available: 0, held: 0, sold: 0, blocked: 0, tickets_sold: 0, checked_in: 0, gross_cents: 0, refunded_cents: 0, net_cents: 0 });
+  }), { available: 0, held: 0, sold: 0, blocked: 0, tickets_sold: 0, checked_in: 0, gross_cents: 0, refunded_cents: 0, excess_refunded_cents: 0, net_cents: 0 });
   return { items, total };
 }
 
