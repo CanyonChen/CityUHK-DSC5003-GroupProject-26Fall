@@ -105,6 +105,24 @@ async function main() {
   const duplicate=await api('POST','/admin/checkins',admin,{performance_id:fixtures.paidPerformance,ticket_code:validCode},409,key());
   assert.equal(duplicate.code,'TICKET_ALREADY_USED');
   await api('POST','/orders/'+unknown.order_id+'/cancel',buyer,{});
+  // A PAID order with a VOID ticket and an AVAILABLE seat is inconsistent even if
+  // neither side has a duplicate owner. The read-only report must catch the order/ticket mismatch.
+  const candidate=(await q(`SELECT t.ticket_id,oi.session_seat_id FROM tickets t
+    JOIN order_items oi ON oi.order_item_id=t.order_item_id JOIN orders o ON o.order_id=oi.order_id
+    JOIN session_seats ss ON ss.session_seat_id=oi.session_seat_id
+    WHERE o.status='PAID' AND t.status='VALID' AND ss.session_seat_status='SOLD'
+      AND NOT EXISTS (SELECT 1 FROM checkins c WHERE c.ticket_id=t.ticket_id) LIMIT 1`))[0];
+  assert.ok(candidate);
+  await q("UPDATE tickets SET status='VOID' WHERE ticket_id=?",[candidate.ticket_id]);
+  await q("UPDATE session_seats SET session_seat_status='AVAILABLE' WHERE session_seat_id=?",[candidate.session_seat_id]);
+  try {
+    const mismatch=await inspect(conn);
+    assert.ok(mismatch.checks.ticket_order.count>0);
+  } finally {
+    await q("UPDATE tickets SET status='VALID' WHERE ticket_id=?",[candidate.ticket_id]);
+    await q("UPDATE session_seats SET session_seat_status='SOLD' WHERE session_seat_id=?",[candidate.session_seat_id]);
+  }
+  checks.push('read-only inspection detects a paid order with a void ticket even when its seat is available');
   const report=await inspect(conn);
   fs.writeFileSync(path.join(__dirname,'../.cache/checks/inventory-consistency.json'),JSON.stringify(report,null,2));
   assert.equal(report.ok,true,JSON.stringify(report));

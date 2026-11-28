@@ -18,7 +18,9 @@ const checks = {
     HAVING (ss.session_seat_status='SOLD' AND COUNT(t.ticket_id)<>1)
       OR (ss.session_seat_status<>'SOLD' AND COUNT(t.ticket_id)<>0)`,
   ticket_order: `SELECT t.ticket_id AS id FROM tickets t JOIN order_items oi ON oi.order_item_id=t.order_item_id JOIN orders o ON o.order_id=oi.order_id
-    WHERE (t.status IN ('VALID','USED') AND o.status<>'PAID')
+    WHERE (o.status='PAID' AND t.status NOT IN ('VALID','USED'))
+      OR (o.status='REFUND_PENDING' AND t.status<>'REFUND_PENDING')
+      OR (t.status IN ('VALID','USED') AND o.status<>'PAID')
       OR (t.status='REFUND_PENDING' AND o.status<>'REFUND_PENDING')
       OR (o.status IN ('CANCELLED','EXPIRED','REFUNDED') AND t.status<>'VOID')`,
   fulfilment: `SELECT o.order_id AS id FROM orders o LEFT JOIN order_items oi ON oi.order_id=o.order_id
