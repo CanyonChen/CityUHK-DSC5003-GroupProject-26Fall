@@ -1,5 +1,8 @@
 // The API keeps its stable codes and English diagnostic messages for all clients.
 const byCode = {
+  INVENTORY_INCONSISTENT: ['订单与座位归属不一致，操作已回滚，请联系管理员核查。','訂單與座位歸屬不一致，操作已回滾，請聯絡管理員核查。'],
+  TICKET_QR_EXPIRED: ['票码已过期，请刷新电子票后重试。','票碼已過期，請重新整理電子票後再試。'],
+  CHECKIN_CONFLICT: ['门票状态已变化，请重新核验。','門票狀態已變更，請重新核驗。'],
   REFUND_IN_PROGRESS: ['这笔付款已有退款正在处理，请刷新记录。', '這筆付款已有退款正在處理，請重新整理紀錄。'],
   REFUND_RETRY_NOT_ALLOWED: ['只有失败的异常付款退款可以重试。', '只有失敗的異常付款退款可以重試。'],
   REFUND_LIMIT_EXCEEDED: ['这笔付款已退款，或重试会超过原付款金额。', '這筆付款已退款，或重試會超過原付款金額。'],

@@ -75,7 +75,7 @@ async function runRec() {
   try {
     const data = await runReconciliation();
     toast.value = () => data.skipped ? t('ops.recInProgress') : t('ops.recResult', data);
-    await Promise.all([loadRec(), loadExceptions()]);
+    await Promise.all([loadRec(), loadExceptions(), loadRefunds(), loadLedger()]);
   } catch (err) {
     toast.value = () => errorMessage(err);
   } finally {
@@ -108,7 +108,9 @@ async function retry(row) {
 }
 
 async function resolve(row, result) {
-  const confirmKey = result === 'SUCCEEDED' ? 'ops.refundSuccessConfirm' : 'ops.refundFailureConfirm';
+  const confirmKey = row.is_anomalous
+    ? (result === 'SUCCEEDED' ? 'ops.anomalousSuccessConfirm' : 'ops.anomalousFailureConfirm')
+    : (result === 'SUCCEEDED' ? 'ops.refundSuccessConfirm' : 'ops.refundFailureConfirm');
   live.pause();
   if (!window.confirm(t(confirmKey, { order: row.order_no }))) {
     live.resume();
@@ -164,6 +166,9 @@ onBeforeUnmount(() => {
     <div><span class="muted">{{ t('ops.pending') }}</span><br /><strong>{{ rec.pending }}</strong></div>
     <div><span class="muted">{{ t('ops.processed24') }}</span><br /><strong>{{ rec.processed_24h }}</strong></div>
     <div><span class="muted">{{ t('ops.failed24') }}</span><br /><strong>{{ rec.failed_24h }}</strong></div>
+    <div><span class="muted">{{ t('ops.unknownPayments') }}</span><br /><strong>{{ rec.unknown_payments }}</strong></div>
+    <div><span class="muted">{{ t('ops.manualRefunds') }}</span><br /><strong>{{ rec.pending_refunds }}</strong></div>
+    <small v-if="rec.last_summary" class="muted">{{ t('ops.recChecked', { payments: rec.last_summary.payments_checked, refunds: rec.last_summary.manual_refunds }) }}</small>
     <button class="ghost-button" :disabled="recBusy" @click="runRec">{{ t(recBusy ? 'ops.running' : 'ops.runNow') }}</button>
   </section>
 
@@ -177,10 +182,11 @@ onBeforeUnmount(() => {
   <div v-if="loading" class="empty-state">{{ t('ops.loading') }}</div>
 
   <section v-else-if="tab === 'ledger'" class="panel">
+    <p class="muted">{{ t('ops.netFormula') }}</p>
     <div v-if="!ledger.items.length" class="empty-state">{{ t('ops.ledgerEmpty') }}</div>
     <div v-else class="table-wrap">
       <table class="data-table record-table ledger-table" :aria-label="t('ops.ledger')">
-        <thead><tr><th>{{ t('ops.performance') }}</th><th>{{ t('ops.status') }}</th><th class="num">{{ t('ops.sold') }}</th><th class="num">{{ t('ops.gross') }}</th><th class="num">{{ t('ops.refunded') }}</th><th class="num">{{ t('ops.net') }}</th></tr></thead>
+        <thead><tr><th>{{ t('ops.performance') }}</th><th>{{ t('ops.status') }}</th><th class="num">{{ t('ops.sold') }}</th><th class="num">{{ t('ops.gross') }}</th><th class="num">{{ t('ops.refunded') }}</th><th class="num">{{ t('ops.excessRefunded') }}</th><th class="num">{{ t('ops.totalRefunded') }}</th><th class="num">{{ t('ops.net') }}</th></tr></thead>
         <tbody>
           <tr v-for="row in ledger.items" :key="row.performance_id">
             <td class="record-title" :data-label="t('ops.performance')"><strong>{{ row.event_name }}</strong><small>{{ hkt(row.starts_at) }}</small></td>
@@ -188,6 +194,8 @@ onBeforeUnmount(() => {
             <td class="num" :data-label="t('ops.sold')">{{ row.tickets_sold }}</td>
             <td class="num" :data-label="t('ops.gross')">{{ money(row.gross_cents) }}</td>
             <td class="num" :data-label="t('ops.refunded')">{{ money(row.refunded_cents) }}</td>
+            <td class="num" :data-label="t('ops.excessRefunded')">{{ money(row.excess_refunded_cents) }}</td>
+            <td class="num" :data-label="t('ops.totalRefunded')">{{ money(row.total_refunded_cents) }}</td>
             <td class="num strong" :data-label="t('ops.net')">{{ money(row.net_cents) }}</td>
           </tr>
         </tbody>
@@ -196,7 +204,9 @@ onBeforeUnmount(() => {
           <td class="num" :data-label="t('ops.sold')">{{ ledger.total.tickets_sold }}</td>
           <td class="num" :data-label="t('ops.gross')">{{ money(ledger.total.gross_cents) }}</td>
           <td class="num" :data-label="t('ops.refunded')">{{ money(ledger.total.refunded_cents) }}</td>
-          <td class="num strong" :data-label="t('ops.net')">{{ money(ledger.total.net_cents) }}</td>
+          <td class="num" :data-label="t('ops.excessRefunded')">{{ money(ledger.total.excess_refunded_cents) }}</td>
+            <td class="num" :data-label="t('ops.totalRefunded')">{{ money(ledger.total.total_refunded_cents) }}</td>
+            <td class="num strong" :data-label="t('ops.net')">{{ money(ledger.total.net_cents) }}</td>
         </tr></tfoot>
       </table>
     </div>

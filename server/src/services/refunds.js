@@ -6,6 +6,7 @@ const { isLateRefund } = require('../lib/refund-kind');
 const { retryTransaction } = require('../lib/retry-transaction');
 const { ApiError } = require('../lib/http');
 const cfg = require('../config');
+const { releaseSoldSeats } = require('./inventory');
 const { toIso, toInt } = require('../lib/format');
 const { writeAudit } = require('../lib/audit');
 
@@ -255,6 +256,7 @@ async function resolveRefundOnce({ refundId, result, requestId, actorId }) {
           [toInt(refund.payment_attempt_id)]
         );
       } else {
+        released = await releaseSoldSeats(conn, toInt(refund.order_id));
         await q(conn, "UPDATE orders SET status = 'REFUNDED' WHERE order_id = ?", [toInt(refund.order_id)]);
         await q(
           conn,
@@ -263,15 +265,6 @@ async function resolveRefundOnce({ refundId, result, requestId, actorId }) {
             WHERE oi.order_id = ? AND t.status IN ('REFUND_PENDING','VALID')`,
           [toInt(refund.order_id)]
         );
-        const release = await q(
-          conn,
-          `UPDATE session_seats ss
-              JOIN order_items oi ON oi.session_seat_id = ss.session_seat_id
-              SET ss.session_seat_status = 'AVAILABLE', ss.holder_order_id = NULL, ss.hold_expires_at = NULL
-            WHERE oi.order_id = ? AND ss.session_seat_status = 'SOLD'`,
-          [toInt(refund.order_id)]
-        );
-        released = toInt(release.affectedRows);
       }
     } else {
       await q(conn, "UPDATE refunds SET status = 'FAILED' WHERE refund_id = ?", [refundId]);

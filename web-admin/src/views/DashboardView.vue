@@ -116,6 +116,7 @@ onBeforeUnmount(() => {
     <div v-if="loading" class="empty-state">{{ t('programme.loadingSales') }}</div>
     <div v-else-if="!data.items.length" class="empty-state">{{ t('programme.noSales') }}</div>
     <div v-else class="table-wrap">
+      <p class="muted">{{ t('programme.netFormula') }}</p>
       <table class="data-table">
         <thead>
           <tr>
@@ -127,6 +128,8 @@ onBeforeUnmount(() => {
             <th class="num">{{ t('programme.checked') }}</th>
             <th class="num">{{ t('programme.gross') }}</th>
             <th class="num">{{ t('programme.refunded') }}</th>
+            <th class="num">{{ t('programme.excessRefunded') }}</th>
+            <th class="num">{{ t('programme.totalRefunded') }}</th>
             <th class="num">{{ t('programme.net') }}</th>
           </tr>
         </thead>
@@ -143,6 +146,8 @@ onBeforeUnmount(() => {
             <td class="num">{{ n(row.checked_in) }}</td>
             <td class="num">{{ money(row.gross_cents) }}</td>
             <td class="num">{{ money(row.refunded_cents) }}</td>
+            <td class="num">{{ money(row.excess_refunded_cents) }}</td>
+            <td class="num">{{ money(row.total_refunded_cents) }}</td>
             <td class="num strong">{{ money(row.net_cents) }}</td>
           </tr>
         </tbody>
@@ -154,6 +159,8 @@ onBeforeUnmount(() => {
             <td class="num">{{ n(data.total.checked_in) }}</td>
             <td class="num">{{ money(data.total.gross_cents) }}</td>
             <td class="num">{{ money(data.total.refunded_cents) }}</td>
+            <td class="num">{{ money(data.total.excess_refunded_cents) }}</td>
+            <td class="num">{{ money(data.total.total_refunded_cents) }}</td>
             <td class="num strong">{{ money(data.total.net_cents) }}</td>
           </tr>
         </tfoot>

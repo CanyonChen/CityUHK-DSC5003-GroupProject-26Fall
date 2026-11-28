@@ -7,6 +7,7 @@ const cfg = require('../config');
 const { toIso, toInt, orderNo, seatLabel } = require('../lib/format');
 const { writeAudit } = require('../lib/audit');
 const { issueTickets } = require('./ticket-issuance');
+const { sellHeldSeats, releaseSoldSeats } = require('./inventory');
 const { retryTransaction } = require('../lib/retry-transaction');
 
 async function q(exec, sql, params = []) {
@@ -480,16 +481,14 @@ async function cancelOrderOnce({ orderId, userId, requestId }) {
       if (!tickets.length || tickets.some(ticket => ticket.status !== 'VALID')) {
         throw new ApiError(409, 'CANCELLATION_NOT_ALLOWED', 'Only unused free tickets can be cancelled');
       }
+      const released = await releaseSoldSeats(conn, orderId);
       await q(conn, "UPDATE orders SET status = 'CANCELLED', closed_at = UTC_TIMESTAMP(3) WHERE order_id = ?", [orderId]);
       await q(conn, `UPDATE tickets t JOIN order_items oi ON oi.order_item_id = t.order_item_id
         SET t.status = 'VOID' WHERE oi.order_id = ?`, [orderId]);
-      const released = await q(conn, `UPDATE session_seats ss JOIN order_items oi ON oi.session_seat_id = ss.session_seat_id
-        SET ss.session_seat_status = 'AVAILABLE', ss.holder_order_id = NULL, ss.hold_expires_at = NULL
-        WHERE oi.order_id = ? AND ss.session_seat_status = 'SOLD'`, [orderId]);
       await writeAudit(conn, { actorType: 'USER', actorId: userId, objectType: 'ORDER', objectId: orderId,
-        action: 'FREE_BOOKING_CANCELLED', summary: `free booking cancelled, tickets VOID, ${released.affectedRows} seats released`, requestId });
+        action: 'FREE_BOOKING_CANCELLED', summary: `free booking cancelled, tickets VOID, ${released} seats released`, requestId });
       await conn.commit();
-      return { order_id: orderId, status: 'CANCELLED', released_seats: toInt(released.affectedRows) };
+      return { order_id: orderId, status: 'CANCELLED', released_seats: released };
     }
     if (order.status !== 'PENDING_PAYMENT') {
       throw new ApiError(409, 'ORDER_NOT_PAYABLE', 'The order is paid or closed and cannot be cancelled');
@@ -550,14 +549,7 @@ async function confirmFreeOrderOnce({ orderId, userId, requestId }) {
     if (order.status !== 'PENDING_PAYMENT') throw new ApiError(409, 'ORDER_NOT_PAYABLE', 'This booking is closed');
     const now = (await q(conn, 'SELECT UTC_TIMESTAMP(3) AS now'))[0].now;
     if (order.expires_at <= now) throw new ApiError(409, 'ORDER_EXPIRED', 'The free booking hold has expired');
-    const seats = await q(conn, `SELECT ss.session_seat_id, ss.holder_order_id, ss.session_seat_status
-      FROM order_items oi JOIN session_seats ss ON ss.session_seat_id = oi.session_seat_id
-      WHERE oi.order_id = ? FOR UPDATE`, [orderId]);
-    if (!seats.length || seats.some(seat => seat.session_seat_status !== 'HELD' || toInt(seat.holder_order_id) !== orderId)) {
-      throw new ApiError(409, 'SEAT_UNAVAILABLE', 'The held seats are no longer available');
-    }
-    await q(conn, `UPDATE session_seats SET session_seat_status = 'SOLD', holder_order_id = NULL, hold_expires_at = NULL
-      WHERE holder_order_id = ? AND session_seat_status = 'HELD'`, [orderId]);
+    await sellHeldSeats(conn, orderId);
     const issued = await issueTickets(conn, orderId);
     await q(conn, "UPDATE orders SET status = 'PAID', paid_at = UTC_TIMESTAMP(3) WHERE order_id = ?", [orderId]);
     await writeAudit(conn, { actorType: 'USER', actorId: userId, objectType: 'ORDER', objectId: orderId,

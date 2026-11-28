@@ -70,3 +70,11 @@ flowchart TD
 | 页面验收 | extended_integration_check 准备合成数据 → browser_e2e_check 操作两端实际页面 → 截图、trace、结果摘要 |
 
 验票保持原文本方案：TicketView 的 Copy gate code → CheckinView 的票码输入框 → POST /admin/checkins。没有摄像头组件或硬件扫码依赖。
+
+## 一致性与恢复调用
+
+- orders/payments → inventory.sellHeldSeats → 当前预留归属和更新数量校验 → ticket-issuance。
+- refunds/免费取消 → inventory.releaseSoldSeats → 唯一有效票据归属 → 条件释放，再作废原票。
+- 两端用户请求 → shared/request-intents.mjs；SeatMapView 保存未确定的预留选择，刷新后重放原请求。
+- payments.handleNotification → 先持久化 payment_notifications → 事务内履约；reconciliation → payment-adapter 查询证据 → 同一通知处理入口恢复。
+- inventory_consistency_check → 只读快照检查；recovery_integration_check → 故障注入、恢复与全库检查。

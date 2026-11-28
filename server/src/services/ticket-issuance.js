@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('node:crypto');
+const { ApiError } = require('../lib/http');
 const { toInt } = require('../lib/format');
 async function q(conn, sql, params = []) { return (await conn.query(sql, params))[0]; }
 
@@ -16,23 +17,19 @@ async function issueTickets(conn, orderId) {
       WHERE oi.order_id = ?`,
     [orderId]
   );
-  if (toInt(existing[0].n) >= items.length) return toInt(existing[0].n);
+  if (!items.length || toInt(existing[0].n) !== 0) throw new ApiError(409, 'INVENTORY_INCONSISTENT', 'Unconfirmed order already has tickets or no seats');
 
   let issued = 0;
   for (const item of items) {
     const code = crypto.randomBytes(24).toString('hex');
     const hash = crypto.createHash('sha256').update(code).digest('hex');
-    try {
-      await q(
+    await q(
         conn,
         `INSERT INTO tickets (order_item_id, ticket_code_hash, status, issued_at)
          VALUES (?, ?, 'VALID', UTC_TIMESTAMP(3))`,
         [toInt(item.order_item_id), hash]
       );
-      issued += 1;
-    } catch (err) {
-      if (!err || err.code !== 'ER_DUP_ENTRY') throw err;
-    }
+    issued += 1;
   }
   return issued;
 }

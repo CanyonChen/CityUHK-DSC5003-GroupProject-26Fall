@@ -67,7 +67,7 @@ async function main() {
   buyerToken = await loginApi(username);
   checks.push('registration and automatic sign-in through the visitor form');
 
-  async function chooseEvent(name, mobile = false) {
+  async function chooseEvent(name, mobile = false, loseResponse = false) {
     await user.goto(USER + '/events');
     if (mobile) await user.setViewportSize({ width: 390, height: 844 });
     await user.getByRole('searchbox', { name: 'Search productions' }).fill(name);
@@ -78,11 +78,30 @@ async function main() {
     await visible(user.getByRole('heading', { name: 'Auditorium plan' }));
     await noPageOverflow(user);
     await user.getByRole('button', { name: /^A row .*available$/ }).first().click();
+    const keys = []; let committedOrder;
+    const routePattern = '**/api/orders';
+    if (loseResponse) await user.route(routePattern, async route => {
+      if (route.request().method() !== 'POST') return route.continue();
+      keys.push(route.request().headers()['idempotency-key']);
+      const response = await route.fetch();
+      if (keys.length === 1) { committedOrder = (await response.json()).data.order_id; await route.abort('failed'); }
+      else await route.fulfill({ response });
+    });
     await user.getByRole('button', { name: 'Reserve seats', exact: true }).click();
+    if (loseResponse) {
+      await visible(user.getByText('The reservation result is unknown. Retry to retrieve the original result; your request is saved in this tab.', {exact:true}));
+      await user.reload();
+      await user.getByRole('button', { name: 'Reserve seats', exact: true }).click();
+      await eventually(async () => new URL(user.url()).pathname.startsWith('/orders/'), 'replayed reservation did not open');
+      assert.equal(keys.length, 2); assert.equal(keys[0], keys[1]);
+      assert.equal(Number(new URL(user.url()).pathname.split('/').pop()), committedOrder);
+      await user.unroute(routePattern);
+      checks.push('lost reservation response survives reload and replays the same key and order');
+    }
     await user.waitForURL(/\/orders\/\d+$/);
     return Number(new URL(user.url()).pathname.split('/').pop());
   }
-  const freeOrderId = await chooseEvent(fixtures.freeEventName, true);
+  const freeOrderId = await chooseEvent(fixtures.freeEventName, true, true);
   await visible(user.getByRole('heading', { name: 'Free booking', exact: true }));
   assert.equal(await user.getByRole('button', { name: 'Continue to payment', exact: true }).count(), 0);
   await user.getByRole('button', { name: 'Confirm free booking', exact: true }).click();
@@ -177,6 +196,13 @@ async function main() {
     const refunds = await api('GET', '/admin/refunds?order_id=' + fixtures.retryOrderId, adminToken);
     return refunds.items.some(row => row.status === 'SUCCEEDED') && refunds.items.some(row => row.refund_id === fixtures.retryRefundId && row.status === 'FAILED');
   }, 'refund retry did not settle or failed history changed');
+  await admin.getByRole('button', { name: en('ops.ledger'), exact: true }).click();
+  for (const label of ['ops.refunded','ops.excessRefunded','ops.totalRefunded']) {
+    await visible(admin.getByRole('columnheader', { name: en(label), exact: true }));
+  }
+  await visible(admin.getByText(en('ops.netFormula'), {exact:true}));
+  await admin.getByRole('button', { name: en('ops.runNow'), exact:true }).click();
+  await eventually(async () => (await api('GET','/admin/reconciliation/status',adminToken)).last_summary != null, 'reconciliation summary missing');
   await shot(admin, '04-finance-refund-retry');
   checks.push('finance UI creates a retry, confirms success and preserves the failed refund history');
 

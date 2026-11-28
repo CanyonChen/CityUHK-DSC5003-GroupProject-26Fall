@@ -1,5 +1,11 @@
-import { TOKEN_KEY } from './auth';
+import { TOKEN_KEY, session } from './auth';
+import { createIntentStore, runIntent } from '../../shared/request-intents.mjs';
 import { resolveApiBase } from '../../shared/api-config.mjs';
+
+let intentStorage;
+try { intentStorage = window.sessionStorage; } catch { /* fallback to memory */ }
+const intents = createIntentStore(intentStorage);
+function intent(scope, send) { return runIntent(intents, [session.user?.user_id, ...scope], send); }
 
 export const API_BASE = resolveApiBase(import.meta.env.VITE_API_BASE, window.location);
 
@@ -49,7 +55,10 @@ export async function api(path, options = {}) {
     }
     throw err;
   }
-  return payload?.data;
+  if (!payload || payload.code !== 'OK' || !Object.hasOwn(payload, 'data')) {
+    throw new ApiError(502, 'INVALID_RESPONSE', 'The response could not be confirmed. Retry the same operation.');
+  }
+  return payload.data;
 }
 
 export const register = (user_name, password, display_name) =>
@@ -91,12 +100,13 @@ export const getSeatRecommendations = (id, { partySize, region, budgetCents, lim
   });
 };
 
-export const createOrder = (performanceId, seatIds) =>
-  api('/orders', {
-    method: 'POST',
-    headers: { 'Idempotency-Key': crypto.randomUUID() },
-    body: { performance_id: performanceId, session_seat_ids: seatIds },
-  });
+export const createOrder = (performanceId, seatIds) => {
+  const ids = [...seatIds].sort((a, b) => a - b);
+  return intent(['order', performanceId, ids], key => api('/orders', {
+    method: 'POST', headers: { 'Idempotency-Key': key },
+    body: { performance_id: performanceId, session_seat_ids: ids },
+  }));
+};
 
 export const confirmFreeOrder = (id) => api(`/orders/${id}/confirm-free`, { method: 'POST' });
 
@@ -110,11 +120,9 @@ export const listOrders = (params = {}) => {
 export const cancelOrder = (id) => api(`/orders/${id}/cancel`, { method: 'POST' });
 
 export const requestRefund = (id, reason = '') =>
-  api(`/orders/${id}/refund`, {
-    method: 'POST',
-    headers: { 'Idempotency-Key': crypto.randomUUID() },
-    body: { reason },
-  });
+  intent(['refund', id, reason], key => api(`/orders/${id}/refund`, {
+    method: 'POST', headers: { 'Idempotency-Key': key }, body: { reason },
+  }));
 
 export const createPayment = (orderId) => api('/payments', { method: 'POST', body: { order_id: orderId } });
 

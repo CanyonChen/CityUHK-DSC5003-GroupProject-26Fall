@@ -19,6 +19,12 @@ const error = ref('');
 const actionError = ref('');
 const busy = ref(false);
 const selected = ref([]);
+const retryReservation = ref(null);
+const retrySelectionKey = () => 'cityuhk-events-hub.reservation:' + session.user?.user_id + ':' + route.params.id;
+function retainReservation(value) {
+  retryReservation.value = value;
+  try { if (value) sessionStorage.setItem(retrySelectionKey(), JSON.stringify(value)); else sessionStorage.removeItem(retrySelectionKey()); } catch { /* memory fallback */ }
+}
 const lastUpdated = ref('');
 const recommendParty = ref(2);
 const recommendRegion = ref('');
@@ -94,7 +100,10 @@ async function load(silent = false) {
     const available = new Set(
       map.seats.filter((s) => s.status === 'AVAILABLE').map((s) => s.session_seat_id)
     );
-    selected.value = selected.value.filter((id) => available.has(id));
+    if (!retryReservation.value) {
+      try { retryReservation.value = JSON.parse(sessionStorage.getItem(retrySelectionKey()) || 'null'); } catch { /* storage unavailable */ }
+    }
+    selected.value = retryReservation.value?.seatIds || selected.value.filter((id) => available.has(id));
     if (!recommendRegion.value || !regionOptions.value.includes(recommendRegion.value)) {
       recommendRegion.value = regionOptions.value[0] || '';
     }
@@ -142,6 +151,7 @@ onBeforeUnmount(() => {
 
 function toggleSeat(seat) {
   actionError.value = '';
+  if (retryReservation.value) { actionError.value = 'Retry the previous reservation to confirm its result before changing seats.'; return; }
   if (seat.status !== 'AVAILABLE') return;
   const id = seat.session_seat_id;
   const index = selected.value.indexOf(id);
@@ -255,10 +265,16 @@ async function reserve() {
   }
   busy.value = true;
   try {
-    const order = await createOrder(Number(route.params.id), selected.value);
+    retainReservation({ seatIds: [...selected.value] });
+    const order = await createOrder(Number(route.params.id), retryReservation.value.seatIds);
+    retainReservation(null);
     router.push(`/orders/${order.order_id}`);
   } catch (err) {
-    if (err.code === 'SEAT_UNAVAILABLE') {
+    const uncertain = !err.status || err.status >= 500;
+    if (!uncertain) retainReservation(null);
+    if (uncertain) {
+      actionError.value = 'The reservation result is unknown. Retry to retrieve the original result; your request is saved in this tab.';
+    } else if (err.code === 'SEAT_UNAVAILABLE') {
       actionError.value = 'Another guest just took one of those seats. Refresh the map and try again.';
       await load();
     } else if (err.code === 'LIMIT_EXCEEDED') {
@@ -276,6 +292,7 @@ async function reserve() {
 }
 
 function clearSelection() {
+  if (retryReservation.value) return;
   selected.value = [];
 }
 </script>
@@ -439,7 +456,7 @@ function clearSelection() {
           <button class="btn btn-gold btn-block" type="button" :disabled="busy || !selectedSeats.length" @click="reserve">
             {{ busy ? 'Reserving…' : (session.token ? 'Reserve seats' : 'Sign in to reserve') }}
           </button>
-          <button v-if="selectedSeats.length" class="btn btn-outline btn-block btn-sm" type="button" @click="clearSelection">Clear selection</button>
+          <button v-if="selectedSeats.length" class="btn btn-outline btn-block btn-sm" type="button" :disabled="Boolean(retryReservation)" @click="clearSelection">Clear selection</button>
         </div>
       </aside>
     </div>

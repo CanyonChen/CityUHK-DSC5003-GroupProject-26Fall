@@ -19,7 +19,7 @@ const inputRef = ref(null);
 const now = ref(Date.now());
 let clock;
 onBeforeUnmount(() => clearInterval(clock));
-const checkinErrors = new Set(['TICKET_ALREADY_USED', 'TICKET_INVALID', 'OUT_OF_WINDOW', 'WRONG_PERFORMANCE', 'FORBIDDEN']);
+const checkinErrors = new Set(['TICKET_ALREADY_USED', 'TICKET_INVALID', 'TICKET_QR_EXPIRED', 'CHECKIN_CONFLICT', 'OUT_OF_WINDOW', 'WRONG_PERFORMANCE', 'FORBIDDEN']);
 
 const selected = computed(() => performances.value.find((p) => p.performance_id === selectedId.value));
 const withinWindow = computed(() => {
