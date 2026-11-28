@@ -120,17 +120,17 @@ onBeforeUnmount(() => {
       <table class="data-table">
         <thead>
           <tr>
-            <th>{{ t('programme.performance') }}</th>
-            <th>{{ t('programme.date') }}</th>
-            <th>{{ t('programme.status') }}</th>
-            <th class="num">{{ t('programme.seats') }}</th>
-            <th class="num">{{ t('programme.sold') }}</th>
-            <th class="num">{{ t('programme.checked') }}</th>
-            <th class="num">{{ t('programme.gross') }}</th>
-            <th class="num">{{ t('programme.refunded') }}</th>
-            <th class="num">{{ t('programme.excessRefunded') }}</th>
-            <th class="num">{{ t('programme.totalRefunded') }}</th>
-            <th class="num">{{ t('programme.net') }}</th>
+            <th scope="col">{{ t('programme.performance') }}</th>
+            <th scope="col">{{ t('programme.date') }}</th>
+            <th scope="col">{{ t('programme.status') }}</th>
+            <th scope="col" class="num">{{ t('programme.seats') }}</th>
+            <th scope="col" class="num">{{ t('programme.sold') }}</th>
+            <th scope="col" class="num">{{ t('programme.checked') }}</th>
+            <th scope="col" class="num">{{ t('programme.gross') }}</th>
+            <th scope="col" class="num">{{ t('programme.refunded') }}</th>
+            <th scope="col" class="num">{{ t('programme.excessRefunded') }}</th>
+            <th scope="col" class="num">{{ t('programme.totalRefunded') }}</th>
+            <th scope="col" class="num">{{ t('programme.net') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -185,13 +185,13 @@ onBeforeUnmount(() => {
       <table class="data-table">
         <thead>
           <tr>
-            <th>{{ t('programme.region') }}</th>
-            <th class="num">{{ t('programme.seats') }}</th>
-            <th class="num">{{ t('programme.sellable') }}</th>
-            <th class="num">{{ t('programme.sold') }}</th>
-            <th class="num">{{ t('programme.checked') }}</th>
-            <th class="num">{{ t('programme.occupancy') }}</th>
-            <th class="num">{{ t('programme.attendance') }}</th>
+            <th scope="col">{{ t('programme.region') }}</th>
+            <th scope="col" class="num">{{ t('programme.seats') }}</th>
+            <th scope="col" class="num">{{ t('programme.sellable') }}</th>
+            <th scope="col" class="num">{{ t('programme.sold') }}</th>
+            <th scope="col" class="num">{{ t('programme.checked') }}</th>
+            <th scope="col" class="num">{{ t('programme.occupancy') }}</th>
+            <th scope="col" class="num">{{ t('programme.attendance') }}</th>
           </tr>
         </thead>
         <tbody>

@@ -196,6 +196,7 @@ async function main() {
     const refunds = await api('GET', '/admin/refunds?order_id=' + fixtures.retryOrderId, adminToken);
     return refunds.items.some(row => row.status === 'SUCCEEDED') && refunds.items.some(row => row.refund_id === fixtures.retryRefundId && row.status === 'FAILED');
   }, 'refund retry did not settle or failed history changed');
+  await admin.setViewportSize({ width: 1440, height: 1000 });
   await admin.getByRole('button', { name: en('ops.ledger'), exact: true }).click();
   for (const label of ['ops.refunded','ops.excessRefunded','ops.totalRefunded']) {
     await visible(admin.getByRole('columnheader', { name: en(label), exact: true }));

@@ -140,3 +140,5 @@ $api = 'http://127.0.0.1:3000'
 - 核销使用 ticket_id 与 VALID 状态的条件更新；TICKET_QR_EXPIRED 表示刷新二维码，CHECKIN_CONFLICT 表示重新核验。TICKET_INVALID 的 details.reason 可区分 REFUNDED、REFUND_PENDING 或 VOID。
 - 对账默认每 60 秒运行，默认最小记录年龄 30 秒，每类单批 50 条。status 新增 unknown_payments、pending_refunds、last_summary；run 新增 payments_checked、unknown、refunds_checked、manual_refunds。
 - 适配器无法查询退款结果时保留 PENDING 并写入 REFUND_RECONCILE_UNKNOWN，等待管理员确认。没有真实资金查询或自动推定成功。
+
+- 受权限保护的订单详情返回原下单 request_key，最近正常退款也返回 request_key；前端只在查询结果匹配本标签页未确定请求键时确认结束该请求，避免查到旧历史记录而误清除新请求。

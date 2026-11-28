@@ -74,7 +74,7 @@ async function loadOrder(exec, orderId) {
 
   const refunds = await q(
     exec,
-    `SELECT refund_id, status, amount, reason, created_at
+    `SELECT refund_id, status, amount, reason, created_at, idempotency_key
        FROM refunds WHERE order_id = ? ORDER BY refund_id DESC LIMIT 1`,
     [orderId]
   );
@@ -82,6 +82,7 @@ async function loadOrder(exec, orderId) {
   const refund = refunds.length
     ? {
         refund_id: toInt(refunds[0].refund_id),
+        request_key: refunds[0].idempotency_key?.startsWith(`refund:${orderId}:`) ? refunds[0].idempotency_key.slice(`refund:${orderId}:`.length) : null,
         status: refunds[0].status,
         amount_cents: toInt(refunds[0].amount),
         reason: refunds[0].reason,
@@ -92,6 +93,7 @@ async function loadOrder(exec, orderId) {
   return {
     order_id: toInt(o.order_id),
     order_no: orderNo(toInt(o.order_id), o.created_at),
+    request_key: o.idempotency_key,
     status: o.status,
     performance_id: toInt(o.performance_id),
     event_name: o.event_name,

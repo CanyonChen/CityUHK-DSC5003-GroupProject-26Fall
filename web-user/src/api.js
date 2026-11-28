@@ -110,7 +110,16 @@ export const createOrder = (performanceId, seatIds) => {
 
 export const confirmFreeOrder = (id) => api(`/orders/${id}/confirm-free`, { method: 'POST' });
 
-export const getOrder = (id) => api(`/orders/${id}`);
+export const getOrder = async id => {
+  const order = await api(`/orders/${id}`);
+  const user = session.user?.user_id;
+  const scope = [user, 'order', order.performance_id, order.items.map(x => x.session_seat_id).sort((a,b) => a-b)];
+  if (intents.acknowledge(scope, order.request_key)) {
+    try { intentStorage?.removeItem('cityuhk-events-hub.reservation:' + user + ':' + order.performance_id); } catch { /* storage unavailable */ }
+  }
+  if (order.refund?.request_key) intents.acknowledge([user, 'refund', Number(id), order.refund.reason || ''], order.refund.request_key);
+  return order;
+};
 
 export const listOrders = (params = {}) => {
   const qs = new URLSearchParams(params).toString();
@@ -120,7 +129,7 @@ export const listOrders = (params = {}) => {
 export const cancelOrder = (id) => api(`/orders/${id}/cancel`, { method: 'POST' });
 
 export const requestRefund = (id, reason = '') =>
-  intent(['refund', id, reason], key => api(`/orders/${id}/refund`, {
+  intent(['refund', Number(id), reason], key => api(`/orders/${id}/refund`, {
     method: 'POST', headers: { 'Idempotency-Key': key }, body: { reason },
   }));
 

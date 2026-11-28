@@ -12,6 +12,13 @@ export function createIntentStore(storage, makeKey = () => crypto.randomUUID()) 
       try { storage?.setItem(id, key); } catch { /* in-memory fallback */ }
       return key;
     },
+    acknowledge(scope, confirmedKey) {
+      const id = name(scope);
+      let key = memory.get(id);
+      try { key ||= storage?.getItem(id); } catch { /* storage unavailable */ }
+      if (!key || key !== confirmedKey) return false;
+      this.clear(scope); return true;
+    },
     clear(scope) {
       const id = name(scope); memory.delete(id);
       try { storage?.removeItem(id); } catch { /* in-memory fallback */ }

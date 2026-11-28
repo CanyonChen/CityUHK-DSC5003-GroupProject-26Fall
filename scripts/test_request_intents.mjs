@@ -25,3 +25,12 @@ test('blocked storage retains a key within the page', () => {
   const store = createIntentStore({ getItem(){throw Error();},setItem(){throw Error();},removeItem(){throw Error();} }, () => 'key');
   assert.equal(store.key(['x']), store.key(['x']));
 });
+
+test('a queried refund acknowledges only its matching request and permits a new attempt after failure', () => {
+  let n=0; const store=createIntentStore(storage(),()=>String(++n)), scope=[1,'refund',8,'Customer request'];
+  const first=store.key(scope);
+  assert.equal(store.acknowledge(scope,'a different historical refund'),false);
+  assert.equal(store.key(scope),first);
+  assert.equal(store.acknowledge(scope,first),true);
+  assert.notEqual(store.key(scope),first);
+});

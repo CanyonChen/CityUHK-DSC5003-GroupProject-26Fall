@@ -186,7 +186,7 @@ onBeforeUnmount(() => {
     <div v-if="!ledger.items.length" class="empty-state">{{ t('ops.ledgerEmpty') }}</div>
     <div v-else class="table-wrap">
       <table class="data-table record-table ledger-table" :aria-label="t('ops.ledger')">
-        <thead><tr><th>{{ t('ops.performance') }}</th><th>{{ t('ops.status') }}</th><th class="num">{{ t('ops.sold') }}</th><th class="num">{{ t('ops.gross') }}</th><th class="num">{{ t('ops.refunded') }}</th><th class="num">{{ t('ops.excessRefunded') }}</th><th class="num">{{ t('ops.totalRefunded') }}</th><th class="num">{{ t('ops.net') }}</th></tr></thead>
+        <thead><tr><th scope="col">{{ t('ops.performance') }}</th><th scope="col">{{ t('ops.status') }}</th><th scope="col" class="num">{{ t('ops.sold') }}</th><th scope="col" class="num">{{ t('ops.gross') }}</th><th scope="col" class="num">{{ t('ops.refunded') }}</th><th scope="col" class="num">{{ t('ops.excessRefunded') }}</th><th scope="col" class="num">{{ t('ops.totalRefunded') }}</th><th scope="col" class="num">{{ t('ops.net') }}</th></tr></thead>
         <tbody>
           <tr v-for="row in ledger.items" :key="row.performance_id">
             <td class="record-title" :data-label="t('ops.performance')"><strong>{{ row.event_name }}</strong><small>{{ hkt(row.starts_at) }}</small></td>
@@ -257,7 +257,7 @@ onBeforeUnmount(() => {
     <div v-if="!audits.items.length" class="empty-state">{{ t('ops.auditEmpty') }}</div>
     <div v-else class="table-wrap">
       <table class="data-table record-table" :aria-label="t('ops.auditTrail')">
-        <thead><tr><th>{{ t('ops.time') }}</th><th>{{ t('ops.actor') }}</th><th>{{ t('ops.action') }}</th><th>{{ t('ops.object') }}</th><th>{{ t('ops.result') }}</th></tr></thead>
+        <thead><tr><th scope="col">{{ t('ops.time') }}</th><th scope="col">{{ t('ops.actor') }}</th><th scope="col">{{ t('ops.action') }}</th><th scope="col">{{ t('ops.object') }}</th><th scope="col">{{ t('ops.result') }}</th></tr></thead>
         <tbody>
           <tr v-for="row in audits.items" :key="row.log_id">
             <td class="tight" :data-label="t('ops.time')">{{ hkt(row.occurred_at) }}</td>
