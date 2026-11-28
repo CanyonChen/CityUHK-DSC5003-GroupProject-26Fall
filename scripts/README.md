@@ -51,3 +51,9 @@ The benchmark tools share dataset summaries, timings and query plans in `.cache/
 - `node scripts/financial_integration_check.js`: real HTTP/InnoDB regressions against a disposable `ticketing_ac` or `ticketing_ci` database. It creates fixtures and changes only their data.
 - Pull requests run `.github/workflows/project-checks.yml`: static checks, both frontend builds, MariaDB acceptance and WebSocket tests. This workflow does not deploy or merge.
 - [Audit record](../docs/project-audit-2026-11-28.md) and [file relationships](../docs/file-relationships.md) distinguish executed checks from outstanding acceptance.
+
+## 后续优化验收
+
+`node scripts/extended_integration_check.cjs` 只对 ticketing_ac / ticketing_ci 验证免费票、失败异常退款重试和托管来源，并准备浏览器合成数据。
+
+`node scripts/browser_e2e_check.cjs` 使用固定版本 Playwright 1.56.1，对运行中的两个已构建前端进行操作。CI 在 .cache/browser-tools 安装测试工具，不增加生产依赖。产物在 .cache/checks/browser/，含截图、trace.zip 与 summary.json。验票采用原方案的复制/粘贴票码流程，不要求摄像头。

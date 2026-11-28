@@ -58,3 +58,15 @@ flowchart TD
 运行 `python scripts/check_project_links.py`，检查相对导入、HTML 资源、Markdown 链接和两端 API 包装函数对应的 Express 路由。证据写入 `.cache/checks/project-links.json`，列出每条边、接口与来源位置。
 
 该检查验证路径连接；数据库锁、事务隔离、字段含义和业务正确性由独立测试及人工检查验证。
+
+## 后续优化的文件关系
+
+| 功能 | 调用关系 |
+|---|---|
+| 免费确认与取消 | 用户端 OrderView → api.confirmFreeOrder/cancelOrder → routes/orders → services/orders → ticket-issuance、orders/tickets/session_seats |
+| 退款重试 | 管理端 FinanceView → api.retryRefund → routes/admin → services/refunds → refund-kind、refund/payment 记录与 audit_logs |
+| 托管来源 | config.CORS_ORIGINS → lib/origins → app.js 与 realtime.js 共用策略 |
+| API 与 WS 地址 | shared/api-config.mjs → 两端 api.js 与 realtime.js；/api 代理保留 WebSocket 前缀 |
+| 页面验收 | extended_integration_check 准备合成数据 → browser_e2e_check 操作两端实际页面 → 截图、trace、结果摘要 |
+
+验票保持原文本方案：TicketView 的 Copy gate code → CheckinView 的票码输入框 → POST /admin/checkins。没有摄像头组件或硬件扫码依赖。
