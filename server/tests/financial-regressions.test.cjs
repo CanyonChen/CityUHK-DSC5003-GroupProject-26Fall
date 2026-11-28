@@ -17,7 +17,7 @@ function service(name, db) {
   const module = { exports: {} };
   const stubs = {
     '../db': db, '../config': cfg, '../lib/http': { ApiError },
-    '../lib/audit': { writeAudit: async () => {} },
+    '../lib/audit': { writeAudit: async (_conn, entry) => { db.audits?.push(entry); } },
     './orders': { releaseSeats: async () => 0, expireDueOrders: async () => 0 },
   };
   const requireStub = id => Object.hasOwn(stubs, id) ? stubs[id] : nativeRequire(id);
@@ -36,7 +36,7 @@ function fixture({ orderStatus = 'REFUND_PENDING', late = false, refundStatus = 
     attempt: { attempt_id: 20, order_id: 10, user_id: userId, result: attemptResult,
       amount: 48000, currency: 'HKD', handling_category: late ? 'AWAITING_REFUND' : 'NORMAL' },
     // A late payment's old seat has already been sold to another order.
-    seat: 'SOLD', ticket: late ? 'VOID' : 'REFUND_PENDING', mutations: [], connectionReads: 0,
+    seat: 'SOLD', ticket: late ? 'VOID' : 'REFUND_PENDING', mutations: [], audits: [], connectionReads: 0,
   };
   const execute = async (sql, params = []) => {
     const s = sql.replace(/\s+/g, ' ').trim();
@@ -64,7 +64,7 @@ function fixture({ orderStatus = 'REFUND_PENDING', late = false, refundStatus = 
     beginTransaction: async () => {}, commit: async () => {}, rollback: async () => {}, release() {},
     query: async (...args) => { state.connectionReads++; return [await execute(...args)]; },
   };
-  const db = { query: execute, pool: { getConnection: async () => conn } };
+  const db = { query: execute, pool: { getConnection: async () => conn }, audits: state.audits };
   return { state, db };
 }
 
@@ -97,6 +97,7 @@ for (const orderStatus of ['EXPIRED', 'CANCELLED', 'PAID', 'REFUND_PENDING', 'RE
       assert.equal(state.seat, 'SOLD');
       assert.equal(answer.released_seats, 0);
       assert.equal(state.refund.status, result);
+      assert.match(state.audits.at(-1).summary, /tickets and seats unchanged/);
       assert.ok(!state.mutations.some(sql => /UPDATE (?:orders|tickets|session_seats)/.test(sql)));
       if (result === 'SUCCEEDED') assert.equal(state.attempt.handling_category, 'NORMAL');
     });

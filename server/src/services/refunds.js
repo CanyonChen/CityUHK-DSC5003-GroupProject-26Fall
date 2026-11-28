@@ -280,9 +280,11 @@ async function resolveRefund({ refundId, result, requestId, actorId }) {
       objectType: 'REFUND',
       objectId: refundId,
       action: result === 'SUCCEEDED' ? 'REFUND_SUCCEEDED' : 'REFUND_FAILED',
-      summary: result === 'SUCCEEDED'
-        ? `order ${refund.order_id} ${latePayment ? 'late payment kept ' + refund.order_status : 'REFUND_PENDING→REFUNDED'}, tickets VOID, ${released} seats released`
-        : `order ${refund.order_id} ${latePayment ? 'late payment kept EXPIRED' : 'REFUND_PENDING→PAID'}, tickets restored VALID`,
+      summary: latePayment
+        ? `payment ${refund.payment_attempt_id} late/excess refund ${result}, order ${refund.order_status}, tickets and seats unchanged`
+        : result === 'SUCCEEDED'
+          ? `order ${refund.order_id} REFUND_PENDING→REFUNDED, tickets VOID, ${released} seats released`
+          : `order ${refund.order_id} REFUND_PENDING→PAID, tickets restored VALID`,
       requestId,
     });
     await conn.commit();
