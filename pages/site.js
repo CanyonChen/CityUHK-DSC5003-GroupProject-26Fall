@@ -1,3 +1,4 @@
+import { choosePerformance } from './demo-performance.mjs';
 import { copy, programmeText, productionsZh, staticZh, staticZhCn } from './i18n.js';
 import { formatCopy } from './event-formats.js';
 
@@ -63,8 +64,8 @@ export function demoEntries(now) {
   return snapshot.events.map(event => {
     const shows = snapshot.performances.filter(show => show.eventId === event.id)
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-    const next = shows.find(show => Date.parse(show.startsAt) >= now);
-    const show = next || shows.at(-1);
+    const show = choosePerformance(shows, now);
+    const next = show && Date.parse(show.startsAt) >= now ? show : null;
     const t = copy[language];
     const { title, genre, description, poster } = programmeText(event, language);
     const label = '[Demo] ' + title;
@@ -108,7 +109,7 @@ function selectEvent(event) {
   currentEvent = event;
   performances = snapshot.performances.filter(show => show.eventId === event.id)
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-  performance = performances.find(show => show.startsAt >= snapshot.capturedAt) || performances.at(-1);
+  performance = choosePerformance(performances);
   selectedSeat = null;
   renderDetails();
 }

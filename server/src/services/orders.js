@@ -94,6 +94,7 @@ async function loadOrder(exec, orderId) {
     event_name: o.event_name,
     venue_name: o.venue_name,
     starts_at: toIso(o.starts_at),
+    refund_policy: { cutoff_hours_before_start: cfg.limits.refundCutoffHours, partial_allowed: false },
     total_amount_cents: toInt(o.total_amount),
     currency: o.currency,
     expires_at: toIso(o.expires_at),

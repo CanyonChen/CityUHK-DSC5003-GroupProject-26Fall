@@ -40,14 +40,8 @@ async function refundRow(refundId, exec = query) {
  */
 async function requestRefundOnce({ orderId, userId, key, reason, requestId }) {
   const storedKey = `refund:${orderId}:${key}`;
-
-  const replay = await q(
-    query,
-    "SELECT refund_id FROM refunds WHERE order_id = ? AND idempotency_key = ? AND status IN ('PENDING','SUCCEEDED')",
-    [orderId, storedKey]
-  );
-  if (replay.length) {
-    return { replayed: true, refund: await refundRow(replay[0].refund_id), orderStatus: 'REFUND_PENDING' };
+  if (storedKey.length > 100) {
+    throw new ApiError(400, 'VALIDATION_ERROR', `Refund Idempotency-Key must be at most ${100 - `refund:${orderId}:`.length} characters`);
   }
 
   const conn = await pool.getConnection();
@@ -65,6 +59,19 @@ async function requestRefundOnce({ orderId, userId, key, reason, requestId }) {
     if (!orders.length) throw new ApiError(404, 'NOT_FOUND', 'Order not found');
     const order = orders[0];
     if (toInt(order.user_id) !== userId) throw new ApiError(403, 'FORBIDDEN', 'You cannot request a refund for this order');
+
+    // Serialize retries with refund creation and verify ownership before returning stored data.
+    const replay = await q(
+      conn,
+      'SELECT refund_id FROM refunds WHERE order_id = ? AND idempotency_key = ? FOR UPDATE',
+      [orderId, storedKey]
+    );
+    if (replay.length) {
+      const refund = await refundRow(replay[0].refund_id, (sql, params) => q(conn, sql, params));
+      await conn.commit();
+      return { replayed: true, refund, orderStatus: order.status };
+    }
+
     if (order.status === 'REFUND_PENDING' || order.status === 'REFUNDED') {
       throw new ApiError(409, 'REFUND_NOT_ALLOWED', 'This order is already in refund processing or refunded');
     }
@@ -174,6 +181,7 @@ async function requestRefund(args) {
  * API-43 Admin confirms the refund result.
  * SUCCEEDED: order REFUNDED, tickets VOID, seats back to AVAILABLE;
  * FAILED: order back to PAID, tickets back to VALID, seats remain SOLD.
+ * Excess/late payment refunds leave order, ticket and seat state unchanged.
  * Repeating the same result returns the existing record; a different result returns 409 so a successful refund cannot be changed to failed.
  */
 async function resolveRefund({ refundId, result, requestId, actorId }) {
@@ -201,8 +209,8 @@ async function resolveRefund({ refundId, result, requestId, actorId }) {
     await conn.beginTransaction();
     const rows = await q(
       conn,
-      `SELECT r.refund_id, r.order_id, r.status, r.amount, o.status AS order_status,
-              o.user_id, o.currency
+      `SELECT r.refund_id, r.order_id, r.status, r.amount, r.payment_attempt_id,
+              r.idempotency_key, o.status AS order_status, o.user_id, o.currency
          FROM refunds r JOIN orders o ON o.order_id = r.order_id
         WHERE r.refund_id = ? FOR UPDATE`,
       [refundId]
@@ -216,45 +224,54 @@ async function resolveRefund({ refundId, result, requestId, actorId }) {
       }
       throw new ApiError(409, 'REFUND_ALREADY_RESOLVED', 'The refund is already confirmed and cannot be changed');
     }
-    if (!['REFUND_PENDING', 'EXPIRED'].includes(refund.order_status)) {
+    // Only the server-generated key identifies an excess/late payment refund.
+    // A customer can enter any reason text, including LATE_PAYMENT.
+    const latePayment = refund.idempotency_key === `late-${refund.payment_attempt_id}`;
+    if (!latePayment && refund.order_status !== 'REFUND_PENDING') {
       throw new ApiError(409, 'REFUND_NOT_ALLOWED', 'The order is not in refund processing');
     }
-    const latePayment = refund.order_status === 'EXPIRED';
 
     let released = 0;
     if (result === 'SUCCEEDED') {
       await q(conn, "UPDATE refunds SET status = 'SUCCEEDED' WHERE refund_id = ?", [refundId]);
-      if (!latePayment) {
+      if (latePayment) {
+        // These seats may now belong to another buyer. Refund only this payment attempt.
+        await q(
+          conn,
+          "UPDATE payment_attempts SET handling_category = 'NORMAL' WHERE attempt_id = ?",
+          [toInt(refund.payment_attempt_id)]
+        );
+      } else {
         await q(conn, "UPDATE orders SET status = 'REFUNDED' WHERE order_id = ?", [toInt(refund.order_id)]);
+        await q(
+          conn,
+          `UPDATE tickets t JOIN order_items oi ON oi.order_item_id = t.order_item_id
+              SET t.status = 'VOID'
+            WHERE oi.order_id = ? AND t.status IN ('REFUND_PENDING','VALID')`,
+          [toInt(refund.order_id)]
+        );
+        const release = await q(
+          conn,
+          `UPDATE session_seats ss
+              JOIN order_items oi ON oi.session_seat_id = ss.session_seat_id
+              SET ss.session_seat_status = 'AVAILABLE', ss.holder_order_id = NULL, ss.hold_expires_at = NULL
+            WHERE oi.order_id = ? AND ss.session_seat_status = 'SOLD'`,
+          [toInt(refund.order_id)]
+        );
+        released = toInt(release.affectedRows);
       }
-      await q(
-        conn,
-        `UPDATE tickets t JOIN order_items oi ON oi.order_item_id = t.order_item_id
-            SET t.status = 'VOID'
-          WHERE oi.order_id = ? AND t.status IN ('REFUND_PENDING','VALID')`,
-        [toInt(refund.order_id)]
-      );
-      const release = await q(
-        conn,
-        `UPDATE session_seats ss
-            JOIN order_items oi ON oi.session_seat_id = ss.session_seat_id
-            SET ss.session_seat_status = 'AVAILABLE', ss.holder_order_id = NULL, ss.hold_expires_at = NULL
-          WHERE oi.order_id = ? AND ss.session_seat_status = 'SOLD'`,
-        [toInt(refund.order_id)]
-      );
-      released = toInt(release.affectedRows);
     } else {
       await q(conn, "UPDATE refunds SET status = 'FAILED' WHERE refund_id = ?", [refundId]);
       if (!latePayment) {
         await q(conn, "UPDATE orders SET status = 'PAID' WHERE order_id = ?", [toInt(refund.order_id)]);
+        await q(
+          conn,
+          `UPDATE tickets t JOIN order_items oi ON oi.order_item_id = t.order_item_id
+              SET t.status = 'VALID'
+            WHERE oi.order_id = ? AND t.status = 'REFUND_PENDING'`,
+          [toInt(refund.order_id)]
+        );
       }
-      await q(
-        conn,
-        `UPDATE tickets t JOIN order_items oi ON oi.order_item_id = t.order_item_id
-            SET t.status = 'VALID'
-          WHERE oi.order_id = ? AND t.status = 'REFUND_PENDING'`,
-        [toInt(refund.order_id)]
-      );
     }
 
     await writeAudit(conn, {
@@ -264,7 +281,7 @@ async function resolveRefund({ refundId, result, requestId, actorId }) {
       objectId: refundId,
       action: result === 'SUCCEEDED' ? 'REFUND_SUCCEEDED' : 'REFUND_FAILED',
       summary: result === 'SUCCEEDED'
-        ? `order ${refund.order_id} ${latePayment ? 'late payment kept EXPIRED' : 'REFUND_PENDING→REFUNDED'}, tickets VOID, ${released} seats released`
+        ? `order ${refund.order_id} ${latePayment ? 'late payment kept ' + refund.order_status : 'REFUND_PENDING→REFUNDED'}, tickets VOID, ${released} seats released`
         : `order ${refund.order_id} ${latePayment ? 'late payment kept EXPIRED' : 'REFUND_PENDING→PAID'}, tickets restored VALID`,
       requestId,
     });
@@ -272,7 +289,7 @@ async function resolveRefund({ refundId, result, requestId, actorId }) {
     return {
       replayed: false,
       refund: await refundRow(refundId, (sql, params) => q(conn, sql, params)),
-      orderStatus: latePayment ? 'EXPIRED' : (result === 'SUCCEEDED' ? 'REFUNDED' : 'PAID'),
+      orderStatus: latePayment ? refund.order_status : (result === 'SUCCEEDED' ? 'REFUNDED' : 'PAID'),
       released_seats: released,
     };
   } catch (err) {

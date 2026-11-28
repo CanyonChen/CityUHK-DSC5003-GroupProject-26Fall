@@ -86,7 +86,7 @@ export const updateTiers = (id, tiers) => api(`/admin/performances/${id}/price-t
 export const setSeatStatus = (id, status) => api(`/admin/session-seats/${id}`, { method: 'PATCH', body: { status } });
 export const bulkSetSeatStatus = (performanceId, body) =>
   api(`/admin/performances/${performanceId}/seat-status`, { method: 'PATCH', body });
-export const getSeatMap = (id) => api(`/performances/${id}/seats`, { anonymous: true });
+export const getSeatMap = (id) => api(`/admin/performances/${id}/seats`);
 
 // check-in
 export const checkerPerformances = () => api('/admin/checker/performances');

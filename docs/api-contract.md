@@ -121,3 +121,10 @@ $api = 'http://127.0.0.1:3000'
 ```
 
 本地 HTTP 和 WebSocket 配置允许来自 `http://localhost`、`http://127.0.0.1` 的浏览器来源（可带端口）。前端失去 WebSocket 连接时仍能通过 REST 读取和提交数据。[实时通道实现](../server/src/realtime.js)
+
+## Audit additions (2026-11-28)
+
+- `GET /admin/performances/:performanceId/seats` requires ADMIN and can return a draft seat map. The public `GET /performances/:performanceId/seats` keeps drafts private.
+- Order details include `refund_policy.cutoff_hours_before_start` and `refund_policy.partial_allowed`.
+- Refund replay first verifies the order owner and returns the existing refund plus the current order status. Its key is stored as `refund:<order_id>:<key>`, so the full stored value must fit 100 characters; an overlong value returns 400.
+- Confirming an excess/late-payment refund leaves order, ticket and seat state unchanged. A successful confirmation clears that payment attempt's awaiting-refund marker.

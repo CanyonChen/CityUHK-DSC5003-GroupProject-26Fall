@@ -281,6 +281,12 @@ async function simulate({ userId, paymentId, result, requestId }) {
     ]);
     const order = orders[0];
 
+    // A later simulated failure/timeout cannot contradict an already settled attempt.
+    if (result !== 'SUCCESS' && attempt.result !== 'PENDING') {
+      await conn.commit();
+      return { payment_status: attempt.result, order_status: order.status, tickets_issued: 0 };
+    }
+
     if (result === 'TIMEOUT') {
       await conn.commit();
       return { payment_status: 'PENDING', order_status: order.status, tickets_issued: 0 };

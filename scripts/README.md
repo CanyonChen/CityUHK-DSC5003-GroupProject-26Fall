@@ -43,3 +43,11 @@ The benchmark tools share dataset summaries, timings and query plans in `.cache/
 ## Public event data
 
 `python scripts/sync_cap.py --help` lists the options for refreshing the public CAP feed. `node scripts/export_pages_snapshot.js` reads the local ticketing database and writes a fresh Pages demo snapshot. `python scripts/generate_covers.py` regenerates the local ticketing apps’ SVG programme covers.
+
+## PR checks and cross-file audit
+
+- `python scripts/check_project_links.py`: validate local imports, documentation/assets and frontend-to-API route matching; write `.cache/checks/project-links.json`.
+- `node --test server/tests/*.test.cjs scripts/test_demo_performance.mjs`: financial state/ownership regressions, draft privacy and default demo performance selection; no database required.
+- `node scripts/financial_integration_check.js`: real HTTP/InnoDB regressions against a disposable `ticketing_ac` or `ticketing_ci` database. It creates fixtures and changes only their data.
+- Pull requests run `.github/workflows/project-checks.yml`: static checks, both frontend builds, MariaDB acceptance and WebSocket tests. This workflow does not deploy or merge.
+- [Audit record](../docs/project-audit-2026-11-28.md) and [file relationships](../docs/file-relationships.md) distinguish executed checks from outstanding acceptance.

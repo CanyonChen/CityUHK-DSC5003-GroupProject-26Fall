@@ -1,0 +1,122 @@
+name: Project checks
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python database/check_schema.py
+      - run: python scripts/check_project_links.py
+      - run: python -m unittest discover -s scripts -p test_sync_cap.py
+      - run: node --test scripts/test_event_formats.mjs scripts/test_demo_performance.mjs server/tests/*.test.cjs web-admin/tests/*.test.mjs
+
+  frontends:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [web-user, web-admin]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix ${{ matrix.project }}
+      - run: npm --prefix ${{ matrix.project }} run build
+
+  ticketing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-only-password
+          MARIADB_ROOT_HOST: '%'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ci-only-password
+      DB_NAME: ticketing_ac
+      PORT: 3300
+      BASE: http://127.0.0.1:3300
+      API_BASE: http://127.0.0.1:3300
+      JWT_SECRET: ci-only-jwt-secret
+      PAYMENT_NOTIFY_SECRET: ac-test-secret
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix server
+      - name: Seed only the disposable database
+        run: |
+          node - <<'JS'
+          const fs = require('node:fs');
+          const mysql = require('./server/node_modules/mysql2/promise');
+          (async () => {
+            const conn = await mysql.createConnection({
+              host: process.env.DB_HOST, port: Number(process.env.DB_PORT),
+              user: process.env.DB_USER, password: process.env.DB_PASSWORD,
+              multipleStatements: true,
+            });
+            try {
+              for (const filename of ['database/schema.sql', 'database/seed.sql']) {
+                const sql = fs.readFileSync(filename, 'utf8').replaceAll('ticketing_system', 'ticketing_ac');
+                await conn.query(sql);
+              }
+            } finally { await conn.end(); }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          JS
+      - name: Start API and wait for a healthy database connection
+        run: |
+          mkdir -p .cache/checks
+          node server/src/server.js > .cache/checks/api.log 2>&1 &
+          node - <<'JS'
+          (async () => {
+            for (let n = 0; n < 30; n++) {
+              try { if ((await fetch(process.env.BASE + '/health')).ok) return; } catch {}
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            throw new Error('API did not become healthy');
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          JS
+      - run: node scripts/ac_coverage_check.js --all
+      - run: node scripts/financial_integration_check.js
+      - run: node scripts/realtime_check.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ticketing-check-evidence
+          path: .cache/checks/

@@ -30,9 +30,10 @@ const isPending = computed(() => order.value?.status === 'PENDING_PAYMENT');
 const canPay = computed(() => isPending.value && remaining.value > 0);
 const hoursToStart = computed(() => {
   if (!order.value?.starts_at) return 0;
-  return (new Date(order.value.starts_at).getTime() - Date.now()) / 3600000;
+  return (new Date(order.value.starts_at).getTime() - now.value) / 3600000;
 });
-const refundable = computed(() => order.value?.status === 'PAID' && hoursToStart.value >= 24);
+const refundCutoffHours = computed(() => order.value?.refund_policy?.cutoff_hours_before_start ?? 24);
+const refundable = computed(() => order.value?.status === 'PAID' && hoursToStart.value > refundCutoffHours.value);
 const live = createLiveRefresh(() => load(true, true));
 watch(busy, (value) => {
   if (value) live.pause();
@@ -109,15 +110,15 @@ async function simulate(result) {
   busy.value = true;
   try {
     const data = await simulatePayment(payment.value.payment_id, result);
-    if (result === 'SUCCESS' && data.order_status === 'PAID') {
-      actionInfo.value = `Payment approved · ${data.tickets_issued} ticket${data.tickets_issued === 1 ? '' : 's'} issued.`;
+    if (data.payment_status === 'SUCCEEDED' && data.order_status === 'PAID') {
+      actionInfo.value = 'Payment approved. Your tickets are ready.';
       await load();
       setTimeout(() => router.push({ path: '/tickets', query: { paid: order.value.order_id } }), 1400);
-    } else if (result === 'FAIL') {
+    } else if (data.payment_status === 'FAILED') {
       actionInfo.value = 'The gateway declined this attempt. Your seats are still held — try again.';
       payment.value = null;
       await load();
-    } else if (result === 'TIMEOUT') {
+    } else if (data.payment_status === 'PENDING') {
       actionInfo.value = 'The gateway timed out. Your order is still pending; try again before the timer runs out.';
     }
   } catch (err) {
@@ -171,7 +172,7 @@ async function refund() {
     await load();
   } catch (err) {
     if (err.code === 'REFUND_NOT_ALLOWED') {
-      actionError.value = 'This order cannot be refunded now. Refunds close 24 hours before the performance, and used or partially used orders are not eligible.';
+      actionError.value = `This order cannot be refunded now. Refunds close ${refundCutoffHours.value} hours before the performance, and used or partially used orders are not eligible.`;
       await load();
     } else {
       actionError.value = err.message || 'Could not request the refund.';
@@ -270,7 +271,7 @@ async function refund() {
             Request refund
           </button>
           <p v-else class="muted small" style="margin-top: 10px">
-            Refunds close 24 hours before the performance.
+            Refunds close {{ refundCutoffHours }} hours before the performance.
           </p>
         </template>
 
