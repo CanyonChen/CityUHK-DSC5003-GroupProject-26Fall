@@ -52,6 +52,14 @@ async function main() {
   pool = mysql.createPool({ host: process.env.DB_HOST || '127.0.0.1', port: Number(process.env.DB_PORT || 3306),
     user: process.env.DB_USER || 'root', password: process.env.DB_PASSWORD || '', database: DB, timezone: 'Z' });
   const admin = await login('admin'), stamp = Date.now().toString(36);
+  const legacy = await q(`SELECT r.refund_id, r.order_id FROM refunds r JOIN orders o ON o.order_id=r.order_id
+    WHERE r.status='PENDING' AND o.status IN ('EXPIRED','CANCELLED') AND r.idempotency_key LIKE 'REF-%' LIMIT 1`);
+  assert.equal(legacy.length, 1, 'legacy demonstration refund fixture exists');
+  await api('POST', '/admin/refunds/' + legacy[0].refund_id + '/resolve', { token: admin, body: { result: 'FAILED' } });
+  const legacyRetry = await api('POST', '/admin/refunds/' + legacy[0].refund_id + '/retry', { token: admin, key: key(), status: 201 });
+  await api('POST', '/admin/refunds/' + legacyRetry.refund.refund_id + '/resolve', { token: admin, body: { result: 'SUCCEEDED' } });
+  assert.equal((await q('SELECT status FROM orders WHERE order_id=?', [legacy[0].order_id]))[0].status, 'EXPIRED');
+  checks.push('existing REF-* demonstration refunds can be retried without changing the expired order');
   const buyer = await register('ext' + stamp + 'a'), other = await register('ext' + stamp + 'b');
   const freeEventName = 'Browser Free ' + stamp, paidEventName = 'Browser Paid ' + stamp;
   const freeEvent = await event(admin, freeEventName), paidEvent = await event(admin, paidEventName);

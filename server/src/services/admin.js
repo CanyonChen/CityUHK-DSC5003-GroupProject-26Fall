@@ -1038,11 +1038,11 @@ async function salesStats({ performanceId, dateFrom, dateTo }) {
              WHERE o.performance_id = p.performance_id AND o.status IN ('PAID','REFUND_PENDING','REFUNDED')) AS gross,
             (SELECT IFNULL(SUM(r.amount),0) FROM refunds r JOIN orders o ON o.order_id = r.order_id
              WHERE o.performance_id = p.performance_id AND r.status = 'SUCCEEDED'
-               AND NOT (r.idempotency_key = CONCAT('late-', r.payment_attempt_id)
+               AND NOT (o.status IN ('EXPIRED','CANCELLED') OR r.idempotency_key = CONCAT('late-', r.payment_attempt_id)
                  OR r.idempotency_key LIKE CONCAT('late-', r.payment_attempt_id, ':retry:%'))) AS refunded,
             (SELECT IFNULL(SUM(r.amount),0) FROM refunds r JOIN orders o ON o.order_id = r.order_id
              WHERE o.performance_id = p.performance_id AND r.status = 'SUCCEEDED'
-               AND (r.idempotency_key = CONCAT('late-', r.payment_attempt_id)
+               AND (o.status IN ('EXPIRED','CANCELLED') OR r.idempotency_key = CONCAT('late-', r.payment_attempt_id)
                  OR r.idempotency_key LIKE CONCAT('late-', r.payment_attempt_id, ':retry:%'))) AS excess_refunded
        FROM performances p
        JOIN events e ON e.event_id = p.event_id
@@ -1256,7 +1256,7 @@ async function listRefunds({ status, orderId, page, pageSize, offset }) {
   const count = await q(query, `SELECT COUNT(*) AS total ${base}`, params);
   const rows = await q(
     query,
-    `SELECT r.refund_id, r.order_id, r.payment_attempt_id, r.idempotency_key, o.created_at, r.amount, pa.currency, r.status, r.reason,
+    `SELECT r.refund_id, r.order_id, r.payment_attempt_id, r.idempotency_key, o.status AS order_status, o.created_at, r.amount, pa.currency, r.status, r.reason,
             pa.handling_category,
             EXISTS (SELECT 1 FROM refunds active WHERE active.payment_attempt_id = r.payment_attempt_id AND active.status IN ('PENDING','SUCCEEDED')) AS has_active_refund,
             r.created_at AS refund_created_at, r.updated_at

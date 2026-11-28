@@ -126,8 +126,14 @@ async function main() {
   await admin.getByLabel(en('shell.password'), { exact: true }).fill('Demo@1234');
   await admin.getByRole('button', { name: en('shell.enterConsole'), exact: true }).click();
   await admin.waitForURL(ADMIN + '/');
+  async function navigate(key) {
+    await visible(admin.locator('.admin-header'));
+    const link = admin.getByRole('link', { name: en(key), exact: true });
+    if (!await link.isVisible()) await admin.getByRole('button', { name: en('shell.menu'), exact: true }).click();
+    await link.click();
+  }
   adminToken = await loginApi('admin');
-  await admin.getByRole('link', { name: en('shell.events'), exact: true }).click();
+  await navigate('shell.events');
   await admin.getByRole('button', { name: en('programme.newEvent'), exact: true }).click();
   const eventDialog = admin.getByRole('dialog');
   const eventName = 'Created in browser ' + Date.now().toString(36);
@@ -142,7 +148,7 @@ async function main() {
   await visible(admin.getByRole('row').filter({ hasText: eventName + ' revised' }));
   checks.push('administrator signs in and creates/edits an event through the actual forms');
 
-  await admin.getByRole('link', { name: en('shell.performances'), exact: true }).click();
+  await navigate('shell.performances');
   await admin.getByLabel(en('programme.event'), { exact: true }).selectOption(String(fixtures.freeEventId));
   await admin.getByLabel(en('programme.status'), { exact: true }).selectOption('DRAFT');
   const draftRow = admin.getByRole('row').filter({ hasText: '#' + fixtures.draftPerformance });
@@ -160,7 +166,7 @@ async function main() {
   await eventually(async () => (await api('GET', '/admin/performances/' + fixtures.draftPerformance, adminToken)).status === 'PUBLISHED', 'draft did not publish');
   checks.push('draft inventory opens privately; staff block/restore a seat and publish the performance');
 
-  await admin.getByRole('link', { name: en('shell.finance'), exact: true }).click();
+  await navigate('shell.finance');
   await admin.getByRole('button', { name: new RegExp('^' + en('ops.refunds')) }).click();
   const failedRow = admin.locator('li').filter({ hasText: fixtures.retryOrderNo }).filter({ has: admin.getByRole('button', { name: en('ops.retryRefund'), exact: true }) });
   await failedRow.getByRole('button', { name: en('ops.retryRefund'), exact: true }).click();
@@ -174,7 +180,7 @@ async function main() {
   checks.push('finance UI creates a retry, confirms success and preserves the failed refund history');
 
   // This follows requirements v1.2: paste the copied text, with camera access unavailable.
-  await admin.getByRole('link', { name: en('shell.checkin'), exact: true }).click();
+  await navigate('shell.checkin');
   await admin.locator('.gate-card').filter({ hasText: fixtures.paidEventName }).click();
   const input = admin.getByLabel(en('ops.ticketCode'), { exact: true });
   await input.click();
@@ -219,6 +225,8 @@ async function main() {
 }
 main().catch(async error => {
   console.error(error); process.exitCode = 1;
+  console.error('Page errors:', pageErrors);
+  for (const [page, name] of [[user, 'user'], [admin, 'admin']]) if (page && !page.isClosed()) console.error('Failure view ' + name + ': ' + page.url() + '\\n' + (await page.locator('body').innerText()).slice(0, 10000));
   for (const [page, name] of [[user, 'failure-user'], [admin, 'failure-admin']]) if (page && !page.isClosed()) await shot(page, name).catch(() => {});
 }).finally(async () => {
   if (context) await context.tracing.stop({ path: path.join(OUT, 'trace.zip') }).catch(() => {});
