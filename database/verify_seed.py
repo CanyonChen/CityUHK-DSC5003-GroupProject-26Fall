@@ -32,20 +32,20 @@ expect("Order total equals sum of item prices",
        "GROUP BY o.order_id, o.total_amount HAVING o.total_amount <> SUM(i.price_snapshot)) x;",
        lambda r: r[0][0] == "0")
 
-expect("Every SOLD seat has a ticket",
-       "SELECT COUNT(*) FROM session_seats s LEFT JOIN order_items i ON i.session_seat_id=s.session_seat_id "
-       "LEFT JOIN tickets t ON t.order_item_id=i.order_item_id "
-       "WHERE s.session_seat_status='SOLD' AND t.ticket_id IS NULL;",
+expect("Every SOLD seat has exactly one active ticket",
+       "SELECT COUNT(*) FROM (SELECT s.session_seat_id FROM session_seats s LEFT JOIN order_items i ON i.session_seat_id=s.session_seat_id "
+       "LEFT JOIN tickets t ON t.order_item_id=i.order_item_id AND t.status IN ('VALID','USED','REFUND_PENDING') "
+       "WHERE s.session_seat_status='SOLD' GROUP BY s.session_seat_id HAVING COUNT(t.ticket_id)<>1) x;",
        lambda r: r[0][0] == "0")
 
-expect("Every ticket maps to a SOLD seat",
+expect("Every active ticket maps to a SOLD seat",
        "SELECT COUNT(*) FROM tickets t JOIN order_items i ON i.order_item_id=t.order_item_id "
-       "JOIN session_seats s ON s.session_seat_id=i.session_seat_id WHERE s.session_seat_status<>'SOLD';",
+       "JOIN session_seats s ON s.session_seat_id=i.session_seat_id WHERE t.status<>'VOID' AND s.session_seat_status<>'SOLD';",
        lambda r: r[0][0] == "0")
 
-expect("No seat has two tickets",
+expect("No seat has two active tickets",
        "SELECT COUNT(*) FROM (SELECT i.session_seat_id FROM tickets t JOIN order_items i ON i.order_item_id=t.order_item_id "
-       "GROUP BY i.session_seat_id HAVING COUNT(*) > 1) x;",
+       "WHERE t.status IN ('VALID','USED','REFUND_PENDING') GROUP BY i.session_seat_id HAVING COUNT(*) > 1) x;",
        lambda r: r[0][0] == "0")
 
 expect("HELD seats always have holder and expiry",

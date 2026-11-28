@@ -481,6 +481,8 @@ async function ac07() {
   const rows = await q('SELECT session_seat_id, session_seat_status FROM session_seats WHERE session_seat_id IN (?, ?)', [seats[0].session_seat_id, seats[2].session_seat_id]);
   assert(rows.every((r) => r.session_seat_status === 'AVAILABLE'), 'AC-07: sibling seats changed');
 
+  // Remove only the artificial SOLD marker; it never represented a sale or a ticket.
+  await q("UPDATE session_seats SET session_seat_status='BLOCKED' WHERE session_seat_id=? AND session_seat_status='SOLD'", [seats[1].session_seat_id]);
   return { order_count: 0, sibling_seats: rows.map((r) => r.session_seat_status), blocked_seat: 'SOLD (pre-set)' };
 }
 
@@ -1026,6 +1028,7 @@ async function ac25() {
     'AC-25 closed sale'
   );
 
+  await q("UPDATE session_seats SET session_seat_status='BLOCKED' WHERE session_seat_id=? AND session_seat_status='SOLD'", [soldSeat.session_seat_id]);
   return {
     performance_id: perf,
     blocked_seat: seatKey(blockedSeat),
