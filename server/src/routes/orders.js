@@ -89,6 +89,14 @@ router.get(
   })
 );
 
+// Zero-price bookings use a separate authenticated confirmation, not a mock payment.
+router.post('/:orderId/confirm-free', wrap(async (req, res) => {
+  const orderId = requireInt(req.params.orderId, 'order_id');
+  const result = await orders.confirmFreeOrder({ orderId, userId: req.auth.userId, requestId: req.requestId });
+  res.locals.realtime = { order_id: orderId, performance_id: result.order.performance_id };
+  return sendOk(res, result.order);
+}));
+
 // API-15 Request refund (full order)
 router.post(
   '/:orderId/refund',

@@ -2,7 +2,9 @@
 
 const { WebSocketServer } = require('ws');
 
-const LOCAL_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
+const cfg = require('./config');
+const { createOriginPolicy } = require('./lib/origins');
+const acceptsOrigin = createOriginPolicy(cfg.cors);
 
 let wss = null;
 let heartbeat = null;
@@ -58,7 +60,7 @@ function attach(server) {
     maxPayload: 1024,
     verifyClient(info, done) {
       const origin = info.req.headers.origin;
-      if (origin && !LOCAL_ORIGIN.test(origin)) {
+      if (!acceptsOrigin(origin)) {
         done(false, 403, 'Forbidden origin');
         return;
       }

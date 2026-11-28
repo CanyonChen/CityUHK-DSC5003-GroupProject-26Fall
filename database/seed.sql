@@ -10474,3 +10474,13 @@ INSERT INTO audit_logs (log_id,actor_type,actor_id,object_type,object_id,action,
 (16,'ADMIN',31,'PRICE',1,'UPDATE','48000->52000',DATE_SUB(NOW(3), INTERVAL 2000 MINUTE),'AUD-0005');
 
 -- Summary: users 34, seats 670, performances 16, session_seats 3630, orders 594, items 1761, tickets 1751, notifications 593, checkins 629, refunds 6
+
+-- Seed normalization: use the persisted order deadline and release refunded historical sales.
+UPDATE session_seats ss JOIN orders o ON o.order_id=ss.holder_order_id
+SET ss.hold_expires_at=o.expires_at WHERE ss.session_seat_status='HELD';
+UPDATE session_seats ss JOIN order_items oi ON oi.session_seat_id=ss.session_seat_id
+JOIN orders o ON o.order_id=oi.order_id JOIN tickets t ON t.order_item_id=oi.order_item_id
+SET ss.session_seat_status='AVAILABLE',ss.holder_order_id=NULL,ss.hold_expires_at=NULL
+WHERE o.status='REFUNDED' AND t.status='VOID' AND ss.session_seat_status='SOLD'
+  AND NOT EXISTS (SELECT 1 FROM order_items current_item JOIN tickets current_ticket ON current_ticket.order_item_id=current_item.order_item_id
+    WHERE current_item.session_seat_id=ss.session_seat_id AND current_ticket.status IN ('VALID','USED','REFUND_PENDING'));

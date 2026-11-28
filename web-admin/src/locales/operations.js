@@ -1,4 +1,10 @@
 const messages = {
+  'ops.retryRefund': ['Retry refund', '重试退款', '重試退款'],
+  'ops.retryRefundConfirm': ['Create a new attempt for failed refund #{id}? The original record is preserved.', '为失败退款 #{id} 创建新的重试记录？原失败记录会保留。', '為失敗退款 #{id} 建立新的重試紀錄？原失敗紀錄會保留。'],
+  'ops.refundRetryCreated': ['Refund retry #{id} created. Confirm its result after processing.', '已创建退款重试 #{id}，处理后请确认结果。', '已建立退款重試 #{id}，處理後請確認結果。'],
+  'ops.REFUND_RETRIED': ['Refund retried', '已重试退款', '已重試退款'],
+  'ops.ORDER_CONFIRMED_FREE': ['Free booking confirmed', '免费预订已确认', '免費預訂已確認'],
+  'ops.FREE_BOOKING_CANCELLED': ['Free booking cancelled', '免费预订已取消', '免費預訂已取消'],
   'ops.orders': ['Orders', '订单', '訂單'],
   'ops.orderBook': ['Order book', '订单管理', '訂單管理'],
   'ops.ordersIntro': ['Search by order number or buyer to review payments and refunds.', '可按订单号或购票人搜索，查看付款和退款记录。', '可按訂單編號或購票人搜尋，查看付款及退款紀錄。'],
@@ -68,7 +74,7 @@ const messages = {
   'ops.loading': ['Loading…', '正在加载…', '正在載入…'],
   'ops.sold': ['Sold', '售出票数', '售出票數'],
   'ops.gross': ['Gross', '销售总额', '銷售總額'],
-  'ops.refunded': ['Refunded', '已退款额', '已退款額'],
+  'ops.refunded': ['Ticket refunds', '正常退票', '正常退票'],
   'ops.net': ['Net', '净额', '淨額'],
   'ops.paymentExceptions': ['Payment exceptions', '付款异常', '付款異常'],
   'ops.openCount': ['{count} open', '待处理 {count} 项', '待處理 {count} 項'],
@@ -200,6 +206,17 @@ const messages = {
   'ops.tags': ['Tags', '标签', '標籤'],
   'ops.cover': ['Cover', '封面', '封面'],
   'ops.none': ['None', '无', '無'],
+  "ops.excessRefunded": ["Anomalous refunds","异常退款","異常退款"],
+  "ops.totalRefunded": ["All successful refunds","全部成功退款","全部成功退款"],
+  "ops.netFormula": ["Net ticket revenue = gross sales minus ticket refunds. Anomalous refunds are reported separately.","净票款＝销售总额－正常退票；异常退款单独列示，不重复扣减净票款。","淨票款＝銷售總額－正常退票；異常退款獨立列示，不重複扣減淨票款。"],
+  "ops.anomalousSuccessConfirm": ["Confirm the anomalous refund for {order}? Its order, tickets and seats will remain unchanged.","确认订单 {order} 的异常款项已退款？原订单、门票和座位均保持不变。","確認訂單 {order} 的異常款項已退款？原訂單、門票及座位均保持不變。"],
+  "ops.anomalousFailureConfirm": ["Record the anomalous refund for {order} as failed? Keep it for a new retry; tickets and seats remain unchanged.","将订单 {order} 的异常退款记为失败？保留记录供重试，门票和座位不变。","將訂單 {order} 的異常退款記為失敗？保留紀錄供重試，門票及座位不變。"],
+  "ops.unknownPayments": ["Unknown payments","结果未知的支付","結果未知的付款"],
+  "ops.manualRefunds": ["Refunds awaiting confirmation","待确认退款","待確認退款"],
+  "ops.recChecked": ["Last run: {payments} payments checked; {refunds} refunds require confirmation.","上次检查 {payments} 笔支付；{refunds} 笔退款需人工确认。","上次檢查 {payments} 筆付款；{refunds} 筆退款需人工確認。"],
+  'ops.TICKET_QR_EXPIRED': ['The code expired. Ask the guest to refresh it.', '票码已过期，请观众刷新电子票。', '票碼已過期，請觀眾重新整理電子票。'],
+  'ops.CHECKIN_CONFLICT': ['Ticket state changed. Validate it again.', '门票状态已变化，请重新核验。', '門票狀態已變更，請重新核驗。'],
+
 };
 
 export default messages;

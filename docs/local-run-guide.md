@@ -23,7 +23,17 @@ python -m http.server 8000 --bind 127.0.0.1 --directory pages
 
 ## 启动票务应用
 
-### Windows 一键启动
+### Windows：使用 Docker Desktop 启动（无需 XAMPP）
+
+已安装 Node.js 20+ 和 Docker Desktop 的电脑，可以双击仓库根目录的 [Start-Local.bat](../Start-Local.bat)。首次运行需要联网下载 npm 依赖和 MariaDB 镜像；Docker Desktop 首次设置需要由你在其界面完成。
+
+启动器会安装三个服务的锁定依赖，创建专属 MariaDB 容器与持久卷，并在检查 API 与页面就绪后打开用户端和管理端。它使用独立的 `ticketing_local` 数据库和本机 3307 端口，仅在新数据库为空时导入演示数据；重启保留数据，遇到同名但不属于本目录的容器或端口占用时停止，不覆盖其他服务。
+
+配置、随机密钥和日志保存在被 Git 忽略的 `.cache/local-run/`。不要把该目录上传仓库。用户端为 http://127.0.0.1:8080，管理端为 http://127.0.0.1:8081；演示账号及密码见下表。使用 [Stop-Local.bat](../Stop-Local.bat) 停止本启动器创建的服务和专属容器，保留数据库卷。
+
+若依赖安装失败，查看窗口中的 npm 错误；若 Docker 引擎未就绪，请先打开 Docker Desktop 完成提示后重试。需要排查服务启动时，查看 `.cache/local-run/api.err.log`、`user.err.log` 和 `admin.err.log`。
+
+### Windows：使用 XAMPP 的原启动器
 
 安装 Node.js 20 或更新版本（含 npm）和带 MariaDB 的 XAMPP。启动器使用本机 `127.0.0.1:3306`、XAMPP 默认的 `root` 账号和空密码。Python 3.10 或更新版本可用于导入后的校验。若自行设置了数据库账号或端口，使用下文的手动启动步骤。
 

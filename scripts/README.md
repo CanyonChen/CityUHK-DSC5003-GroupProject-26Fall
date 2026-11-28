@@ -43,3 +43,25 @@ The benchmark tools share dataset summaries, timings and query plans in `.cache/
 ## Public event data
 
 `python scripts/sync_cap.py --help` lists the options for refreshing the public CAP feed. `node scripts/export_pages_snapshot.js` reads the local ticketing database and writes a fresh Pages demo snapshot. `python scripts/generate_covers.py` regenerates the local ticketing apps’ SVG programme covers.
+
+## PR checks and cross-file audit
+
+- `python scripts/check_project_links.py`: validate local imports, documentation/assets and frontend-to-API route matching; write `.cache/checks/project-links.json`.
+- `node --test server/tests/*.test.cjs scripts/test_demo_performance.mjs`: financial state/ownership regressions, draft privacy and default demo performance selection; no database required.
+- `node scripts/financial_integration_check.js`: real HTTP/InnoDB regressions against a disposable `ticketing_ac` or `ticketing_ci` database. It creates fixtures and changes only their data.
+- Pull requests run `.github/workflows/project-checks.yml`: static checks, both frontend builds, MariaDB acceptance and WebSocket tests. This workflow does not deploy or merge.
+- [Audit record](../docs/project-audit-2026-11-28.md) and [file relationships](../docs/file-relationships.md) distinguish executed checks from outstanding acceptance.
+
+## 后续优化验收
+
+`node scripts/extended_integration_check.cjs` 只对 ticketing_ac / ticketing_ci 验证免费票、失败异常退款重试和托管来源，并准备浏览器合成数据。
+
+`node scripts/browser_e2e_check.cjs` 使用固定版本 Playwright 1.56.1，对运行中的两个已构建前端进行操作。CI 在 .cache/browser-tools 安装测试工具，不增加生产依赖。产物在 .cache/checks/browser/，含截图、trace.zip 与 summary.json。验票采用原方案的复制/粘贴票码流程，不要求摄像头。
+
+## 一致性与恢复检查
+
+- `node scripts/recovery_integration_check.cjs`：仅允许 ticketing_ac/ticketing_ci 隔离库，执行中断恢复、归属冲突、未知退款和核销回归；在 extended_integration_check 之后运行。
+- `node scripts/inventory_consistency_check.cjs`：对 DB_NAME 指定库执行只读一致性快照检查，不修改业务记录，输出 .cache/checks/inventory-consistency.json。VOID 历史票不算重复售出。
+- `node --test scripts/test_request_intents.mjs`：网络异常、重载与账号隔离的幂等键行为。
+
+实现与边界：[一致性与恢复说明](../docs/consistency-recovery-2026-11-28.md)。

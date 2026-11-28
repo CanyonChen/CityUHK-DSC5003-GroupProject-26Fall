@@ -8,6 +8,7 @@ on:
       - 'scripts/sync_cap.py'
       - 'scripts/test_sync_cap.py'
       - 'scripts/test_event_formats.mjs'
+      - 'scripts/test_demo_performance.mjs'
       - 'web-user/public/media/*.svg'
       - '.github/workflows/cityuhk-events-hub-pages.yml'
   schedule:
@@ -32,7 +33,7 @@ jobs:
       - name: Check announcement parsing
         run: python -m unittest discover -s scripts -p test_sync_cap.py
       - name: Check event formats
-        run: node --test scripts/test_event_formats.mjs
+        run: node --test scripts/test_event_formats.mjs scripts/test_demo_performance.mjs
       - name: Assemble the public site
         run: |
           mkdir -p _site/media

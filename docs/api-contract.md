@@ -47,6 +47,7 @@ $api = 'http://127.0.0.1:3000'
 | `GET /orders` | 本人的订单，可按 `status`、`date_from`、`date_to` 分页筛选。 |
 | `GET /orders/:orderId` | 本人或管理员读取订单、座位明细及付款、退款、票据情况。 |
 | `POST /orders/:orderId/cancel` | 取消本人待支付订单，释放仍归该订单持有的座位。 |
+| `POST /orders/:orderId/confirm-free` | 本人确认零价预留，在同一事务中核对座位归属、标记已售和出票；重复确认返回原订单，不创建支付流水。 |
 | `POST /orders/:orderId/refund` | 本人申请整单退款，需幂等键，`reason` 可选；默认在开演前 24 小时截止。 |
 | `POST /payments` | 发送 `order_id` 创建支付尝试，已有可用尝试时复用。 |
 | `GET /payments/:paymentId` | 查询支付尝试的处理状态。 |
@@ -105,7 +106,7 @@ $api = 'http://127.0.0.1:3000'
 | `GET /admin/stats` | 按 `performance_id`、`date_from`、`date_to` 查询销售、退款和核销汇总。 |
 | `GET /admin/orders` | 跨用户订单查询，支持 `keyword`、`status`、`performance_id`、日期和分页。 |
 | `GET /admin/payments/exceptions` | 查询待处理或异常支付，支持 `type` 和分页。 |
-| `POST /admin/payments/:paymentId/reconcile` | 为支付尝试记录一次人工对账结果。 |
+| `POST /admin/payments/:paymentId/reconcile` | 查询模拟适配器的持久化结果，重试未完成的本地处理；无结果时返回 STILL_UNKNOWN。 |
 | `GET /admin/refunds` | 退款记录，按 `status`、`order_id` 分页查询。 |
 | `POST /admin/refunds/:refundId/resolve` | `result` 为 `SUCCEEDED` 或 `FAILED`。成功退款会作废相应票据并释放库存。 |
 | `GET /admin/reconciliation/status` | 查询后台对账任务的配置与最近一次运行状态。 |
@@ -121,3 +122,23 @@ $api = 'http://127.0.0.1:3000'
 ```
 
 本地 HTTP 和 WebSocket 配置允许来自 `http://localhost`、`http://127.0.0.1` 的浏览器来源（可带端口）。前端失去 WebSocket 连接时仍能通过 REST 读取和提交数据。[实时通道实现](../server/src/realtime.js)
+
+## Audit additions (2026-11-28)
+
+- `GET /admin/performances/:performanceId/seats` requires ADMIN and can return a draft seat map. The public `GET /performances/:performanceId/seats` keeps drafts private.
+- Order details include `refund_policy.cutoff_hours_before_start` and `refund_policy.partial_allowed`.
+- Refund replay first verifies the order owner and returns the existing refund plus the current order status. Its key is stored as `refund:<order_id>:<key>`, so the full stored value must fit 100 characters; an overlong value returns 400.
+- Confirming an excess/late-payment refund leaves order, ticket and seat state unchanged. A successful confirmation clears that payment attempt's awaiting-refund marker.
+
+## 一致性与恢复补充（2026-11-28）
+
+- 创建订单与退款申请的 Idempotency-Key 在同一标签页保存，网络错误、5xx 或无法解析的响应后重用；确认成功或明确拒绝后结束该次请求。订单重放返回原资源的当前状态。
+- 免费票取消仍走 cancel，受未使用及退款截止时间限制，无金额流水。
+- 管理员 POST /admin/refunds/:refundId/retry 要求幂等键，返回新退款记录；原 FAILED 行不变。退款列表返回 is_anomalous 和 retryable。
+- stats 返回 refunded_cents（正常退票）、excess_refunded_cents（异常退款）、total_refunded_cents（两者之和），net_cents = gross_cents - refunded_cents。
+- INVENTORY_INCONSISTENT：订单与当前座位归属不一致，事务回滚；有效票据用于证明 SOLD 座位当前归属，VOID 历史票不算当前归属。
+- 核销使用 ticket_id 与 VALID 状态的条件更新；TICKET_QR_EXPIRED 表示刷新二维码，CHECKIN_CONFLICT 表示重新核验。TICKET_INVALID 的 details.reason 可区分 REFUNDED、REFUND_PENDING 或 VOID。
+- 对账默认每 60 秒运行，默认最小记录年龄 30 秒，每类单批 50 条。status 新增 unknown_payments、pending_refunds、last_summary；run 新增 payments_checked、unknown、refunds_checked、manual_refunds。
+- 适配器无法查询退款结果时保留 PENDING 并写入 REFUND_RECONCILE_UNKNOWN，等待管理员确认。没有真实资金查询或自动推定成功。
+
+- 受权限保护的订单详情返回原下单 request_key，最近正常退款也返回 request_key；前端只在查询结果匹配本标签页未确定请求键时确认结束该请求，避免查到旧历史记录而误清除新请求。

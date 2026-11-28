@@ -1,6 +1,7 @@
 import { TOKEN_KEY } from './auth';
+import { resolveApiBase } from '../../shared/api-config.mjs';
 
-export const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:3000';
+export const API_BASE = resolveApiBase(import.meta.env.VITE_API_BASE, window.location);
 
 export class ApiError extends Error {
   constructor(status, code, message, details) {
@@ -86,7 +87,7 @@ export const updateTiers = (id, tiers) => api(`/admin/performances/${id}/price-t
 export const setSeatStatus = (id, status) => api(`/admin/session-seats/${id}`, { method: 'PATCH', body: { status } });
 export const bulkSetSeatStatus = (performanceId, body) =>
   api(`/admin/performances/${performanceId}/seat-status`, { method: 'PATCH', body });
-export const getSeatMap = (id) => api(`/performances/${id}/seats`, { anonymous: true });
+export const getSeatMap = (id) => api(`/admin/performances/${id}/seats`);
 
 // check-in
 export const checkerPerformances = () => api('/admin/checker/performances');
@@ -102,6 +103,7 @@ export const listCheckins = (params) => api(`/admin/checkins${qs(params)}`);
 export const stats = (params) => api(`/admin/stats${qs(params)}`);
 export const adminOrders = (params) => api(`/admin/orders${qs(params)}`);
 export const adminRefunds = (params) => api(`/admin/refunds${qs(params)}`);
+export const retryRefund = (id, key = crypto.randomUUID()) => api(`/admin/refunds/${id}/retry`, { method: 'POST', headers: { 'Idempotency-Key': key } });
 export const resolveRefund = (id, result) => api(`/admin/refunds/${id}/resolve`, { method: 'POST', body: { result } });
 export const paymentExceptions = (params) => api(`/admin/payments/exceptions${qs(params)}`);
 export const reconcilePayment = (id) => api(`/admin/payments/${id}/reconcile`, { method: 'POST' });

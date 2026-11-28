@@ -1,6 +1,13 @@
-import { TOKEN_KEY } from './auth';
+import { TOKEN_KEY, session } from './auth';
+import { createIntentStore, runIntent } from '../../shared/request-intents.mjs';
+import { resolveApiBase } from '../../shared/api-config.mjs';
 
-export const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:3000';
+let intentStorage;
+try { intentStorage = window.sessionStorage; } catch { /* fallback to memory */ }
+const intents = createIntentStore(intentStorage);
+function intent(scope, send) { return runIntent(intents, [session.user?.user_id, ...scope], send); }
+
+export const API_BASE = resolveApiBase(import.meta.env.VITE_API_BASE, window.location);
 
 export class ApiError extends Error {
   constructor(status, code, message, details) {
@@ -48,7 +55,10 @@ export async function api(path, options = {}) {
     }
     throw err;
   }
-  return payload?.data;
+  if (!payload || payload.code !== 'OK' || !Object.hasOwn(payload, 'data')) {
+    throw new ApiError(502, 'INVALID_RESPONSE', 'The response could not be confirmed. Retry the same operation.');
+  }
+  return payload.data;
 }
 
 export const register = (user_name, password, display_name) =>
@@ -90,14 +100,26 @@ export const getSeatRecommendations = (id, { partySize, region, budgetCents, lim
   });
 };
 
-export const createOrder = (performanceId, seatIds) =>
-  api('/orders', {
-    method: 'POST',
-    headers: { 'Idempotency-Key': crypto.randomUUID() },
-    body: { performance_id: performanceId, session_seat_ids: seatIds },
-  });
+export const createOrder = (performanceId, seatIds) => {
+  const ids = [...seatIds].sort((a, b) => a - b);
+  return intent(['order', performanceId, ids], key => api('/orders', {
+    method: 'POST', headers: { 'Idempotency-Key': key },
+    body: { performance_id: performanceId, session_seat_ids: ids },
+  }));
+};
 
-export const getOrder = (id) => api(`/orders/${id}`);
+export const confirmFreeOrder = (id) => api(`/orders/${id}/confirm-free`, { method: 'POST' });
+
+export const getOrder = async id => {
+  const order = await api(`/orders/${id}`);
+  const user = session.user?.user_id;
+  const scope = [user, 'order', order.performance_id, order.items.map(x => x.session_seat_id).sort((a,b) => a-b)];
+  if (intents.acknowledge(scope, order.request_key)) {
+    try { intentStorage?.removeItem('cityuhk-events-hub.reservation:' + user + ':' + order.performance_id); } catch { /* storage unavailable */ }
+  }
+  if (order.refund?.request_key) intents.acknowledge([user, 'refund', Number(id), order.refund.reason || ''], order.refund.request_key);
+  return order;
+};
 
 export const listOrders = (params = {}) => {
   const qs = new URLSearchParams(params).toString();
@@ -107,11 +129,9 @@ export const listOrders = (params = {}) => {
 export const cancelOrder = (id) => api(`/orders/${id}/cancel`, { method: 'POST' });
 
 export const requestRefund = (id, reason = '') =>
-  api(`/orders/${id}/refund`, {
-    method: 'POST',
-    headers: { 'Idempotency-Key': crypto.randomUUID() },
-    body: { reason },
-  });
+  intent(['refund', Number(id), reason], key => api(`/orders/${id}/refund`, {
+    method: 'POST', headers: { 'Idempotency-Key': key }, body: { reason },
+  }));
 
 export const createPayment = (orderId) => api('/payments', { method: 'POST', body: { order_id: orderId } });
 

@@ -288,13 +288,13 @@ function parseLayout(layoutJson) {
   }
 }
 
-async function getSeatMap(performanceId, userId) {
+async function getSeatMap(performanceId, userId, { includeDraft = false } = {}) {
   const rows = await query(
     `SELECT p.performance_id, p.event_id, p.venue_id, p.status,
             v.name AS venue_name, v.row_count, v.col_count, v.layout_json
        FROM performances p
        JOIN venues v ON v.venue_id = p.venue_id
-      WHERE p.performance_id = ? AND p.status <> 'DRAFT'`,
+      WHERE p.performance_id = ? ${includeDraft ? '' : "AND p.status <> 'DRAFT'"}`,
     [performanceId]
   );
   if (!rows.length) throw performanceNotFound();

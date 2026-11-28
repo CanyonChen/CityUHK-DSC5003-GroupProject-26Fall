@@ -7,6 +7,9 @@ const { ApiError } = require('../lib/http');
 const cfg = require('../config');
 const { toIso, toInt, orderNo, seatLabel } = require('../lib/format');
 const { writeAudit } = require('../lib/audit');
+const { isLateRefund } = require('../lib/refund-kind');
+const paymentAdapter = require('./payment-adapter');
+const paymentService = require('./payments');
 
 async function q(exec, sql, params = []) {
   if (typeof exec === 'function') return exec(sql, params);
@@ -849,8 +852,9 @@ function resolveTicketCode(code) {
     const payload = jwt.verify(raw, cfg.jwt.secret);
     if (payload.typ !== 'TICKET_QR' || !payload.tid) throw new Error('wrong token');
     return { ticketId: toInt(payload.tid) };
-  } catch {
-    throw new ApiError(404, 'TICKET_INVALID', 'Invalid ticket code or expired QR code');
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') throw new ApiError(409, 'TICKET_QR_EXPIRED', 'The QR code expired; refresh the ticket code');
+    throw new ApiError(404, 'TICKET_INVALID', 'Invalid ticket code');
   }
 }
 
@@ -911,10 +915,13 @@ async function checkin({ ticketCode, performanceId, userId, roles, requestId }) 
       });
     }
     if (t.status !== 'VALID' || ['REFUND_PENDING', 'REFUNDED'].includes(t.order_status)) {
-      throw new ApiError(409, 'TICKET_INVALID', 'The ticket is not in a check-in-eligible state');
+      throw new ApiError(409, 'TICKET_INVALID', 'The ticket is not in a check-in-eligible state', {
+        reason: t.order_status === 'REFUNDED' ? 'REFUNDED' : t.status === 'REFUND_PENDING' ? 'REFUND_PENDING' : t.status,
+      });
     }
 
-    await q(conn, "UPDATE tickets SET status = 'USED' WHERE ticket_id = ?", [toInt(t.ticket_id)]);
+    const changed = await q(conn, "UPDATE tickets SET status = 'USED' WHERE ticket_id = ? AND status = 'VALID'", [toInt(t.ticket_id)]);
+    if (changed.affectedRows !== 1) throw new ApiError(409, 'CHECKIN_CONFLICT', 'The ticket state changed; validate it again');
     await q(conn, 'INSERT INTO checkins (ticket_id, checker_id) VALUES (?, ?)', [toInt(t.ticket_id), userId]);
     const checkedAt = (await q(conn, 'SELECT checked_in_at FROM checkins WHERE ticket_id = ?', [toInt(t.ticket_id)]))[0];
     await writeAudit(conn, {
@@ -1036,7 +1043,13 @@ async function salesStats({ performanceId, dateFrom, dateTo }) {
             (SELECT IFNULL(SUM(o.total_amount),0) FROM orders o
              WHERE o.performance_id = p.performance_id AND o.status IN ('PAID','REFUND_PENDING','REFUNDED')) AS gross,
             (SELECT IFNULL(SUM(r.amount),0) FROM refunds r JOIN orders o ON o.order_id = r.order_id
-             WHERE o.performance_id = p.performance_id AND r.status = 'SUCCEEDED') AS refunded
+             WHERE o.performance_id = p.performance_id AND r.status = 'SUCCEEDED'
+               AND NOT (o.status IN ('EXPIRED','CANCELLED') OR r.idempotency_key = CONCAT('late-', r.payment_attempt_id)
+                 OR r.idempotency_key LIKE CONCAT('late-', r.payment_attempt_id, ':retry:%'))) AS refunded,
+            (SELECT IFNULL(SUM(r.amount),0) FROM refunds r JOIN orders o ON o.order_id = r.order_id
+             WHERE o.performance_id = p.performance_id AND r.status = 'SUCCEEDED'
+               AND (o.status IN ('EXPIRED','CANCELLED') OR r.idempotency_key = CONCAT('late-', r.payment_attempt_id)
+                 OR r.idempotency_key LIKE CONCAT('late-', r.payment_attempt_id, ':retry:%'))) AS excess_refunded
        FROM performances p
        JOIN events e ON e.event_id = p.event_id
        JOIN venues v ON v.venue_id = p.venue_id
@@ -1058,6 +1071,8 @@ async function salesStats({ performanceId, dateFrom, dateTo }) {
     checked_in: toInt(r.checked_in),
     gross_cents: toInt(r.gross),
     refunded_cents: toInt(r.refunded),
+    total_refunded_cents: toInt(r.refunded) + toInt(r.excess_refunded),
+    excess_refunded_cents: toInt(r.excess_refunded),
     net_cents: toInt(r.gross) - toInt(r.refunded),
   }));
   const total = items.reduce((acc, x) => ({
@@ -1069,8 +1084,10 @@ async function salesStats({ performanceId, dateFrom, dateTo }) {
     checked_in: acc.checked_in + x.checked_in,
     gross_cents: acc.gross_cents + x.gross_cents,
     refunded_cents: acc.refunded_cents + x.refunded_cents,
+    total_refunded_cents: acc.total_refunded_cents + x.total_refunded_cents,
+    excess_refunded_cents: acc.excess_refunded_cents + x.excess_refunded_cents,
     net_cents: acc.net_cents + x.net_cents,
-  }), { available: 0, held: 0, sold: 0, blocked: 0, tickets_sold: 0, checked_in: 0, gross_cents: 0, refunded_cents: 0, net_cents: 0 });
+  }), { available: 0, held: 0, sold: 0, blocked: 0, tickets_sold: 0, checked_in: 0, gross_cents: 0, refunded_cents: 0, total_refunded_cents: 0, excess_refunded_cents: 0, net_cents: 0 });
   return { items, total };
 }
 
@@ -1247,7 +1264,10 @@ async function listRefunds({ status, orderId, page, pageSize, offset }) {
   const count = await q(query, `SELECT COUNT(*) AS total ${base}`, params);
   const rows = await q(
     query,
-    `SELECT r.refund_id, r.order_id, o.created_at, r.amount, pa.currency, r.status, r.reason, r.created_at AS refund_created_at, r.updated_at
+    `SELECT r.refund_id, r.order_id, r.payment_attempt_id, r.idempotency_key, o.status AS order_status, o.created_at, r.amount, pa.currency, r.status, r.reason,
+            pa.handling_category,
+            EXISTS (SELECT 1 FROM refunds active WHERE active.payment_attempt_id = r.payment_attempt_id AND active.status IN ('PENDING','SUCCEEDED')) AS has_active_refund,
+            r.created_at AS refund_created_at, r.updated_at
        ${base}
       ORDER BY r.created_at DESC, r.refund_id DESC
       LIMIT ? OFFSET ?`,
@@ -1257,7 +1277,8 @@ async function listRefunds({ status, orderId, page, pageSize, offset }) {
     items: rows.map((r) => ({
       refund_id: toInt(r.refund_id), order_id: toInt(r.order_id),
       order_no: orderNo(toInt(r.order_id), r.created_at),
-      amount_cents: toInt(r.amount), status: r.status, reason: r.reason,
+      amount_cents: toInt(r.amount), status: r.status, reason: r.reason, is_anomalous: isLateRefund(r),
+      retryable: r.status === 'FAILED' && isLateRefund(r) && r.handling_category === 'AWAITING_REFUND' && !r.has_active_refund,
       created_at: isoOrNull(r.refund_created_at), updated_at: isoOrNull(r.updated_at),
     })),
     page, page_size: pageSize, total: toInt(count[0] && count[0].total),
@@ -1322,32 +1343,17 @@ async function paymentExceptions({ type, page, pageSize, offset }) {
 }
 
 async function reconcilePayment({ paymentId, requestId, actorId }) {
-  const conn = await pool.getConnection();
-  try {
-    await conn.beginTransaction();
-    const rows = await q(
-      conn,
-      `SELECT pa.attempt_id, pa.result, pa.handling_category, o.status AS order_status
-         FROM payment_attempts pa JOIN orders o ON o.order_id = pa.order_id
-        WHERE pa.attempt_id = ? FOR UPDATE`,
-      [paymentId]
-    );
-    if (!rows.length) throw new ApiError(404, 'NOT_FOUND', 'Payment attempt not found');
-    const p = rows[0];
-    const result = p.result === 'SUCCEEDED' ? 'APPLIED' : (p.result === 'FAILED' ? 'FAILED' : 'STILL_UNKNOWN');
-    await writeAudit(conn, {
-      actorType: 'ADMIN', actorId, objectType: 'PAYMENT', objectId: paymentId,
-      action: 'PAYMENT_RECONCILED', summary: `result=${p.result}, order=${p.order_status}, reconcile=${result}`,
-      requestId,
-    });
-    await conn.commit();
-    return { result, payment_status: p.result };
-  } catch (err) {
-    await conn.rollback();
-    throw err;
-  } finally {
-    conn.release();
-  }
+  const before = await query('SELECT attempt_id FROM payment_attempts WHERE attempt_id = ?', [paymentId]);
+  if (!before.length) throw new ApiError(404, 'NOT_FOUND', 'Payment attempt not found');
+  const evidence = await paymentAdapter.queryPayment(paymentId);
+  let outcome = null;
+  if (evidence.status !== 'UNKNOWN') outcome = await paymentService.handleNotification({ ...evidence, recover: true, requestId });
+  const rows = await query('SELECT result FROM payment_attempts WHERE attempt_id = ?', [paymentId]);
+  const result = rows[0].result === 'SUCCEEDED' ? 'APPLIED' : rows[0].result === 'FAILED' ? 'FAILED' : 'STILL_UNKNOWN';
+  await writeAudit(query, { actorType: 'ADMIN', actorId, objectType: 'PAYMENT', objectId: paymentId,
+    action: 'PAYMENT_RECONCILED', summary: `adapter=${evidence.status}, local=${rows[0].result}, result=${result}`, requestId });
+  return { result, payment_status: rows[0].result, provider_result: evidence.status,
+    reason: evidence.reason, notification_result: outcome?.result };
 }
 
 async function auditLogs({ objectType, objectId, action, dateFrom, dateTo, page, pageSize, offset }) {

@@ -6,6 +6,9 @@ const { ApiError } = require('../lib/http');
 const cfg = require('../config');
 const { toIso, toInt, orderNo, seatLabel } = require('../lib/format');
 const { writeAudit } = require('../lib/audit');
+const { issueTickets } = require('./ticket-issuance');
+const { sellHeldSeats, releaseSoldSeats } = require('./inventory');
+const { retryTransaction } = require('../lib/retry-transaction');
 
 async function q(exec, sql, params = []) {
   if (typeof exec === 'function') return exec(sql, params);
@@ -71,7 +74,7 @@ async function loadOrder(exec, orderId) {
 
   const refunds = await q(
     exec,
-    `SELECT refund_id, status, amount, reason, created_at
+    `SELECT refund_id, status, amount, reason, created_at, idempotency_key
        FROM refunds WHERE order_id = ? ORDER BY refund_id DESC LIMIT 1`,
     [orderId]
   );
@@ -79,6 +82,7 @@ async function loadOrder(exec, orderId) {
   const refund = refunds.length
     ? {
         refund_id: toInt(refunds[0].refund_id),
+        request_key: refunds[0].idempotency_key?.startsWith(`refund:${orderId}:`) ? refunds[0].idempotency_key.slice(`refund:${orderId}:`.length) : null,
         status: refunds[0].status,
         amount_cents: toInt(refunds[0].amount),
         reason: refunds[0].reason,
@@ -89,11 +93,14 @@ async function loadOrder(exec, orderId) {
   return {
     order_id: toInt(o.order_id),
     order_no: orderNo(toInt(o.order_id), o.created_at),
+    request_key: o.idempotency_key,
     status: o.status,
     performance_id: toInt(o.performance_id),
     event_name: o.event_name,
     venue_name: o.venue_name,
     starts_at: toIso(o.starts_at),
+    refund_policy: { cutoff_hours_before_start: cfg.limits.refundCutoffHours, partial_allowed: false },
+    is_free: toInt(o.total_amount) === 0,
     total_amount_cents: toInt(o.total_amount),
     currency: o.currency,
     expires_at: toIso(o.expires_at),
@@ -445,14 +452,14 @@ async function listOrders({ userId, status, dateFrom, dateTo, page, pageSize, of
   };
 }
 
-async function cancelOrder({ orderId, userId, requestId }) {
+async function cancelOrderOnce({ orderId, userId, requestId }) {
   await expireDueOrders();
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     const rows = await q(
       conn,
-      'SELECT order_id, user_id, status, expires_at FROM orders WHERE order_id = ? FOR UPDATE',
+      'SELECT order_id, user_id, status, expires_at, total_amount, performance_id FROM orders WHERE order_id = ? FOR UPDATE',
       [orderId]
     );
     if (!rows.length) throw new ApiError(404, 'NOT_FOUND', 'Order not found');
@@ -465,6 +472,25 @@ async function cancelOrder({ orderId, userId, requestId }) {
     }
     if (order.status === 'EXPIRED') {
       throw new ApiError(409, 'ORDER_EXPIRED', 'The order has passed its payment deadline');
+    }
+    if (order.status === 'PAID' && toInt(order.total_amount) === 0) {
+      const performances = await q(conn, 'SELECT starts_at FROM performances WHERE performance_id = ?', [order.performance_id]);
+      const now = (await q(conn, 'SELECT UTC_TIMESTAMP(3) AS now'))[0].now;
+      const cutoff = new Date(performances[0].starts_at.getTime() - cfg.limits.refundCutoffHours * 3600000);
+      if (!(now < cutoff)) throw new ApiError(409, 'CANCELLATION_NOT_ALLOWED', 'Free booking cancellation is closed before the performance');
+      const tickets = await q(conn, `SELECT t.ticket_id, t.status FROM tickets t
+        JOIN order_items oi ON oi.order_item_id = t.order_item_id WHERE oi.order_id = ? FOR UPDATE`, [orderId]);
+      if (!tickets.length || tickets.some(ticket => ticket.status !== 'VALID')) {
+        throw new ApiError(409, 'CANCELLATION_NOT_ALLOWED', 'Only unused free tickets can be cancelled');
+      }
+      const released = await releaseSoldSeats(conn, orderId);
+      await q(conn, "UPDATE orders SET status = 'CANCELLED', closed_at = UTC_TIMESTAMP(3) WHERE order_id = ?", [orderId]);
+      await q(conn, `UPDATE tickets t JOIN order_items oi ON oi.order_item_id = t.order_item_id
+        SET t.status = 'VOID' WHERE oi.order_id = ?`, [orderId]);
+      await writeAudit(conn, { actorType: 'USER', actorId: userId, objectType: 'ORDER', objectId: orderId,
+        action: 'FREE_BOOKING_CANCELLED', summary: `free booking cancelled, tickets VOID, ${released} seats released`, requestId });
+      await conn.commit();
+      return { order_id: orderId, status: 'CANCELLED', released_seats: released };
     }
     if (order.status !== 'PENDING_PAYMENT') {
       throw new ApiError(409, 'ORDER_NOT_PAYABLE', 'The order is paid or closed and cannot be cancelled');
@@ -506,11 +532,43 @@ async function cancelOrder({ orderId, userId, requestId }) {
   }
 }
 
+
+/** Confirm an existing zero-price hold atomically; no payment or refund ledger rows are created. */
+async function confirmFreeOrderOnce({ orderId, userId, requestId }) {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const rows = await q(conn, 'SELECT * FROM orders WHERE order_id = ? FOR UPDATE', [orderId]);
+    if (!rows.length) throw new ApiError(404, 'NOT_FOUND', 'Order not found');
+    const order = rows[0];
+    if (toInt(order.user_id) !== userId) throw new ApiError(403, 'FORBIDDEN', 'You cannot confirm this booking');
+    if (toInt(order.total_amount) !== 0) throw new ApiError(409, 'PAYMENT_REQUIRED', 'This booking requires payment');
+    if (order.status === 'PAID') {
+      const existing = await loadOrder(conn, orderId);
+      await conn.commit();
+      return { replayed: true, order: existing };
+    }
+    if (order.status !== 'PENDING_PAYMENT') throw new ApiError(409, 'ORDER_NOT_PAYABLE', 'This booking is closed');
+    const now = (await q(conn, 'SELECT UTC_TIMESTAMP(3) AS now'))[0].now;
+    if (order.expires_at <= now) throw new ApiError(409, 'ORDER_EXPIRED', 'The free booking hold has expired');
+    await sellHeldSeats(conn, orderId);
+    const issued = await issueTickets(conn, orderId);
+    await q(conn, "UPDATE orders SET status = 'PAID', paid_at = UTC_TIMESTAMP(3) WHERE order_id = ?", [orderId]);
+    await writeAudit(conn, { actorType: 'USER', actorId: userId, objectType: 'ORDER', objectId: orderId,
+      action: 'ORDER_CONFIRMED_FREE', summary: `free booking confirmed, issued ${issued} tickets, no payment`, requestId });
+    const confirmed = await loadOrder(conn, orderId);
+    await conn.commit();
+    return { replayed: false, order: confirmed };
+  } catch (error) { await conn.rollback(); throw error; }
+  finally { conn.release(); }
+}
+
 module.exports = {
   createOrder,
   getOrderForViewer,
   listOrders,
-  cancelOrder,
+  cancelOrder: args => retryTransaction(() => cancelOrderOnce(args)),
+  confirmFreeOrder: args => retryTransaction(() => confirmFreeOrderOnce(args)),
   expireDueOrders,
   expireOne,
   startExpiryWorker,

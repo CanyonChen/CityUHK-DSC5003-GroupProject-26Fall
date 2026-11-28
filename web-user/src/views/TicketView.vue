@@ -129,6 +129,7 @@ async function copyGateCode() {
           class="btn btn-outline btn-sm"
           type="button"
           style="margin-top: 8px"
+          :disabled="refreshing"
           @click="copyGateCode"
         >
           {{ copied ? 'Code copied' : 'Copy gate code (demo)' }}

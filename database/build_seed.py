@@ -215,7 +215,7 @@ for pid, eid, vid, start, status, frac, opt in PERFS:
         st = take(2)
         created = random.randint(200, 800)
         oid, total = create_order(pid, random.randint(1, 30), st, "REFUNDED",
-                                  created, paid_m=created - 3, ticket_status="VOID")
+                                  created, paid_m=created - 3, ticket_status="VOID", seat_status="AVAILABLE")
         att = add_payment(oid, total, "SUCCEEDED", "AWAITING_REFUND", created - 3)
         add_notice(att, "APPLIED", created - 4)
         add_refund(oid, att, total, "SUCCEEDED", created - 20, "Event date changed")
@@ -387,6 +387,17 @@ w(f"-- Summary: users {len(users)}, seats {len(seat_rows)}, performances {len(PE
   f"orders {len(ORDER_ROWS)}, items {len(ITEM_ROWS)}, tickets {len(TICKET_ROWS)}, notifications {len(NOTIF_ROWS)}, "
   f"checkins {len(CHECKIN_ROWS)}, refunds {len(REFUND_ROWS)}")
 
+w("""
+-- Seed normalization: use the persisted order deadline and release refunded historical sales.
+UPDATE session_seats ss JOIN orders o ON o.order_id=ss.holder_order_id
+SET ss.hold_expires_at=o.expires_at WHERE ss.session_seat_status='HELD';
+UPDATE session_seats ss JOIN order_items oi ON oi.session_seat_id=ss.session_seat_id
+JOIN orders o ON o.order_id=oi.order_id JOIN tickets t ON t.order_item_id=oi.order_item_id
+SET ss.session_seat_status='AVAILABLE',ss.holder_order_id=NULL,ss.hold_expires_at=NULL
+WHERE o.status='REFUNDED' AND t.status='VOID' AND ss.session_seat_status='SOLD'
+  AND NOT EXISTS (SELECT 1 FROM order_items current_item JOIN tickets current_ticket ON current_ticket.order_item_id=current_item.order_item_id
+    WHERE current_item.session_seat_id=ss.session_seat_id AND current_ticket.status IN ('VALID','USED','REFUND_PENDING'));
+""".strip("\n"))
 OUT.write_text("\n".join(L) + "\n", encoding="utf-8")
 print(f"seed.sql written | users {len(users)} seats {len(seat_rows)} session_seats {len(ss_rows)} "
       f"orders {len(ORDER_ROWS)} items {len(ITEM_ROWS)} tickets {len(TICKET_ROWS)} notices {len(NOTIF_ROWS)} "

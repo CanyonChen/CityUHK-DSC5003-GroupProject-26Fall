@@ -14,3 +14,9 @@ Open the [admin sign-in](http://127.0.0.1:8081/login). Use the seeded `admin` ac
 Open **Performances**, then **Seats** for a performance to inspect its inventory or block and restore seats. **Orders** supports search by order number or buyer. **Finance** shows payment exceptions, reconciliations and refund progress.
 
 The app uses Vue 3 and Vite. Set `VITE_API_BASE` before starting or building to change the API origin. Run `npm run build --prefix web-admin` for a production build. See the [setup guide](../docs/local-run-guide.md) for the full stack.
+
+## 验票范围
+
+沿用原需求规格 v1.2：验票员在工作区输入或粘贴票码文本（二维码 JWT 载荷或 64 位票码哈希）。不要求摄像头或硬件扫码，也不请求摄像头权限。用户端的 Copy gate code (demo) 可用于完整演示“复制 → 粘贴 → 核验”。
+
+页面验收覆盖授权场次、成功核验、重复核验、无效或过期票码、错误场次及核销时间窗。

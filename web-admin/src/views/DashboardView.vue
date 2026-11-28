@@ -116,18 +116,21 @@ onBeforeUnmount(() => {
     <div v-if="loading" class="empty-state">{{ t('programme.loadingSales') }}</div>
     <div v-else-if="!data.items.length" class="empty-state">{{ t('programme.noSales') }}</div>
     <div v-else class="table-wrap">
+      <p class="muted">{{ t('programme.netFormula') }}</p>
       <table class="data-table">
         <thead>
           <tr>
-            <th>{{ t('programme.performance') }}</th>
-            <th>{{ t('programme.date') }}</th>
-            <th>{{ t('programme.status') }}</th>
-            <th class="num">{{ t('programme.seats') }}</th>
-            <th class="num">{{ t('programme.sold') }}</th>
-            <th class="num">{{ t('programme.checked') }}</th>
-            <th class="num">{{ t('programme.gross') }}</th>
-            <th class="num">{{ t('programme.refunded') }}</th>
-            <th class="num">{{ t('programme.net') }}</th>
+            <th scope="col">{{ t('programme.performance') }}</th>
+            <th scope="col">{{ t('programme.date') }}</th>
+            <th scope="col">{{ t('programme.status') }}</th>
+            <th scope="col" class="num">{{ t('programme.seats') }}</th>
+            <th scope="col" class="num">{{ t('programme.sold') }}</th>
+            <th scope="col" class="num">{{ t('programme.checked') }}</th>
+            <th scope="col" class="num">{{ t('programme.gross') }}</th>
+            <th scope="col" class="num">{{ t('programme.refunded') }}</th>
+            <th scope="col" class="num">{{ t('programme.excessRefunded') }}</th>
+            <th scope="col" class="num">{{ t('programme.totalRefunded') }}</th>
+            <th scope="col" class="num">{{ t('programme.net') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -143,6 +146,8 @@ onBeforeUnmount(() => {
             <td class="num">{{ n(row.checked_in) }}</td>
             <td class="num">{{ money(row.gross_cents) }}</td>
             <td class="num">{{ money(row.refunded_cents) }}</td>
+            <td class="num">{{ money(row.excess_refunded_cents) }}</td>
+            <td class="num">{{ money(row.total_refunded_cents) }}</td>
             <td class="num strong">{{ money(row.net_cents) }}</td>
           </tr>
         </tbody>
@@ -154,6 +159,8 @@ onBeforeUnmount(() => {
             <td class="num">{{ n(data.total.checked_in) }}</td>
             <td class="num">{{ money(data.total.gross_cents) }}</td>
             <td class="num">{{ money(data.total.refunded_cents) }}</td>
+            <td class="num">{{ money(data.total.excess_refunded_cents) }}</td>
+            <td class="num">{{ money(data.total.total_refunded_cents) }}</td>
             <td class="num strong">{{ money(data.total.net_cents) }}</td>
           </tr>
         </tfoot>
@@ -178,13 +185,13 @@ onBeforeUnmount(() => {
       <table class="data-table">
         <thead>
           <tr>
-            <th>{{ t('programme.region') }}</th>
-            <th class="num">{{ t('programme.seats') }}</th>
-            <th class="num">{{ t('programme.sellable') }}</th>
-            <th class="num">{{ t('programme.sold') }}</th>
-            <th class="num">{{ t('programme.checked') }}</th>
-            <th class="num">{{ t('programme.occupancy') }}</th>
-            <th class="num">{{ t('programme.attendance') }}</th>
+            <th scope="col">{{ t('programme.region') }}</th>
+            <th scope="col" class="num">{{ t('programme.seats') }}</th>
+            <th scope="col" class="num">{{ t('programme.sellable') }}</th>
+            <th scope="col" class="num">{{ t('programme.sold') }}</th>
+            <th scope="col" class="num">{{ t('programme.checked') }}</th>
+            <th scope="col" class="num">{{ t('programme.occupancy') }}</th>
+            <th scope="col" class="num">{{ t('programme.attendance') }}</th>
           </tr>
         </thead>
         <tbody>

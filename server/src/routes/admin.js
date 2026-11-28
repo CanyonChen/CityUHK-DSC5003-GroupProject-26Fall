@@ -6,6 +6,7 @@ const { pageParams, optionalDate, optionalString, intParam } = require('../lib/p
 const { requireInt, requireArray, idempotencyKey } = require('../lib/body');
 const { authenticate, requireRole } = require('../middleware/auth');
 const admin = require('../services/admin');
+const catalog = require('../services/catalog');
 const refunds = require('../services/refunds');
 const users = require('../services/users');
 const reconciliation = require('../services/reconciliation');
@@ -118,6 +119,13 @@ router.get('/performances', ADMIN_ONLY, wrap(async (req, res) => {
 router.get('/performances/:performanceId', ADMIN_ONLY, wrap(async (req, res) => {
   const performanceId = requireInt(req.params.performanceId, 'performance_id');
   const data = await admin.getAdminPerformance(performanceId);
+  return sendOk(res, data);
+}));
+
+// Staff must configure draft seats without exposing the draft publicly.
+router.get('/performances/:performanceId/seats', ADMIN_ONLY, wrap(async (req, res) => {
+  const performanceId = requireInt(req.params.performanceId, 'performance_id');
+  const data = await catalog.getSeatMap(performanceId, req.auth.userId, { includeDraft: true });
   return sendOk(res, data);
 }));
 
@@ -262,6 +270,14 @@ router.get('/refunds', ADMIN_ONLY, wrap(async (req, res) => {
     page, pageSize, offset,
   });
   return sendOk(res, data);
+}));
+
+router.post('/refunds/:refundId/retry', ADMIN_ONLY, wrap(async (req, res) => {
+  const refundId = requireInt(req.params.refundId, 'refund_id');
+  const key = idempotencyKey(req);
+  const result = await refunds.retryLateRefund({ refundId, key, actorId: req.auth.userId, requestId: req.requestId });
+  res.locals.realtime = { order_id: result.refund.order_id };
+  return sendOk(res, result, result.replayed ? 200 : 201);
 }));
 
 router.post('/refunds/:refundId/resolve', ADMIN_ONLY, wrap(async (req, res) => {

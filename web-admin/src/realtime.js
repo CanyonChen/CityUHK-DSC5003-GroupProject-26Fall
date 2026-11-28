@@ -1,11 +1,12 @@
 import { API_BASE } from './api';
+import { webSocketUrl } from '../../shared/api-config.mjs';
 
 /**
  * Subscribe to the API's invalidation channel. The payload is only a signal:
  * the browser still calls the normal authenticated REST endpoints to refetch.
  */
 export function connectRealtime(onEvent) {
-  const wsBase = API_BASE.replace(/^http/, 'ws').replace(/\/$/, '');
+  const wsUrl = webSocketUrl(API_BASE, window.location);
   let socket = null;
   let retryTimer = null;
   let closed = false;
@@ -21,7 +22,7 @@ export function connectRealtime(onEvent) {
   function open() {
     if (closed) return;
     try {
-      socket = new WebSocket(`${wsBase}/ws`);
+      socket = new WebSocket(wsUrl);
     } catch {
       scheduleReconnect();
       return;

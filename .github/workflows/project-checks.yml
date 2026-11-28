@@ -1,0 +1,171 @@
+name: Project checks
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Parse Windows launch scripts
+        shell: pwsh
+        run: |
+          $files = @('Start-Local.ps1', 'scripts/dev.ps1', 'scripts/_common.ps1')
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $file), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count) { throw ($errors | Out-String) }
+          }
+      - run: python database/check_schema.py
+      - run: python scripts/check_project_links.py
+      - run: python -m unittest discover -s scripts -p test_sync_cap.py
+      - run: node --test scripts/test_event_formats.mjs scripts/test_demo_performance.mjs scripts/test_api_config.mjs scripts/test_request_intents.mjs server/tests/*.test.cjs web-admin/tests/*.test.mjs
+
+  frontends:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [web-user, web-admin]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix ${{ matrix.project }}
+      - run: npm --prefix ${{ matrix.project }} run build
+
+  ticketing:
+    # Match the pinned Playwright browser/dependency support matrix.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-only-password
+          MARIADB_ROOT_HOST: '%'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ci-only-password
+      DB_NAME: ticketing_ac
+      PORT: 3300
+      BASE: http://127.0.0.1:3300
+      API_BASE: http://127.0.0.1:3300
+      JWT_SECRET: ci-only-jwt-secret
+      PAYMENT_NOTIFY_SECRET: ac-test-secret
+      CORS_ORIGINS: https://tickets.example.test,https://admin.example.test
+      TICKET_QR_SECONDS: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix server
+      - name: Seed only the disposable database
+        run: |
+          node - <<'JS'
+          const fs = require('node:fs');
+          const mysql = require('./server/node_modules/mysql2/promise');
+          (async () => {
+            const conn = await mysql.createConnection({
+              host: process.env.DB_HOST, port: Number(process.env.DB_PORT),
+              user: process.env.DB_USER, password: process.env.DB_PASSWORD,
+              multipleStatements: true,
+            });
+            try {
+              for (const filename of ['database/schema.sql', 'database/seed.sql']) {
+                const sql = fs.readFileSync(filename, 'utf8').replaceAll('ticketing_system', 'ticketing_ac');
+                await conn.query(sql);
+              }
+            } finally { await conn.end(); }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          JS
+      - name: Start API and wait for a healthy database connection
+        run: |
+          mkdir -p .cache/checks
+          node server/src/server.js > .cache/checks/api.log 2>&1 &
+          node - <<'JS'
+          (async () => {
+            for (let n = 0; n < 30; n++) {
+              try { if ((await fetch(process.env.BASE + '/health')).ok) return; } catch {}
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            throw new Error('API did not become healthy');
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          JS
+      - run: node scripts/ac_coverage_check.js --all
+      - run: node scripts/financial_integration_check.js
+      - run: node scripts/extended_integration_check.cjs
+      - run: node scripts/recovery_integration_check.cjs
+      - run: node scripts/realtime_check.js
+      - name: Build both apps for the same-origin API proxy
+        env:
+          VITE_API_BASE: /api
+        run: |
+          npm ci --prefix web-user
+          npm ci --prefix web-admin
+          npm --prefix web-user run build
+          npm --prefix web-admin run build
+      - name: Install pinned browser test tools
+        run: |
+          mkdir -p .cache/browser-tools
+          echo '{"private":true}' > .cache/browser-tools/package.json
+          npm install --prefix .cache/browser-tools --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          node .cache/browser-tools/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Start the built frontends
+        env:
+          API_PROXY_TARGET: http://127.0.0.1:3300
+        run: |
+          npm --prefix web-user run preview > .cache/checks/web-user.log 2>&1 &
+          npm --prefix web-admin run preview > .cache/checks/web-admin.log 2>&1 &
+          node - <<'JS'
+          (async () => {
+            for (const port of [8080, 8081]) {
+              let ready = false;
+              for (let i = 0; i < 40; i++) {
+                try { if ((await fetch('http://127.0.0.1:' + port)).ok) { ready = true; break; } } catch {}
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+              if (!ready) throw new Error('Frontend not ready on ' + port);
+            }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          JS
+      - name: Browser acceptance using text ticket codes
+        run: node scripts/browser_e2e_check.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ticketing-check-evidence
+          path: .cache/checks/

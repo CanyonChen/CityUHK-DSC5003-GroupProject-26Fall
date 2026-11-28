@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { checkerPerformances, checkin, listCheckins } from '../api';
 import { hkt } from '../format';
 
@@ -16,13 +16,15 @@ const history = ref([]);
 const historyTotal = ref(0);
 const loading = ref(true);
 const inputRef = ref(null);
-const checkinErrors = new Set(['TICKET_ALREADY_USED', 'TICKET_INVALID', 'OUT_OF_WINDOW', 'WRONG_PERFORMANCE', 'FORBIDDEN']);
+const now = ref(Date.now());
+let clock;
+onBeforeUnmount(() => clearInterval(clock));
+const checkinErrors = new Set(['TICKET_ALREADY_USED', 'TICKET_INVALID', 'TICKET_QR_EXPIRED', 'CHECKIN_CONFLICT', 'OUT_OF_WINDOW', 'WRONG_PERFORMANCE', 'FORBIDDEN']);
 
 const selected = computed(() => performances.value.find((p) => p.performance_id === selectedId.value));
 const withinWindow = computed(() => {
   if (!selected.value) return false;
-  const now = Date.now();
-  return now >= new Date(selected.value.checkin_start_at).getTime() && now < new Date(selected.value.checkin_end_at).getTime();
+  return now.value >= new Date(selected.value.checkin_start_at).getTime() && now.value < new Date(selected.value.checkin_end_at).getTime();
 });
 
 async function loadHistory() {
@@ -70,6 +72,7 @@ function choose(id) {
 watch(selectedId, loadHistory);
 
 onMounted(async () => {
+  clock = setInterval(() => { now.value = Date.now(); }, 1000);
   try {
     const data = await checkerPerformances();
     performances.value = data.items;
