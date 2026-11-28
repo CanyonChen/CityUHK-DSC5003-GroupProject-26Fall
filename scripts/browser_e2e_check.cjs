@@ -204,7 +204,8 @@ async function main() {
   await noPageOverflow(admin);
   await admin.getByRole('combobox', { name: en('shell.language'), exact: true }).selectOption('zh-cn');
   await eventually(async () => (await admin.evaluate(() => document.documentElement.lang)) === 'zh-Hans-CN', 'language did not switch');
-  await admin.getByRole('combobox', { name: en('shell.language'), exact: true }).selectOption('en');
+  await admin.getByRole('combobox', { name: dictionaries['shell.language'][1], exact: true }).selectOption('en');
+  await eventually(async () => (await admin.evaluate(() => document.documentElement.lang)) === 'en', 'language did not switch back');
   await shot(admin, '06-admin-mobile');
   checks.push('mobile admin navigation and language switching');
 
