@@ -46,7 +46,8 @@ jobs:
       - run: npm --prefix ${{ matrix.project }} run build
 
   ticketing:
-    runs-on: ubuntu-latest
+    # Match the pinned Playwright browser/dependency support matrix.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       mariadb:
