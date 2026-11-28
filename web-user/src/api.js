@@ -1,6 +1,7 @@
 import { TOKEN_KEY } from './auth';
+import { resolveApiBase } from '../../shared/api-config.mjs';
 
-export const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:3000';
+export const API_BASE = resolveApiBase(import.meta.env.VITE_API_BASE, window.location);
 
 export class ApiError extends Error {
   constructor(status, code, message, details) {
@@ -96,6 +97,8 @@ export const createOrder = (performanceId, seatIds) =>
     headers: { 'Idempotency-Key': crypto.randomUUID() },
     body: { performance_id: performanceId, session_seat_ids: seatIds },
   });
+
+export const confirmFreeOrder = (id) => api(`/orders/${id}/confirm-free`, { method: 'POST' });
 
 export const getOrder = (id) => api(`/orders/${id}`);
 

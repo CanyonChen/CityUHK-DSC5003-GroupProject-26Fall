@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { cancelOrder, createPayment, getOrder, requestRefund, simulatePayment } from '../api';
+import { cancelOrder, confirmFreeOrder, createPayment, getOrder, requestRefund, simulatePayment } from '../api';
 import { countdown, dateTime, money, statusLabel } from '../format';
 import { connectRealtime } from '../realtime';
 import { createLiveRefresh } from '../liveRefresh';
@@ -33,7 +33,11 @@ const hoursToStart = computed(() => {
   return (new Date(order.value.starts_at).getTime() - now.value) / 3600000;
 });
 const refundCutoffHours = computed(() => order.value?.refund_policy?.cutoff_hours_before_start ?? 24);
-const refundable = computed(() => order.value?.status === 'PAID' && hoursToStart.value > refundCutoffHours.value);
+const freeBooking = computed(() => order.value?.total_amount_cents === 0);
+const refundable = computed(() => !freeBooking.value && order.value?.status === 'PAID' && hoursToStart.value > refundCutoffHours.value);
+const freeCancelable = computed(() => freeBooking.value && order.value?.status === 'PAID' &&
+  hoursToStart.value > refundCutoffHours.value && order.value.tickets?.length &&
+  order.value.tickets.every(ticket => ticket.status === 'VALID'));
 const live = createLiveRefresh(() => load(true, true));
 watch(busy, (value) => {
   if (value) live.pause();
@@ -80,6 +84,18 @@ async function load(silent = false, keepPayment = false) {
   } finally {
     if (!silent) loading.value = false;
   }
+}
+
+async function confirmFree() {
+  busy.value = true;
+  actionError.value = '';
+  try {
+    order.value = await confirmFreeOrder(order.value.order_id);
+    actionInfo.value = 'Free booking confirmed. Your tickets are ready.';
+  } catch (error) {
+    actionError.value = error.message || 'Could not confirm this free booking.';
+    await load();
+  } finally { busy.value = false; }
 }
 
 async function startPayment() {
@@ -192,7 +208,7 @@ async function refund() {
       </div>
       <div v-if="order" class="toolbar">
         <span class="chip" title="Order status refreshes automatically when payment or refund state changes">● Live</span>
-        <span class="status-badge" :class="`s-${order.status}`">{{ statusLabel(order.status) }}</span>
+        <span class="status-badge" :class="`s-${order.status}`">{{ freeBooking && order.status === 'PAID' ? 'Confirmed' : statusLabel(order.status) }}</span>
       </div>
     </div>
 
@@ -245,7 +261,7 @@ async function refund() {
         <div v-if="order.status === 'REFUNDED'" class="notice notice-info" style="margin-top: 16px">
           This order has been refunded.
         </div>
-        <div v-if="order.tickets?.length" class="notice notice-success" style="margin-top: 16px">
+        <div v-if="order.tickets?.some(ticket => ['VALID', 'USED'].includes(ticket.status))" class="notice notice-success" style="margin-top: 16px">
           Your tickets are ready.
           <RouterLink to="/tickets" style="text-decoration: underline">Open My tickets →</RouterLink>
         </div>
@@ -257,9 +273,10 @@ async function refund() {
 
       <aside class="panel pay-panel">
         <template v-if="order.status === 'PAID'">
-          <h3>Payment complete</h3>
-          <p>Paid {{ dateTime(order.paid_at) }}. Show your QR ticket at the door.</p>
+          <h3>{{ freeBooking ? 'Booking confirmed' : 'Payment complete' }}</h3>
+          <p>{{ freeBooking ? 'Confirmed' : 'Paid' }} {{ dateTime(order.paid_at) }}. Show your QR ticket at the door.</p>
           <RouterLink class="btn btn-gold btn-block" to="/tickets">View my tickets</RouterLink>
+          <button v-if="freeCancelable" class="btn btn-outline btn-block btn-sm" type="button" :disabled="busy" @click="cancel">Cancel free booking</button>
           <button
             v-if="refundable"
             class="btn btn-outline btn-block btn-sm"
@@ -270,11 +287,16 @@ async function refund() {
           >
             Request refund
           </button>
-          <p v-else class="muted small" style="margin-top: 10px">
+          <p v-else-if="!freeBooking" class="muted small" style="margin-top: 10px">
             Refunds close {{ refundCutoffHours }} hours before the performance.
           </p>
         </template>
 
+        <template v-else-if="isPending && remaining > 0 && freeBooking">
+          <h3>Free booking</h3>
+          <p>No payment is required. Confirm before the hold expires to receive your tickets.</p>
+          <button class="btn btn-gold btn-block" type="button" :disabled="busy" @click="confirmFree">{{ busy ? 'Confirming…' : 'Confirm free booking' }}</button>
+        </template>
         <template v-else-if="isPending && remaining > 0">
           <h3>Payment</h3>
           <p v-if="!payment">Start a secure payment attempt for this order. The seats stay held until the timer ends.</p>

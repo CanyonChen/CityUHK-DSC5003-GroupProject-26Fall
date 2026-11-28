@@ -7,45 +7,12 @@ const cfg = require('../config');
 const { toIso, toInt, orderNo } = require('../lib/format');
 const { writeAudit } = require('../lib/audit');
 const { releaseSeats, expireDueOrders } = require('./orders');
+const { issueTickets } = require('./ticket-issuance');
 
 async function q(exec, sql, params = []) {
   if (typeof exec === 'function') return exec(sql, params);
   const [rows] = await exec.query(sql, params);
   return rows;
-}
-
-async function issueTickets(conn, orderId) {
-  const items = await q(
-    conn,
-    'SELECT order_item_id FROM order_items WHERE order_id = ? ORDER BY order_item_id',
-    [orderId]
-  );
-  const existing = await q(
-    conn,
-    `SELECT COUNT(*) AS n FROM tickets t
-       JOIN order_items oi ON oi.order_item_id = t.order_item_id
-      WHERE oi.order_id = ?`,
-    [orderId]
-  );
-  if (toInt(existing[0].n) >= items.length) return toInt(existing[0].n);
-
-  let issued = 0;
-  for (const item of items) {
-    const code = crypto.randomBytes(24).toString('hex');
-    const hash = crypto.createHash('sha256').update(code).digest('hex');
-    try {
-      await q(
-        conn,
-        `INSERT INTO tickets (order_item_id, ticket_code_hash, status, issued_at)
-         VALUES (?, ?, 'VALID', UTC_TIMESTAMP(3))`,
-        [toInt(item.order_item_id), hash]
-      );
-      issued += 1;
-    } catch (err) {
-      if (!err || err.code !== 'ER_DUP_ENTRY') throw err;
-    }
-  }
-  return issued;
 }
 
 async function ensureLateRefund(conn, orderId, attemptId, amount) {
@@ -149,6 +116,10 @@ async function createPayment({ userId, orderId, requestId }) {
     const now = (await q(conn, 'SELECT UTC_TIMESTAMP(3) AS now'))[0].now;
     if (order.expires_at <= now) {
       throw new ApiError(409, 'ORDER_EXPIRED', 'The order has passed its payment deadline');
+    }
+
+    if (toInt(order.total_amount) === 0) {
+      throw new ApiError(409, 'FREE_ORDER_REQUIRES_CONFIRMATION', 'Confirm this free booking without creating a payment');
     }
 
     const pending = await q(

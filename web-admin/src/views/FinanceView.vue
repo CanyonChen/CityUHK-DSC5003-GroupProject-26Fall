@@ -1,6 +1,6 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { stats, paymentExceptions, adminRefunds, auditLogs, reconcilePayment, resolveRefund, reconciliationStatus, runReconciliation } from '../api';
+import { stats, paymentExceptions, adminRefunds, auditLogs, reconcilePayment, resolveRefund, retryRefund, reconciliationStatus, runReconciliation } from '../api';
 import { hkt, money } from '../format';
 import { connectRealtime } from '../realtime';
 import { createLiveRefresh } from '../liveRefresh';
@@ -18,6 +18,7 @@ const loading = ref(true);
 const error = ref('');
 const toast = ref('');
 const refundBusy = ref(null);
+const retryKeys = new Map();
 const rec = ref(null);
 const recBusy = ref(false);
 let stopRealtime = null;
@@ -91,6 +92,21 @@ async function reconcile(row) {
   }
 }
 
+async function retry(row) {
+  live.pause();
+  if (!window.confirm(t('ops.retryRefundConfirm', { id: row.refund_id }))) { live.resume(); return; }
+  refundBusy.value = row.refund_id;
+  const key = retryKeys.get(row.refund_id) || crypto.randomUUID();
+  retryKeys.set(row.refund_id, key);
+  try {
+    const result = await retryRefund(row.refund_id, key);
+    retryKeys.delete(row.refund_id);
+    toast.value = () => t('ops.refundRetryCreated', { id: result.refund.refund_id });
+    await Promise.all([loadRefunds(), loadExceptions(), loadLedger()]);
+  } catch (error) { toast.value = () => errorMessage(error); }
+  finally { refundBusy.value = null; }
+}
+
 async function resolve(row, result) {
   const confirmKey = result === 'SUCCEEDED' ? 'ops.refundSuccessConfirm' : 'ops.refundFailureConfirm';
   live.pause();
@@ -104,7 +120,7 @@ async function resolve(row, result) {
     toast.value = () => t(data.replayed ? 'ops.refundReplayResult' : 'ops.refundResult', {
       id: row.refund_id, refund: status(data.refund.status), order: status(data.orderStatus),
     });
-    await Promise.all([loadRefunds(), loadLedger()]);
+    await Promise.all([loadRefunds(), loadLedger(), loadExceptions()]);
   } catch (err) {
     toast.value = () => errorMessage(err);
   } finally {
@@ -209,6 +225,7 @@ onBeforeUnmount(() => {
         <div><strong>{{ row.order_no }}</strong><small>{{ row.reason ? paymentReason(row.reason, t) : t('ops.customerRequest') }}</small></div>
         <span>{{ money(row.amount_cents) }}</span>
         <span class="muted">{{ hkt(row.created_at) }}</span>
+        <button v-if="row.retryable" class="ghost-button small" :disabled="refundBusy === row.refund_id" @click="retry(row)">{{ t('ops.retryRefund') }}</button>
         <button
           v-if="row.status === 'PENDING'"
           class="ghost-button small"

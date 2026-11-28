@@ -2,7 +2,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const { requestId, notFound, errorHandler } = require('./lib/http');
+const { ApiError, requestId, notFound, errorHandler } = require('./lib/http');
 const realtime = require('./realtime');
 const { resolveRealtimeScope } = require('./realtime-scope');
 const healthRoutes = require('./routes/health');
@@ -17,20 +17,19 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 app.disable('x-powered-by');
 
-// Dual frontends 8080/8081 and local scripts; other origins are blocked
-const LOCAL_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || LOCAL_ORIGIN.test(origin)) return callback(null, true);
-      return callback(null, false);
-    },
-    exposedHeaders: ['X-Request-Id'],
-  })
-);
-
-// request_id must be assigned before body parsing so JSON parse failures still carry it
+const cfg = require('./config');
+const { createOriginPolicy } = require('./lib/origins');
+const acceptsOrigin = createOriginPolicy(cfg.cors);
 app.use(requestId);
+app.use((req, res, next) => {
+  if (!acceptsOrigin(req.get('Origin'))) return next(new ApiError(403, 'ORIGIN_FORBIDDEN', 'This frontend origin is not configured'));
+  next();
+});
+app.use(cors({
+  origin(origin, callback) { callback(null, acceptsOrigin(origin)); },
+  exposedHeaders: ['X-Request-Id'],
+}));
+
 app.use((req, res, next) => {
   const startedAt = process.hrtime.bigint();
   res.on('finish', () => {

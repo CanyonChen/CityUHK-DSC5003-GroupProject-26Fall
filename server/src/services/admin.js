@@ -7,6 +7,7 @@ const { ApiError } = require('../lib/http');
 const cfg = require('../config');
 const { toIso, toInt, orderNo, seatLabel } = require('../lib/format');
 const { writeAudit } = require('../lib/audit');
+const { isLateRefund } = require('../lib/refund-kind');
 
 async function q(exec, sql, params = []) {
   if (typeof exec === 'function') return exec(sql, params);
@@ -1247,7 +1248,10 @@ async function listRefunds({ status, orderId, page, pageSize, offset }) {
   const count = await q(query, `SELECT COUNT(*) AS total ${base}`, params);
   const rows = await q(
     query,
-    `SELECT r.refund_id, r.order_id, o.created_at, r.amount, pa.currency, r.status, r.reason, r.created_at AS refund_created_at, r.updated_at
+    `SELECT r.refund_id, r.order_id, r.payment_attempt_id, r.idempotency_key, o.created_at, r.amount, pa.currency, r.status, r.reason,
+            pa.handling_category,
+            EXISTS (SELECT 1 FROM refunds active WHERE active.payment_attempt_id = r.payment_attempt_id AND active.status IN ('PENDING','SUCCEEDED')) AS has_active_refund,
+            r.created_at AS refund_created_at, r.updated_at
        ${base}
       ORDER BY r.created_at DESC, r.refund_id DESC
       LIMIT ? OFFSET ?`,
@@ -1258,6 +1262,7 @@ async function listRefunds({ status, orderId, page, pageSize, offset }) {
       refund_id: toInt(r.refund_id), order_id: toInt(r.order_id),
       order_no: orderNo(toInt(r.order_id), r.created_at),
       amount_cents: toInt(r.amount), status: r.status, reason: r.reason,
+      retryable: r.status === 'FAILED' && isLateRefund(r) && r.handling_category === 'AWAITING_REFUND' && !r.has_active_refund,
       created_at: isoOrNull(r.refund_created_at), updated_at: isoOrNull(r.updated_at),
     })),
     page, page_size: pageSize, total: toInt(count[0] && count[0].total),

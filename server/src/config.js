@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('node:path');
+const { parseOrigins } = require('./lib/origins');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 function toInt(value, fallback) {
@@ -31,6 +32,10 @@ const cfg = {
     holdSeconds: toInt(process.env.HOLD_SECONDS, 5 * 60),
     ticketQrSeconds: toInt(process.env.TICKET_QR_SECONDS, 60),
   },
+  cors: {
+    origins: parseOrigins(process.env.CORS_ORIGINS || ''),
+    allowLocal: (process.env.NODE_ENV || 'development') !== 'production',
+  },
   currency: process.env.CURRENCY || 'HKD',
   payment: {
     mode: (process.env.PAYMENT_MODE || 'test').toLowerCase(),
@@ -45,5 +50,8 @@ const cfg = {
 if (cfg.env === 'production' && cfg.jwt.secret === 'dev-only-insecure-secret') {
   throw new Error('Production requires a separate JWT_SECRET');
 }
+
+if (cfg.env === 'production' && !cfg.cors.origins.length) throw new Error('Production requires CORS_ORIGINS for the hosted frontends');
+if (cfg.env === 'production' && cfg.payment.notifySecret === 'dev-notify-secret') throw new Error('Production requires a separate PAYMENT_NOTIFY_SECRET');
 
 module.exports = cfg;

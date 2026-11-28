@@ -1,6 +1,9 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const { pool, query } = require('../db');
+const { isLateRefund } = require('../lib/refund-kind');
+const { retryTransaction } = require('../lib/retry-transaction');
 const { ApiError } = require('../lib/http');
 const cfg = require('../config');
 const { toIso, toInt } = require('../lib/format');
@@ -79,6 +82,8 @@ async function requestRefundOnce({ orderId, userId, key, reason, requestId }) {
       throw new ApiError(409, 'REFUND_NOT_ALLOWED', 'Only paid orders can be refunded');
     }
 
+    if (toInt(order.total_amount) === 0) throw new ApiError(409, 'FREE_ORDER_CANCEL_REQUIRED', 'Cancel this unused free booking instead of requesting a monetary refund');
+
     const nowRows = await q(conn, 'SELECT UTC_TIMESTAMP(3) AS now');
     const now = nowRows[0].now;
     const cutoff = new Date(order.starts_at.getTime() - cfg.limits.refundCutoffHours * 3600 * 1000);
@@ -107,8 +112,9 @@ async function requestRefundOnce({ orderId, userId, key, reason, requestId }) {
       conn,
       `SELECT attempt_id, amount, currency
          FROM payment_attempts
-        WHERE order_id = ? AND result = 'SUCCEEDED'
-        ORDER BY attempt_id DESC LIMIT 1`,
+        WHERE order_id = ? AND result = 'SUCCEEDED' AND handling_category = 'NORMAL'
+          AND NOT EXISTS (SELECT 1 FROM refunds r WHERE r.payment_attempt_id = payment_attempts.attempt_id AND r.status IN ('PENDING','SUCCEEDED'))
+        ORDER BY attempt_id ASC LIMIT 1`,
       [orderId]
     );
     if (!payments.length) throw new ApiError(409, 'REFUND_NOT_ALLOWED', 'No successful original payment was found');
@@ -184,14 +190,14 @@ async function requestRefund(args) {
  * Excess/late payment refunds leave order, ticket and seat state unchanged.
  * Repeating the same result returns the existing record; a different result returns 409 so a successful refund cannot be changed to failed.
  */
-async function resolveRefund({ refundId, result, requestId, actorId }) {
+async function resolveRefundOnce({ refundId, result, requestId, actorId }) {
   if (!['SUCCEEDED', 'FAILED'].includes(result)) {
     throw new ApiError(400, 'VALIDATION_ERROR', 'result must be SUCCEEDED or FAILED');
   }
 
   const pre = await q(
     query,
-    `SELECT r.refund_id, r.order_id, r.status, r.amount, o.status AS order_status
+    `SELECT r.refund_id, r.order_id, r.status, r.amount, r.payment_attempt_id, o.status AS order_status
        FROM refunds r JOIN orders o ON o.order_id = r.order_id
       WHERE r.refund_id = ?`,
     [refundId]
@@ -207,6 +213,9 @@ async function resolveRefund({ refundId, result, requestId, actorId }) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+    // Serialize cumulative refunds and retries for one payment attempt.
+    const paymentRows = await q(conn, 'SELECT attempt_id, amount FROM payment_attempts WHERE attempt_id = ? FOR UPDATE', [pre[0].payment_attempt_id]);
+    if (!paymentRows.length) throw new ApiError(404, 'NOT_FOUND', 'Payment record not found');
     const rows = await q(
       conn,
       `SELECT r.refund_id, r.order_id, r.status, r.amount, r.payment_attempt_id,
@@ -226,13 +235,17 @@ async function resolveRefund({ refundId, result, requestId, actorId }) {
     }
     // Only the server-generated key identifies an excess/late payment refund.
     // A customer can enter any reason text, including LATE_PAYMENT.
-    const latePayment = refund.idempotency_key === `late-${refund.payment_attempt_id}`;
+    const latePayment = isLateRefund(refund);
     if (!latePayment && refund.order_status !== 'REFUND_PENDING') {
       throw new ApiError(409, 'REFUND_NOT_ALLOWED', 'The order is not in refund processing');
     }
 
     let released = 0;
     if (result === 'SUCCEEDED') {
+      const sums = await q(conn, "SELECT COALESCE(SUM(amount), 0) AS refunded FROM refunds WHERE payment_attempt_id = ? AND status = 'SUCCEEDED' AND refund_id <> ?", [refund.payment_attempt_id, refundId]);
+      if (toInt(sums[0].refunded) + toInt(refund.amount) > toInt(paymentRows[0].amount)) {
+        throw new ApiError(409, 'REFUND_LIMIT_EXCEEDED', 'Refunds cannot exceed the original payment amount');
+      }
       await q(conn, "UPDATE refunds SET status = 'SUCCEEDED' WHERE refund_id = ?", [refundId]);
       if (latePayment) {
         // These seats may now belong to another buyer. Refund only this payment attempt.
@@ -302,4 +315,46 @@ async function resolveRefund({ refundId, result, requestId, actorId }) {
   }
 }
 
-module.exports = { requestRefund, resolveRefund };
+
+/** Create a new attempt for a failed excess-payment refund; never rewrite the failed record. */
+async function retryLateRefundOnce({ refundId, key, actorId, requestId }) {
+  const pre = await query('SELECT payment_attempt_id FROM refunds WHERE refund_id = ?', [refundId]);
+  if (!pre.length) throw new ApiError(404, 'NOT_FOUND', 'Refund record not found');
+  const paymentId = toInt(pre[0].payment_attempt_id);
+  const storedKey = `late-${paymentId}:retry:${crypto.createHash('sha256').update(key).digest('hex')}`;
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const payments = await q(conn, 'SELECT attempt_id, amount, result, handling_category FROM payment_attempts WHERE attempt_id = ? FOR UPDATE', [paymentId]);
+    const rows = await q(conn, `SELECT r.*, o.status AS order_status FROM refunds r JOIN orders o ON o.order_id = r.order_id WHERE r.refund_id = ? FOR UPDATE`, [refundId]);
+    if (!rows.length || !payments.length) throw new ApiError(404, 'NOT_FOUND', 'Refund or payment record not found');
+    const original = rows[0], paid = payments[0];
+    if (!isLateRefund(original) || original.status !== 'FAILED') {
+      throw new ApiError(409, 'REFUND_RETRY_NOT_ALLOWED', 'Only failed excess or late-payment refunds can be retried');
+    }
+    const replay = await q(conn, 'SELECT refund_id FROM refunds WHERE idempotency_key = ?', [storedKey]);
+    if (replay.length) {
+      const refund = await refundRow(replay[0].refund_id, (sql, params) => q(conn, sql, params));
+      await conn.commit();
+      return { replayed: true, refund, orderStatus: original.order_status };
+    }
+    const active = await q(conn, `SELECT refund_id, status, amount FROM refunds
+      WHERE payment_attempt_id = ? AND status IN ('PENDING','SUCCEEDED') FOR UPDATE`, [paymentId]);
+    if (active.some(row => row.status === 'PENDING')) throw new ApiError(409, 'REFUND_IN_PROGRESS', 'A refund for this payment is already in progress');
+    const refunded = active.reduce((sum, row) => sum + toInt(row.amount), 0);
+    if (paid.result !== 'SUCCEEDED' || toInt(original.amount) <= 0 || refunded + toInt(original.amount) > toInt(paid.amount)) {
+      throw new ApiError(409, 'REFUND_LIMIT_EXCEEDED', 'This payment has already been refunded or cannot be refunded');
+    }
+    const inserted = await q(conn, `INSERT INTO refunds (order_id, payment_attempt_id, reason, amount, idempotency_key, status)
+      VALUES (?, ?, ?, ?, ?, 'PENDING')`, [original.order_id, paymentId, original.reason, original.amount, storedKey]);
+    await q(conn, "UPDATE payment_attempts SET handling_category = 'AWAITING_REFUND' WHERE attempt_id = ?", [paymentId]);
+    await writeAudit(conn, { actorType: 'ADMIN', actorId, objectType: 'REFUND', objectId: toInt(inserted.insertId),
+      action: 'REFUND_RETRIED', summary: `retry of refund ${refundId}, payment ${paymentId}, ${original.amount} cents`, requestId });
+    const refund = await refundRow(toInt(inserted.insertId), (sql, params) => q(conn, sql, params));
+    await conn.commit();
+    return { replayed: false, refund, orderStatus: original.order_status };
+  } catch (error) { await conn.rollback(); throw error; }
+  finally { conn.release(); }
+}
+
+module.exports = { requestRefund, resolveRefund: args => retryTransaction(() => resolveRefundOnce(args)), retryLateRefund: args => retryTransaction(() => retryLateRefundOnce(args)) };

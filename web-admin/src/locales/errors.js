@@ -1,5 +1,8 @@
 // The API keeps its stable codes and English diagnostic messages for all clients.
 const byCode = {
+  REFUND_IN_PROGRESS: ['这笔付款已有退款正在处理，请刷新记录。', '這筆付款已有退款正在處理，請重新整理紀錄。'],
+  REFUND_RETRY_NOT_ALLOWED: ['只有失败的异常付款退款可以重试。', '只有失敗的異常付款退款可以重試。'],
+  REFUND_LIMIT_EXCEEDED: ['这笔付款已退款，或重试会超过原付款金额。', '這筆付款已退款，或重試會超過原付款金額。'],
   INVALID_CREDENTIALS: ['账号或密码有误。', '帳號或密碼有誤。'],
   UNAUTHORIZED: ['登录已失效，请重新登录。', '登入已失效，請重新登入。'],
   FORBIDDEN: ['此账号没有执行此操作的权限。', '此帳號沒有執行此操作的權限。'],

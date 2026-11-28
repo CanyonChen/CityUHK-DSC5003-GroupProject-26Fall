@@ -28,7 +28,7 @@ jobs:
       - run: python database/check_schema.py
       - run: python scripts/check_project_links.py
       - run: python -m unittest discover -s scripts -p test_sync_cap.py
-      - run: node --test scripts/test_event_formats.mjs scripts/test_demo_performance.mjs server/tests/*.test.cjs web-admin/tests/*.test.mjs
+      - run: node --test scripts/test_event_formats.mjs scripts/test_demo_performance.mjs scripts/test_api_config.mjs server/tests/*.test.cjs web-admin/tests/*.test.mjs
 
   frontends:
     runs-on: ubuntu-latest
@@ -72,6 +72,8 @@ jobs:
       API_BASE: http://127.0.0.1:3300
       JWT_SECRET: ci-only-jwt-secret
       PAYMENT_NOTIFY_SECRET: ac-test-secret
+      CORS_ORIGINS: https://tickets.example.test,https://admin.example.test
+      TICKET_QR_SECONDS: 300
     steps:
       - uses: actions/checkout@v4
         with:
@@ -114,6 +116,7 @@ jobs:
           JS
       - run: node scripts/ac_coverage_check.js --all
       - run: node scripts/financial_integration_check.js
+      - run: node scripts/extended_integration_check.cjs
       - run: node scripts/realtime_check.js
       - uses: actions/upload-artifact@v4
         if: always()

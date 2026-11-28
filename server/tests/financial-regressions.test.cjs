@@ -43,7 +43,8 @@ function fixture({ orderStatus = 'REFUND_PENDING', late = false, refundStatus = 
     if (s.startsWith('SELECT')) {
       if (/FROM refunds r JOIN orders o/.test(s)) return [{ ...state.refund, order_status: state.order.status, currency: 'HKD', user_id: state.order.user_id }];
       if (/FROM orders o/.test(s) || /SELECT \* FROM orders/.test(s)) return [{ ...state.order }];
-      if (/FROM payment_attempts pa/.test(s)) return [{ ...state.attempt }];
+      if (/FROM payment_attempts/.test(s)) return [{ ...state.attempt }];
+      if (/COALESCE\\(SUM\\(amount\\), 0\\) AS refunded/.test(s)) return [{ refunded: 0 }];
       if (/FROM refunds/.test(s)) {
         if (/idempotency_key = \\?/.test(s) && params[1] !== state.refund.idempotency_key) return [];
         return [{ ...state.refund }];

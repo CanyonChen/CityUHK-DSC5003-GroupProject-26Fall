@@ -272,6 +272,14 @@ router.get('/refunds', ADMIN_ONLY, wrap(async (req, res) => {
   return sendOk(res, data);
 }));
 
+router.post('/refunds/:refundId/retry', ADMIN_ONLY, wrap(async (req, res) => {
+  const refundId = requireInt(req.params.refundId, 'refund_id');
+  const key = idempotencyKey(req);
+  const result = await refunds.retryLateRefund({ refundId, key, actorId: req.auth.userId, requestId: req.requestId });
+  res.locals.realtime = { order_id: result.refund.order_id };
+  return sendOk(res, result, result.replayed ? 200 : 201);
+}));
+
 router.post('/refunds/:refundId/resolve', ADMIN_ONLY, wrap(async (req, res) => {
   const refundId = requireInt(req.params.refundId, 'refund_id');
   const data = await refunds.resolveRefund({
