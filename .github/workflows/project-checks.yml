@@ -25,6 +25,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Parse Windows launch scripts
+        shell: pwsh
+        run: |
+          $files = @('Start-Local.ps1', 'scripts/dev.ps1', 'scripts/_common.ps1')
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $file), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count) { throw ($errors | Out-String) }
+          }
       - run: python database/check_schema.py
       - run: python scripts/check_project_links.py
       - run: python -m unittest discover -s scripts -p test_sync_cap.py
